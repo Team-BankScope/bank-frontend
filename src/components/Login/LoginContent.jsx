@@ -18,7 +18,7 @@ const LoginContent = () => {
     const location = useLocation();
     const { login } = useAuth();
 
-    const from = location.state?.from?.pathname || "/";
+    const from = location.state?.from?.pathname || "/Main";
 
     useEffect(() => {
         const savedEmail = localStorage.getItem('savedEmail');

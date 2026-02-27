@@ -1,0 +1,578 @@
+/* 기본 컨테이너 */
+.container {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+}
+
+.backgroundImage {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+}
+
+/* 💡 1. 추가된 글래스모피즘 래퍼 */
+.glassWrapper {
+    width: 96%;
+    height: 94vh;
+    background: rgba(255, 255, 255, 0.15); /* 반투명 효과 */
+    backdrop-filter: blur(15px); /* 유리 질감 블러 */
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2;
+}
+
+/* 💡 2. 우측 상단 윈도우 컨트롤 & 테마 */
+.topControls {
+    position: absolute;
+    top: 4.5px;
+    right: 40px; /* 돋보기 공간을 위해 약간 띄움 */
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    z-index: 10;
+}
+
+.themeToggle {
+    background: #e0f0eb;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    padding: 3px 6px;
+    width: 60px;
+    position: relative;
+    cursor: pointer;
+}
+
+.sunIcon {
+    font-size: 14px;
+    z-index: 2;
+}
+
+.toggleKnob {
+    position: absolute;
+    right: 4px;
+    width: 22px;
+    height: 22px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.windowBtns {
+    display: flex;
+    gap: 8px;
+}
+
+.winBtn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+/* --- 연령대 분석 영역 --- */
+.ageGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.ageItem {
+    background: #f0f0f0;
+    color: #888;
+    padding: 8px 0;
+    text-align: center;
+    border-radius: 5px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+/* 60대 강조 부분 */
+.ageActive {
+    background: #e6f7f5;
+    color: #35987c;
+    border: 1px solid #35987c;
+}
+
+.ageDescription {
+    font-size: 11px;
+    color: #35987c;
+    line-height: 1.4;
+    padding: 8px;
+    background: #e6f7f5;
+    border-radius: 5px;
+}
+.btnClose { background-color: #ff5f56; color: #6a0000; }
+.btnMinimize { background-color: #ffbd2e; color: #8a6a00; }
+.btnMaximize {
+    background-color: #27c93f; color: #005a00; font-size: 14px;
+    rotate: 135deg;
+}
+
+/* 💡 기존 워크스페이스 래퍼 (안쪽 흰색 박스) */
+.workspaceWrapper {
+    width: 95%; /* 우측 돋보기가 들어갈 여백을 위해 95%로 설정 */
+    height: 90%;
+    background-color: #ffffff;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin-right: 30px; /* 돋보기 슬라이더와 겹치지 않도록 마진 부여 */
+}
+
+/* --- 상단 헤더 및 알림 배너 --- */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; /* 배너 때문에 상단 정렬 */
+    padding: 20px 30px;
+    border-bottom: 1px solid #e0e0e0;
+
+}
+
+.logo {
+    color: #35987c;
+    margin: 0;
+    font-size: 28px;
+}
+
+.headerRightContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.headerRight {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.statusSelect {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.userInfo {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: bold;
+}
+
+.headerBtn {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    background: #f9f9f9;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* 💡 3. 노란색 알림 배너 */
+.notificationBanner {
+    background-color: #f7d77b;
+    color: #ffffff;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 14px;
+    text-shadow: 0px 1px 2px rgba(0,0,0,0.1);
+    position: absolute;
+    left: 40rem;
+}
+
+/* 💡 4. 우측 돋보기 슬라이더 */
+.zoomSidebar {
+    position: absolute;
+    right: 10px;
+    top: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.zoomTrack {
+    width: 25px;
+    height: 60%;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 20px;
+    position: relative;
+}
+
+.zoomHandle {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    background: #5abcb0;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px 0;
+    color: white;
+    cursor: grab;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.zoomPlus {
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.zoomText {
+    font-size: 12px;
+    text-align: center;
+    line-height: 1.2;
+}
+
+
+/* --- 메인 바디, 왼쪽 사이드바, 카드 요소 등은 기존 제공해드린 CSS 코드를 그대로 이어붙여주세요! --- */
+
+/* --- 메인 바디 --- */
+.contentBody {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* --- 좌측 고객 대기열 (Sidebar) --- */
+.leftSidebar {
+    width: 320px;
+    border-right: 1px solid #e0e0e0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.sidebarHeader {
+    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+.waitingCount {
+    color: #35987c;
+    margin-left: 10px;
+}
+
+.customerList {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* 고객 카드 UI */
+.customerCard {
+    border: 1px solid #c9e4de;
+    border-radius: 12px;
+    padding: 15px;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.customerCard:hover, .activeCard {
+    border-color: #35987c;
+    box-shadow: 0 4px 12px rgba(53, 152, 124, 0.15);
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.customerName {
+    font-size: 18px;
+    font-weight: bold;
+}
+.customerName small {
+    font-size: 12px;
+    color: #777;
+}
+
+.tierBadge {
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+}
+.VIP { background-color: #35987c; }
+.일반 { background-color: #a3d9cf; }
+.우수 { background-color: #5abcb0; }
+
+.cardInfo {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 15px;
+}
+
+.taskLine {
+    flex: 1;
+    border-top: 1px dashed #ccc;
+    margin: 0 10px;
+}
+
+.riskBarContainer {
+    display: flex;
+    align-items: center;
+    background: #f0f0f0;
+    border-radius: 10px;
+    height: 18px;
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.riskBar {
+    background: #35987c;
+    height: 100%;
+    border-radius: 10px;
+    color: white;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    padding-left: 8px;
+}
+
+.riskText {
+    position: absolute;
+    right: 10px;
+    font-size: 11px;
+    color: #777;
+}
+
+.cardActions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.cardActions button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btnAccept { background: #81e6d9; color: white; width: 100%; }
+.btnProcessing { background: #a0aec0; color: white; }
+.btnComplete { background: #35987c; color: white; }
+
+/* --- 중앙 및 우측 메인 콘텐츠 --- */
+.mainContent {
+    flex: 1;
+    background: #fdfdfd;
+    display: flex;
+    overflow: hidden;
+}
+
+/* 1. 아무것도 선택 안된 대기 화면 (두 번째 사진) */
+.welcomeScreen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid #e2f1ed;
+    border-radius: 20px;
+    margin: 20px;
+    background: #fff;
+}
+
+.welcomeScreen h2 {
+    font-size: 32px;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.bigLogo {
+    font-size: 80px;
+    color: #35987c;
+    margin: 0;
+}
+
+/* 2. 상세 화면 (세 번째 사진) */
+.detailScreen {
+    display: flex;
+    flex: 1;
+    padding: 20px;
+    gap: 20px;
+}
+
+.detailMain {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.detailHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #35987c;
+    margin-bottom: 20px;
+}
+
+.detailCustomerInfo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.detailCustomerInfo h2 { margin: 0; }
+.customerId { color: #555; }
+.detailRisk { font-size: 20px; }
+.detailRisk strong { color: #35987c; font-size: 24px; }
+
+/* 상세 계좌 카드 */
+.accountList {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    overflow-y: auto;
+}
+
+.accountCard {
+    border: 1px solid #c9e4de;
+    background: #f4faf9;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.accountHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.accountHeader h3 { margin: 0; font-size: 20px; }
+.tagGreen, .tagBlue, .tagDark {
+    padding: 4px 10px;
+    border-radius: 5px;
+    color: white;
+    font-size: 12px;
+}
+.tagGreen { background: #35987c; }
+.tagBlue { background: #5abcb0; }
+.tagDark { background: #4a5568; }
+
+/* 상세 화면 우측 사이드바 */
+.rightSidebar {
+    width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.infoBox {
+    border: 1px solid #c9e4de;
+    border-radius: 10px;
+    padding: 15px;
+    background: #fff;
+}
+
+.infoBox h4 {
+    margin: 0 0 15px 0;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    text-align: center;
+}
+
+.alertItem {
+    background: #35987c;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    font-size: 13px;
+}
+
+.infoBox ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.infoBox ul li {
+    background: #e6f7f5;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+.ageAnalysisPlaceholder {
+    background: #e6f7f5;
+    padding: 20px;
+    text-align: center;
+    border-radius: 5px;
+    color: #35987c;
+    font-weight: bold;
+}
+/* --- 연령대 분석 영역 --- */
+.ageGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.ageItem {
+    background: #f0f0f0;
+    color: #888;
+    padding: 8px 0;
+    text-align: center;
+    border-radius: 5px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+/* 60대 강조 부분 */
+.ageActive {
+    background: #e6f7f5;
+    color: #35987c;
+    border: 1px solid #35987c;
+}
+
+.ageDescription {
+    font-size: 11px;
+    color: #35987c;
+    line-height: 1.4;
+    padding: 8px;
+    background: #e6f7f5;
+    border-radius: 5px;
+}

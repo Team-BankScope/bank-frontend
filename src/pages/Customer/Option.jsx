@@ -1,9 +1,9 @@
 import React from "react";
 import { useNavigate } from 'react-router-dom';
 import styles from './Option.module.css';
-import first from "../images/Opt/opt1.png";
-import second from "../images/Opt/opt2.png";
-import third from "../images/Opt/opt3.png";
+import first from "../../images/Opt/opt1.png";
+import second from "../../images/Opt/opt2.png";
+import third from "../../images/Opt/opt3.png";
 
 const Option = () => {
     const navigate = useNavigate();

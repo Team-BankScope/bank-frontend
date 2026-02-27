@@ -29,10 +29,10 @@ const AdminLoginContent = () => {
                 password: formData.password
             }).toString();
 
-            const response = await fetch(`/api/user/login-admin?${queryParams}`, {
+            // 1. 먼저 관리자(Admin) 로그인 시도
+            let response = await fetch(`/api/user/login-admin?${queryParams}`, {
                 method: 'POST',
-                headers: {
-                }
+                headers: {}
             });
 
             if (response.ok) {
@@ -41,12 +41,29 @@ const AdminLoginContent = () => {
                     await login(); 
                     alert('관리자 로그인 성공!');
                     navigate('/AdminMain'); // 관리자 메인 페이지로 이동
-                } else {
-                    alert('로그인 실패: 정보를 확인하세요.');
+                    return;
                 }
-            } else {
-                alert('서버 오류가 발생했습니다.');
             }
+
+            // 2. 관리자 로그인이 실패하면 멤버(Member) 로그인 시도
+            response = await fetch(`/api/user/member/login?${queryParams}`, {
+                method: 'POST',
+                headers: {}
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.result === 'SUCCESS') {
+                    await login();
+                    alert('행원 로그인 성공!');
+                    navigate('/BankerWorkSpace'); // 행원 업무 공간으로 이동
+                    return;
+                }
+            }
+
+            // 둘 다 실패한 경우
+            alert('로그인 실패: 정보를 확인하세요.');
+
         } catch (error) {
             console.error('Error:', error);
             alert('오류가 발생했습니다.');

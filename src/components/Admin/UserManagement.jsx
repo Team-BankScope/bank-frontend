@@ -51,6 +51,7 @@ const UserManagement = () => {
             level: userData.level,
             auth: userData.auth,
             team: userData.team,
+            counterNumber: userData.counterNumber, // 추가된 필드
             status: userData.status, // Integer 그대로 전송
         };
 
@@ -135,6 +136,7 @@ const UserManagement = () => {
                     <th>직급</th>
                     <th>권한</th>
                     <th>소속</th>
+                    <th>창구번호</th> {/* 추가된 헤더 */}
                     <th>입사일</th>
                     <th>마지막접속</th>
                     <th>상태</th>
@@ -144,7 +146,7 @@ const UserManagement = () => {
                 <tbody>
                 {users.length === 0 ? (
                     <tr>
-                        <td colSpan="9" style={{ textAlign: 'center', padding: '50px', color: '#888' }}>
+                        <td colSpan="10" style={{ textAlign: 'center', padding: '50px', color: '#888' }}>
                             등록된 임직원이 없습니다.
                         </td>
                     </tr>
@@ -156,6 +158,13 @@ const UserManagement = () => {
                             <td>{getLevelLabel(user.level)}</td>
                             <td>{user.auth}</td>
                             <td>{user.team}</td>
+                            <td>
+                                {user.counterNumber ? (
+                                    user.counterNumber
+                                ) : (
+                                    <span style={{ color: '#a6a6a6' }}>null</span>
+                                )}
+                            </td>
                             <td>{user.joinDate}</td>
                             <td>{user.lastLogin ? new Date(user.lastLogin).toLocaleString() : '-'}</td>
                             <td>

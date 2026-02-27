@@ -1,17 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './AdminMain.module.css';
-import { useAuth } from '../context/AuthContext';
-import logoutIcon from '../images/AdminMain/logout.png';
-import pwIcon from '../images/AdminMain/pw.png';
-import navIcon from '../images/AdminMain/icon.png';
-import adminIcon from '../images/AdminMain/admin.png';
-import UserManagement from '../components/Admin/UserManagement.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
+import logoutIcon from '../../images/AdminMain/logout.png';
+import pwIcon from '../../images/AdminMain/pw.png';
+import navIcon from '../../images/AdminMain/icon.png';
+import adminIcon from '../../images/AdminMain/admin.png';
+import UserManagement from '../../components/Admin/UserManagement.jsx';
+import Admin_dashboard from './Admin_dashboard.jsx';
 
 const AdminMain = () => {
-    const { user, logout } = useAuth();
+    const { user, logout, loading } = useAuth();
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('register'); // 'register', 'info'
+    const [activeTab, setActiveTab] = useState('register'); // 'register', 'info', 'dashboard'
+
+    useEffect(() => {
+        if (!loading && !user) {
+            alert("로그인이 필요한 서비스입니다.");
+            navigate("/AdminLogin");
+        }
+    }, [user, loading, navigate]);
+
+    if (loading) return <div>Loading...</div>;
+    if (!user) return null;
 
     const handleLogout = async () => {
         await logout();
@@ -31,6 +42,12 @@ const AdminMain = () => {
                     <div className={styles.card}>
                         <h3 className={styles.cardTitle}>정보 변경</h3>
                         <p>정보 변경 폼이 여기에 들어갑니다.</p>
+                    </div>
+                );
+            case 'dashboard':
+                return (
+                    <div className={styles.card}>
+                        <Admin_dashboard />
                     </div>
                 );
             default:
@@ -57,6 +74,13 @@ const AdminMain = () => {
                 >
                     <img src={navIcon} alt="네비바아이콘" className={styles.navIcon} />
                     정보 변경
+                </div>
+                <div 
+                    className={`${styles.menuItem} ${activeTab === 'dashboard' ? styles.activeMenu : ''}`}
+                    onClick={() => setActiveTab('dashboard')}
+                >
+                    <img src={navIcon} alt="네비바아이콘" className={styles.navIcon} />
+                    대시보드
                 </div>
                 
                 <div className={styles.bottomMenu}>

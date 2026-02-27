@@ -9,6 +9,7 @@ const AdminModal = ({ isOpen, onClose, onSave, user }) => {
         level: 1, // Integer: 1~5
         auth: '일반',
         team: '',
+        counterNumber: 0, // 추가된 필드: 창구 번호
         status: 1 // Integer: 1(활성), 0(비활성)
     });
 
@@ -21,6 +22,7 @@ const AdminModal = ({ isOpen, onClose, onSave, user }) => {
                 level: user.level,
                 auth: user.auth || '일반',
                 team: user.team,
+                counterNumber: user.counterNumber || 0,
                 status: user.status
             });
         } else {
@@ -31,6 +33,7 @@ const AdminModal = ({ isOpen, onClose, onSave, user }) => {
                 level: 1,
                 auth: '일반',
                 team: '',
+                counterNumber: 0,
                 status: 1
             });
         }
@@ -41,7 +44,7 @@ const AdminModal = ({ isOpen, onClose, onSave, user }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         
-        if (name === 'level' || name === 'status') {
+        if (name === 'level' || name === 'status' || name === 'counterNumber') {
              setFormData({
                 ...formData,
                 [name]: parseInt(value, 10)
@@ -145,6 +148,19 @@ const AdminModal = ({ isOpen, onClose, onSave, user }) => {
                                     className={styles.fullInput} 
                                     value={formData.team}
                                     onChange={handleChange}
+                                />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>창구 번호</th>
+                            <td>
+                                <input 
+                                    type="number" 
+                                    name="counterNumber"
+                                    className={styles.fullInput} 
+                                    value={formData.counterNumber}
+                                    onChange={handleChange}
+                                    placeholder="0"
                                 />
                             </td>
                         </tr>

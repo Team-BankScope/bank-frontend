@@ -4,7 +4,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background-image: url('../images/AdminLogin/log_backgrouond.png');
+    background-image: url('../../images/AdminLogin/log_backgrouond.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;

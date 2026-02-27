@@ -17,7 +17,24 @@ export const AuthProvider = ({ children }) => {
                 const data = await response.json();
                 console.log("Session API Response:", data); // 디버깅 로그 추가
                 if (data.result === "SUCCESS") {
-                    setUser({ email: data.email, name: data.name, residentNumber: data.residentNumber });
+                    if (data.type === 'member') {
+                        setUser({ 
+                            type: 'member',
+                            email: data.email, 
+                            name: data.name, 
+                            level: data.level,
+                            auth: data.auth,
+                            team: data.team
+                        });
+                    } else if (data.type === 'user') {
+                        setUser({ 
+                            type: 'user',
+                            userType: data.userType, // 백엔드에서 userType을 보내줌
+                            email: data.email, 
+                            name: data.name, 
+                            residentNumber: data.residentNumber 
+                        });
+                    }
                 } else {
                     setUser(null);
                 }
