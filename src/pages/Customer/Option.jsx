@@ -10,7 +10,7 @@ const Option = () => {
 
     return (
         <div className={styles.container}>
-            <h2 className={styles.title}>큰 카테고리 선택</h2>
+            <h2 className={styles.title}>처음이라면, 비교부터</h2>
             <div className={styles.content}>
                 <div className={styles.box} onClick={() => navigate('/fast-task')}>
                     <img src={first} alt="빠른 업무" className={styles.bannerImage} />
