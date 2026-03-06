@@ -4,6 +4,7 @@ import BackgroundImage from '../../images/Kiosk/KioskBackground.jpg';
 import KioskLogin from './KioskLogin';
 import KioskTaskSelect from './KioskTaskSelect';
 import KioskComplete from './KioskComplete';
+import KioskNonMember from './KioskNonMember'; // 비회원 접수 컴포넌트 추가
 
 const Kiosk = () => {
     const [step, setStep] = useState(1);
@@ -21,34 +22,42 @@ const Kiosk = () => {
         availableCounter: 0
     });
 
-    // 대시보드 데이터 가져오기
+    // 대시보드 데이터 가져오기 함수 분리
+    const fetchDashboardData = async () => {
+        try {
+            const [waitingRes, timeRes, counterRes] = await Promise.all([
+                fetch('/api/kiosk/waiting-count'), // 수정된 엔드포인트
+                fetch('/api/kiosk/average-time'),
+                fetch('/api/kiosk/available-count')
+            ]);
+
+            const waitingCountText = await waitingRes.text();
+            const averageTimeText = await timeRes.text();
+            const availableCounterText = await counterRes.text();
+
+            setDashboardData({
+                waitingCount: Number(waitingCountText) || 0,
+                averageTime: parseFloat(averageTimeText) || 0,
+                availableCounter: Number(availableCounterText) || 0
+            });
+        } catch (error) {
+            console.error("Failed to fetch dashboard data", error);
+        }
+    };
+
+    // 초기 로드 및 주기적 갱신
     useEffect(() => {
-        const fetchDashboardData = async () => {
-            try {
-                const [waitingRes, timeRes, counterRes] = await Promise.all([
-                    fetch('/api/kiosk/waiting-person'), // 수정된 엔드포인트
-                    fetch('/api/kiosk/average-time'),
-                    fetch('/api/kiosk/available-count')
-                ]);
-
-                const waitingCount = await waitingRes.text();
-                const averageTime = await timeRes.text();
-                const availableCounter = await counterRes.text();
-
-                setDashboardData({
-                    waitingCount: parseInt(waitingCount) || 0,
-                    averageTime: parseFloat(averageTime) || 0,
-                    availableCounter: parseInt(availableCounter) || 0
-                });
-            } catch (error) {
-                console.error("Failed to fetch dashboard data", error);
-            }
-        };
-
         fetchDashboardData();
-        const interval = setInterval(fetchDashboardData, 30000); // 30초마다 갱신
+        const interval = setInterval(fetchDashboardData, 5000); // 5초마다 갱신 (더 자주 갱신)
         return () => clearInterval(interval);
     }, []);
+
+    // step이 1(홈 화면)로 바뀔 때마다 데이터 갱신
+    useEffect(() => {
+        if (step === 1) {
+            fetchDashboardData();
+        }
+    }, [step]);
 
     const handleGoHome = () => {
         setFormData({ ssn: '', task: '', userName: '', taskType: '' });
@@ -108,7 +117,7 @@ const Kiosk = () => {
                             <span className={styles.cardValue}>{dashboardData.waitingCount}</span>
                         </div>
                         <div className={styles.card}>
-                            <span className={styles.cardTitle}>현재 대기 시간</span>
+                            <span className={styles.cardTitle}>예상 대기 시간</span>
                             <span className={styles.cardValue}>약 {Math.round(dashboardData.averageTime)}분</span>
                         </div>
                         <div className={styles.card}>
@@ -116,11 +125,26 @@ const Kiosk = () => {
                             <span className={styles.cardValue}>{dashboardData.availableCounter}</span>
                         </div>
                     </div>
-
-                    <button className={styles.startButton} onClick={() => setStep(2)}>
-                        접수 시작하기
-                    </button>
+                    
+                    <div className={styles.buttonContainer}>
+                        <button className={styles.startButton} onClick={() => setStep(2)}>
+                            회원 접수 시작하기
+                        </button>
+                        <button className={styles.startButton2} onClick={() => setStep(0)}>
+                            비회원 접수 시작하기
+                        </button>
+                    </div>
                 </div>
+            )}
+
+            {/* 💡 Step 0: 비회원 접수 화면 */}
+            {step === 0 && (
+                <KioskNonMember
+                    formData={formData}
+                    setFormData={setFormData}
+                    onNext={() => setStep(3)} // 비회원 접수 완료 시 업무 선택(Step 3)으로 이동
+                    onPrev={() => setStep(1)} // 이전 단계로
+                />
             )}
 
             {step === 2 && (

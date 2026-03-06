@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styles from './Kiosk.module.css';
 
 const KioskComplete = ({ formData, onGoHome, onAddMore, userName }) => {
@@ -8,10 +8,15 @@ const KioskComplete = ({ formData, onGoHome, onAddMore, userName }) => {
         counter: ''
     });
     const [isLoading, setIsLoading] = useState(true);
+    const isSubmitted = useRef(false); // 중복 호출 방지용 ref
 
     const categoryName = formData.taskType;
 
     useEffect(() => {
+        // 이미 제출되었으면 실행하지 않음
+        if (isSubmitted.current) return;
+        isSubmitted.current = true;
+
         const submitFormData = async () => {
             try {
                 const response = await fetch('/api/kiosk/task', {
@@ -32,14 +37,16 @@ const KioskComplete = ({ formData, onGoHome, onAddMore, userName }) => {
                         const checkResponse = await fetch('/api/kiosk/task');
                         if (checkResponse.ok) {
                             const checkData = await checkResponse.json();
+                            console.log("Check Task Response:", checkData); // 디버깅 로그
                             if (checkData.result === 'SUCCESS') {
                                 const task = checkData.task;
                                 setTicketInfo({
-                                    ticketNumber: task.ticketNumber,
-                                    level: task.assignedLevel,
+                                    ticketNumber: task.ticketNumber || '-',
+                                    level: task.assignedLevel || '-',
                                     counter: task.name ? `${task.name} (${task.level})` : '배정 중'
                                 });
-                                setIsLoading(false);
+                            } else {
+                                console.error("Failed to get task info:", checkData);
                             }
                         }
                     } else {
@@ -54,6 +61,8 @@ const KioskComplete = ({ formData, onGoHome, onAddMore, userName }) => {
                 console.error('최종 접수 처리 중 에러 발생:', error);
                 alert('접수 처리 중 문제가 발생했습니다. 창구에 문의해주세요.');
                 onGoHome();
+            } finally {
+                setIsLoading(false);
             }
         };
 
