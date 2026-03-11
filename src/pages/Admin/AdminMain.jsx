@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './AdminMain.module.css';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -8,6 +8,7 @@ import navIcon from '../../images/AdminMain/icon.png';
 import adminIcon from '../../images/AdminMain/admin.png';
 import UserManagement from '../../components/Admin/UserManagement.jsx';
 import Admin_dashboard from './Admin_dashboard.jsx';
+import BoardManagement from '../../components/Admin/BoardManagement.jsx';
 
 const AdminMain = () => {
     const { user, logout, loading } = useAuth();
@@ -24,6 +25,9 @@ const AdminMain = () => {
         { id: 'rates', label: '금리 등록' },
         { id: 'info', label: '정보 변경' }, 
         { id: 'users', label: '사용자 관리' },
+        { id: 'faq', label: 'FAQ 관리' },
+        { id: 'news', label: '새소식 관리' },    
+        { id: 'events', label: '이벤트 관리' }, 
     ];
 
     useEffect(() => {
@@ -66,6 +70,12 @@ const AdminMain = () => {
             );
         case 'users':
             return <div className={styles.card}><UserManagement /></div>;
+        case 'faq':
+            return <div className={styles.card}><BoardManagement type="faq" title="FAQ" /></div>;
+        case 'news':
+            return <div className={styles.card}><BoardManagement type="news" title="새소식"/></div>;
+        case 'events':
+            return <div className={styles.card}><BoardManagement type="events" title="이벤트" /></div>;
         default:
             return <div className={styles.card}><Admin_dashboard /></div>;
     }
