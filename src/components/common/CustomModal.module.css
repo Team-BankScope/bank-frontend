@@ -100,6 +100,7 @@
 .cancel {
     background-color: #e0e0e0;
     color: #555;
+    cursor: pointer;
 }
 
 .cancel:hover {
@@ -109,6 +110,7 @@
 .confirm {
     background-color: rgb(114, 200, 187);
     color: #fff;
+    cursor: pointer;
 }
 .confirm:hover {
     background-color: rgb(94, 186, 172);
