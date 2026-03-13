@@ -23,7 +23,6 @@ const AdminMain = () => {
         { id: 'savings', label: '적금 상품 관리' },
         { id: 'loan', label: '대출 상품 관리' },
         { id: 'rates', label: '금리 등록' },
-        { id: 'info', label: '정보 변경' }, 
         { id: 'users', label: '사용자 관리' },
         { id: 'faq', label: 'FAQ 관리' },
         { id: 'news', label: '새소식 관리' },    
@@ -61,13 +60,6 @@ const AdminMain = () => {
             return <div className={styles.card}><h3>대출 상품 관리</h3><p>대출 상품 목록...</p></div>;
         case 'rates':
             return <div className={styles.card}><h3>금리 등록</h3><p>금리 설정 페이지...</p></div>;
-        case 'info': 
-            return (
-                <div className={styles.card}>
-                    <h3 className={styles.cardTitle}>정보 변경</h3>
-                    <p>정보 변경 폼이 여기에 들어갑니다.</p>
-                </div>
-            );
         case 'users':
             return <div className={styles.card}><UserManagement /></div>;
         case 'faq':

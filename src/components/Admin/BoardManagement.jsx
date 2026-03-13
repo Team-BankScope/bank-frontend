@@ -8,17 +8,16 @@ const BoardManagement = ({ type, title }) => {
     const [selectedItem, setSelectedItem] = useState(null);
     const [postList, setPostList] = useState([]);
 
-    // 💡 핵심: 탭(type, title)이 바뀔 때마다 데이터를 새로 세팅!
     useEffect(() => {
-        // 나중에 여기서 API를 호출하게 됩니다. 예: axios.get(`/api/${type}`)
+        //여기서 API를 호출. (`/api/${type}`)
         const mockData = [
             { id: 1, title: `${title} 게시판의 1번 글입니다.`, date: '2026.03.11', content: '상세 내용' },
             { id: 2, title: `${title} 게시판의 2번 글입니다.`, date: '2026.03.11', content: '상세 내용' },
         ];
         
         setPostList(mockData);
-        setViewMode('list'); // 탭 바꿀 때 목록으로 돌아오게 설정
-    }, [type, title]); // 👈 이 녀석들이 바뀌면 실행됩니다.
+        setViewMode('list'); 
+    }, [type, title]); 
 
     const handleWrite = () => {
         setSelectedItem(null); 
@@ -39,6 +38,8 @@ const BoardManagement = ({ type, title }) => {
         setPostList(postList.filter(p => p.id !== selectedItem.id));
         setIsModalOpen(false);
     };
+
+    
 
     return (
         <div className={styles.container}>
