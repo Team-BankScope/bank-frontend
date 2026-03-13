@@ -75,15 +75,21 @@ const UserManagement = () => {
         setSelectedUser(null);
     };
 
-    // 3. 삭제 로직
+
     const confirmDelete = async () => {
         try {
-            const response = await fetch(`/api/user/member/${selectedUser.id}`, { method: 'DELETE' });
+            // 💡 쿼리 스트링 방식 (?id=값) 으로 주소를 작성해야 합니다.
+            const response = await fetch(`/api/user/member?id=${selectedUser.id}`, { 
+                method: 'DELETE' 
+            });
+
             if (response.ok) {
                 alert('삭제되었습니다.');
                 fetchMembers();
                 setSelectedRowId(null);
                 setSelectedUser(null);
+            } else {
+                alert('삭제 실패');
             }
         } catch (error) {
             console.error('삭제 오류:', error);
