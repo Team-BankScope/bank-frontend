@@ -1,6 +1,7 @@
 import React, {useState, useEffect} from "react";
 import { useNavigate } from 'react-router-dom';
 import HomeImage from '../../images/Home/Home.png';
+import HomeImage2 from '../../images/Home/Home2.png';
 import Briefcase from '../../images/Home/Briefcase.png';
 import Card from '../../images/Home/Card.png';
 import Corporation from '../../images/Home/Corporation.png';
@@ -19,6 +20,8 @@ const Home = () => {
     // 모달창 상태 관리
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalContent, setModalContent] = useState('');
+
+    const banners = [HomeImage, HomeImage2, HomeImage];
 
     // 각 섹션별 고정 데이터
     const fastTasks = [
@@ -123,7 +126,18 @@ const Home = () => {
         <>            
             <div className={styles.homeContainer}>
                 <div className={styles.heroWrapper}>
-                    <img src={HomeImage} alt="BankScope 메인 배너" className={styles.heroImage} />
+                    {/* <img src={HomeImage} alt="BankScope 메인 배너" className={styles.heroImage} /> */}
+                    <div className={styles.sliderContainer}>
+                        <div className={styles.sliderTrack}>
+                            {banners.map((banner, index) => (
+                                <img
+                                    key={index}
+                                    src={banner}
+                                    alt={`BankScop 메인 배너 &{index + 1}`}
+                                    className={styles.heroImage}/>
+                            ))}
+                        </div>
+                    </div>
                 </div>
 
                 {/* 2. 메인 콘텐츠 (메뉴들) */}

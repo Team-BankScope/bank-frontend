@@ -13,11 +13,35 @@
     justify-content: center;
 }
 
-.heroImage {
+/* 1. 새로 추가: 슬라이더 바깥 영역 (넘치는 사진 숨김) */
+.sliderContainer {
     width: 100%;
     max-width: 1920px;
+    overflow: hidden; 
+}
+
+/* 2. 새로 추가: 기차처럼 사진들을 이어 붙여서 움직일 트랙 */
+.sliderTrack {
+    display: flex;
+    width: 100%;
+    /* 8초 동안 무한 반복! */
+    animation: slideBanner 8s infinite ease-in-out; 
+}
+
+/* 3. 기존 덮어쓰기: 사진이 영역에 맞춰 찌그러지지 않게 보호 */
+.heroImage {
+    width: 100%;
+    flex-shrink: 0; 
     height: auto;
     display: block;
+    vertical-align: bottom;
+}
+
+/* 4. 새로 추가: 무한 슬라이드 타이밍 제어 */
+@keyframes slideBanner {
+    0%, 40% { transform: translateX(0); }             /* 1번 사진 멈춤 */
+    50%, 90% { transform: translateX(-100%); }        /* 2번 사진으로 넘어가서 멈춤 */
+    100% { transform: translateX(-200%); }            /* 1번 사진 복사본으로 스무스하게 연결 */
 }
 
 .mainContent {
