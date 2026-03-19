@@ -24,7 +24,6 @@ const AdminMain = () => {
         { id: 'loan', label: '대출 상품 관리' },
         { id: 'rates', label: '금리 등록' },
         { id: 'users', label: '사용자 관리' },
-        { id: 'faq', label: 'FAQ 관리' },
         { id: 'news', label: '새소식 관리' },    
         { id: 'events', label: '이벤트 관리' }, 
     ];
@@ -62,8 +61,6 @@ const AdminMain = () => {
             return <div className={styles.card}><h3>금리 등록</h3><p>금리 설정 페이지...</p></div>;
         case 'users':
             return <div className={styles.card}><UserManagement /></div>;
-        case 'faq':
-            return <div className={styles.card}><BoardManagement type="faq" title="FAQ" /></div>;
         case 'news':
             return <div className={styles.card}><BoardManagement type="news" title="새소식"/></div>;
         case 'events':
