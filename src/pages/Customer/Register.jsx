@@ -7,7 +7,8 @@ const Register = () => {
         name: '',
         email: '',
         password: '',
-        residentNumber: ''
+        residentNumber: '',
+        userType: 'custover'
     });
     const navigate = useNavigate();
 
@@ -100,6 +101,37 @@ const Register = () => {
                         placeholder="'-' 없이 입력해주세요"
                         required
                     />
+                </div>
+                <div className={`${styles.inputGroup} ${styles.typeSelectionGroup}`}>
+                    <label className={styles.groupLabel}>회원 유형</label>
+                    <div className={styles.segmentedControl}>
+                        {/* 일반회원 */}
+                        <div className={styles.segmentOption}>
+                            <input
+                                type="radio"
+                                id="userTypeCustomer"
+                                name="userType"
+                                value="customer"
+                                checked={formData.userType === 'customer'}
+                                onChange={handleChange}
+                                required
+                            />
+                            <label htmlFor="userTypeCustomer">일반회원</label>
+                        </div>
+                        {/* 기업회원 */}
+                        <div className={styles.segmentOption}>
+                            <input
+                                type="radio"
+                                id="userTypeCorporate"
+                                name="userType"
+                                value="corporate"
+                                checked={formData.userType === 'corporate'}
+                                onChange={handleChange}
+                                required
+                            />
+                            <label htmlFor="userTypeCorporate">기업회원</label>
+                        </div>
+                    </div>
                 </div>
                 <button type="submit" className={styles.submitButton}>회원가입</button>
             </form>

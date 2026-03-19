@@ -25,7 +25,8 @@
     margin-bottom: 15px;
 }
 
-.inputGroup label {
+/* 라벨 스타일 통일 */
+.inputGroup label:not(.segmentOption label) {
     display: block;
     margin-bottom: 5px;
     font-weight: 500;
@@ -35,14 +36,16 @@
     font-size: 1.3rem;
 }
 
+/* 일반 입력창 스타일 (회원유형 박스와 높이 맞춤) */
 .inputGroup input {
     width: 100%;
-    padding: 10px;
+    padding: 10px; /* 위아래 10px */
     border: 1px solid #ccc;
     border-radius: 4px;
     box-sizing: border-box;
     font-size: 1rem;
     outline: none;
+    height: 45px; /* 높이를 고정해서 세그먼트와 맞춤 */
 }
 
 .inputGroup input:focus {
@@ -50,6 +53,64 @@
     box-shadow: 0 0 0 2px rgba(0, 154, 131, 0.2);
 }
 
+/* --- 회원 유형 세그먼트 버튼 (수정본) --- */
+.typeSelectionGroup {
+    margin-bottom: 25px;
+}
+
+.segmentedControl {
+    display: flex;
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    overflow: hidden;
+    height: 45px; /* 입력창 높이와 동일하게 설정 */
+    box-sizing: border-box;
+}
+
+.segmentOption {
+    flex: 1;
+    display: flex; /* 내부 라벨을 꽉 채우기 위해 설정 */
+}
+
+/* 실제 라디오 인풋 숨기기 */
+.segmentOption input[type="radio"] {
+    display: none;
+}
+
+/* 라벨 디자인 (빈틈없이 꽉 채우기) */
+.segmentOption label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%; /* 부모 높이 100% 채움 */
+    font-size: 1.1rem;
+    color: #555;
+    background-color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-right: 1px solid #ccc;
+    box-sizing: border-box;
+    margin: 0; /* 혹시 모를 마진 제거 */
+}
+
+.segmentOption:last-child label {
+    border-right: none;
+}
+
+/* 선택되었을 때 배경 꽉 채우기 */
+.segmentOption input[type="radio"]:checked + label {
+    background-color: #009A83;
+    color: white;
+    font-weight: bold;
+}
+
+.segmentOption label:hover {
+    background-color: #f8f8f8;
+}
+
+/* 하단 버튼 및 링크 */
 .submitButton {
     padding: 12px;
     background-color: #009A83;
@@ -75,9 +136,4 @@
 .loginLink a {
     color: #bababa;
     text-decoration: none;
-    font-size: 1.3rem;
-}
-
-.loginLink a:hover {
-    text-decoration: underline;
 }
