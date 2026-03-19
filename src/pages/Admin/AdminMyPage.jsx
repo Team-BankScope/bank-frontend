@@ -1,16 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { useNavigate } from 'react-router-dom';
 import styles from './AdminMyPage.module.css';
 
-const mockUser = {
-  name: "관리팀 김 갑수",
-  email: "admin1 @ naver.com",
-  role: "관리자"
-};
-
 const AdminMyPage = () => {
-  const [user] = useState(mockUser);
-  
-  // 비밀번호 변경 상태 관리 (카멜 케이스 적용)
+  // 1. AuthContext에서 실제 로그인된 유저 정보 가져오기
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  // 2. 비밀번호 상태 관리
   const [passwords, setPasswords] = useState({
     currentPassword: '',
     newPassword: '',
@@ -18,6 +16,17 @@ const AdminMyPage = () => {
   });
 
   const [message, setMessage] = useState({ type: '', text: '' });
+
+  // 3. 로그인 체크 (MyPage.jsx와 동일한 로직)
+  useEffect(() => {
+    if (!loading && !user) {
+      alert("로그인 후 이용 가능합니다.");
+      navigate("/Login");
+    }
+  }, [user, loading, navigate]);
+
+  if (loading) return <div className={styles.loading}>Loading...</div>;
+  if (!user) return null;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -27,7 +36,7 @@ const AdminMyPage = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // 유효성 검사 로직
+    // 유효성 검사
     if (!passwords.currentPassword || !passwords.newPassword || !passwords.confirmPassword) {
       setMessage({ type: 'error', text: '모든 필드를 입력해주세요.' });
       return;
@@ -36,31 +45,24 @@ const AdminMyPage = () => {
       setMessage({ type: 'error', text: '새 비밀번호가 일치하지 않습니다.' });
       return;
     }
-    if (passwords.newPassword.length < 8) {
-      setMessage({ type: 'error', text: '비밀번호는 8자 이상이어야 합니다.' });
-      return;
-    }
     
-    // 성공 시 처리 (향후 API 연동 시 이 부분에 axios 등을 넣으시면 됩니다)
+    // 성공 시 처리 (백엔드 API 연동 시 이 부분에 로직 추가)
     setMessage({ type: 'success', text: '비밀번호가 성공적으로 변경되었습니다.' });
     setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    
-    // 3초 후 알림 메시지 제거
-    setTimeout(() => setMessage({ type: '', text: '' }), 3000);
   };
 
   return (
     <div className={styles.container}>
-      {/* 마이페이지 헤더 영역 */}
+      {/* 마이페이지 헤더 */}
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>마이 페이지</h1>
         <div className={styles.divider}></div>
       </div>
 
-      {/* 기본 정보 섹션 */}
+      {/* 기본 정보 섹션 (이미지 레이아웃 반영) */}
       <section className={styles.infoSection}>
-        <h2 className={styles.sectionTitle}>기본 정보</h2>
         <div className={styles.infoCard}>
+          {/* 우측 상단 상태 선택 (이미지 참조) */}
           <div className={styles.statusWrapper}>
             <select className={styles.statusSelect} defaultValue="active">
               <option value="active">활성화</option>
@@ -68,23 +70,27 @@ const AdminMyPage = () => {
             </select>
           </div>
 
+          {/* 중앙 프로필 아이콘 */}
           <div className={styles.profileIconWrapper}>
             <svg viewBox="0 0 24 24" fill="#00c09a" width="60" height="60">
               <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
             </svg>
           </div>
 
+          {/* 사용자 정보 텍스트 (중앙 정렬) */}
           <div className={styles.userInfo}>
             <p className={styles.welcomeText}>
               환영합니다. <span className={styles.userName}>{user.name}</span>님
             </p>
             <p className={styles.userEmail}>{user.email}</p>
-            <span className={styles.userRole}>{user.role}</span>
+            <div className={styles.badgeWrapper}>
+              <span className={styles.userRole}>{user.grade || '관리자'}</span>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 비밀번호 변경 폼 섹션 */}
+      {/* 비밀번호 변경 섹션 */}
       <section className={styles.passwordSection}>
         <div className={styles.passwordWrapper}>
           <h2 className={styles.passwordTitle}>비밀번호 변경</h2>
@@ -123,6 +129,7 @@ const AdminMyPage = () => {
               />
             </div>
 
+            {/* 메시지 표시 영역 */}
             <div className={styles.messageWrapper}>
               {message.text && (
                 <p className={message.type === 'error' ? styles.errorMessage : styles.successMessage}>
