@@ -244,3 +244,83 @@
 @media (max-width: 480px) {
     .cardGrid { grid-template-columns: 1fr; }
 }
+
+.modalBackdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.4); /* 어두운 반투명 배경 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* 화면 가장 최상단에 뜨도록 */
+}
+
+.modalContainer {
+    background-color: #ffffff;
+    width: 480px; /* 지은님 디자인과 유사한 너비 */
+    border-radius: 24px;
+    padding: 45px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    /* 모달이 나타날 때 살짝 위로 올라오는 부드러운 애니메이션 */
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.modalIconWrapper {
+    margin-bottom: 20px;
+}
+
+.modalTitle {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #111;
+    margin-bottom: 30px;
+    line-height: 1.4;
+    letter-spacing: -0.5px;
+}
+
+.modalMessageContainer {
+    background-color: #f4f5f6; /* 연한 회색 둥근 배경 */
+    border-radius: 16px;
+    padding: 30px 20px;
+    width: 100%;
+    margin-bottom: 35px;
+}
+
+.modalMessage {
+    font-size: 1.05rem;
+    color: #222;
+    line-height: 1.6;
+    font-weight: 500;
+    word-break: keep-all; /* 한글 단어가 중간에 잘리지 않도록 보호 */
+    margin: 0;
+}
+
+.modalButton {
+    background-color: #59927d; /* 💡 사진에 있는 세련된 초록색 */
+    color: #ffffff;
+    font-size: 1.15rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 30px; /* 알약처럼 둥근 모서리 */
+    padding: 18px 0;
+    width: 100%;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    letter-spacing: -0.5px;
+}
+
+.modalButton:hover {
+    background-color: #487866; /* 마우스 올렸을 때 살짝 어두워짐 */
+}

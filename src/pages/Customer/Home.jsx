@@ -16,6 +16,10 @@ import styles from './Home.module.css';
 
 const Home = () => {
 
+    // 모달창 상태 관리
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalContent, setModalContent] = useState('');
+
     // 각 섹션별 고정 데이터
     const fastTasks = [
         { id: 1, title: '계좌 개설', icon: PiggyBank, isVisitRequired: false },
@@ -86,6 +90,35 @@ const Home = () => {
         fetchBoardData();
     }, [activeTab]); // activeTab이 바뀔 때마다 useEffect 재실행
 
+    // 특정 업무 클릭 시 모달창 띄우기
+    const handleCardClick = (title) => {
+        let message = '';
+
+        switch (title) {
+            case '통장 비밀번호 재설정':
+                message = '통장 비밀번호 재설정은 본인 확인 서류 원본 대조를 위해\n영업점 방문이 필수적인 업무입니다.';
+                break;
+            case '펀드/보험 상담':
+                message = '고객님께 최적화된 펀드 및 보험 포트폴리오 구성을 위해\n영업점 방문을 권장합니다.';
+                break;
+            case '퇴직연금 관리':
+                message = '퇴직연금은 세무 및 자산 설계가 통방되어\n전문 상담사의 대면 안내가 필수적입니다.';
+                break;
+            case '기업 대출 신청':
+                message = '전문적인 상담과 법적 절차 확인을 위해\n오프라인 창구 방문이 필요합니다.';
+                break;
+            case '법인 계좌 개설':
+                message = '전문적인 상담과 법적 절차 확인을 위해\n오프라인 창구 방문이 필요합니다.';
+                break;
+            default:
+                console.log(`${title} 페이지로 이동합니다.`);
+                return;
+        }
+
+        setModalContent(message);
+        setIsModalOpen(true);
+    }
+
     return (
         <>            
             <div className={styles.homeContainer}>
@@ -104,7 +137,7 @@ const Home = () => {
                         </div>
                         <div className={styles.cardGrid}>
                             {fastTasks.map((task) => (
-                                <div key={task.id} className={styles.card}>
+                                <div key={task.id} className={styles.card} onClick={() => handleCardClick(task.title)}>
                                     <div className={styles.iconPlaceholder}>
                                         <img src={task.icon} alt={task.title} className={styles.cardIcon} />
                                     </div>
@@ -125,7 +158,7 @@ const Home = () => {
                         </div>
                         <div className={styles.cardGrid}>
                             {consultTasks.map((task) => (
-                                <div key={task.id} className={styles.card}>
+                                <div key={task.id} className={styles.card} onClick={() => handleCardClick(task.title)}>
                                     <div className={styles.iconPlaceholder}>
                                         <img src={task.icon} alt={task.title} className={styles.cardIcon} />
                                     </div>
@@ -146,7 +179,7 @@ const Home = () => {
                         </div>
                         <div className={styles.cardGrid}>
                             {corporateTasks.map((task) => (
-                                <div key={task.id} className={styles.card}>
+                                <div key={task.id} className={styles.card} onClick={() => handleCardClick(task.title)}>
                                     <div className={styles.iconPlaceholder}>
                                         <img src={task.icon} alt={task.title} className={styles.cardIcon} />
                                     </div>
@@ -214,6 +247,34 @@ const Home = () => {
                     </section>
                 </main>
             </div>
+
+            {/*isModalOpen이 true일 때만 렌더링*/}
+            {isModalOpen && (
+                <div className={styles.modalBackdrop} onClick={() => setIsModalOpen(false)}>
+                    <div className={styles.modalContainer} onClick={(e) => e.stopPropagation()}>
+                        <div className={styles.modalIconWrapper}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#222" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                            </svg>
+                        </div>
+                        <h2 className={styles.modalTitle}>
+                            가까운 영업점에 방문해주세요.
+                        </h2>
+                        <div className={styles.modalMessageContainer}>
+                            <p className={styles.modalMessage}>
+                                {modalContent.split('\n').map((line, idx) => (
+                                    <React.Fragment key={idx}>
+                                        {line}<br />
+                                    </React.Fragment>
+                                ))}
+                            </p>
+                        </div>
+                        <button className={styles.modalButton} onClick={() => setIsModalOpen(false)}>
+                            메인으로 돌아가기
+                        </button>
+                    </div>
+                </div>
+            )}
         </>
     );
 };
