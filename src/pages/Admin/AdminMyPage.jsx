@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
-import CustomModal from '../../components/common/CustomModal.jsx'; // 공통 모달
+import CustomModal from '../../components/common/CustomModal.jsx'; 
 import styles from './AdminMyPage.module.css';
 
 const AdminMyPage = () => {
@@ -15,10 +15,10 @@ const AdminMyPage = () => {
     confirmPassword: '',
   });
 
-  // 에러 메시지 상태 (입력 안함, 불일치 등)
+  // 에러 메시지 상태 
   const [message, setMessage] = useState({ type: '', text: '' });
   
-  // 모달의 종류를 관리하는 상태 ('' = 닫힘, 'confirm' = 변경 확인, 'success' = 변경 완료)
+  // 모달의 종류 관리
   const [modalType, setModalType] = useState('');
 
   useEffect(() => {
@@ -36,7 +36,7 @@ const AdminMyPage = () => {
     setPasswords((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 1. 폼 제출 시 (모달창 띄우기 전 유효성 검사)
+
   const handleSubmit = (e) => {
     e.preventDefault();
     
@@ -49,28 +49,24 @@ const AdminMyPage = () => {
       return;
     }
     
-    // 에러 메시지 초기화 후 '변경 확인' 모달 열기
+    // 모든 검증 통과 시 모달 열기
     setMessage({ type: '', text: '' });
     setModalType('confirm'); 
   };
 
-  // 2. '변경 확인' 모달에서 '변경하기' 눌렀을 때
+  // 비밀번호 변경 로직 실행
   const executePasswordChange = () => {
-    // CustomModal의 onClose와 동시에 실행되어 무시되는 것을 방지하기 위해,
-    // 실제 서버 통신처럼 약간의 시간차(0.15초)를 두고 성공 모달을 띄웁니다!
     setTimeout(() => {
       setModalType('success');
     }, 150);
   };
 
-  // 3. '성공' 모달에서 '확인' 버튼을 눌렀을 때 (최종 초기화)
+  // 성공 모달 확인 버튼 클릭 시 실행되는 함수
   const handleSuccessConfirm = () => {
-    // 성공 시 인풋 창 내용 싹 비우기
     setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    setModalType(''); // 모달 닫기
+    setModalType('');
   };
 
-  // 모달 닫기용 함수 (onClose 시 타입이 바로 ''로 변하는 것을 방지하는 안전장치)
   const handleConfirmClose = () => {
     setModalType(prev => prev === 'confirm' ? '' : prev);
   };
@@ -163,9 +159,8 @@ const AdminMyPage = () => {
         </div>
       </section>
 
-      {/* --- 모달 영역 --- */}
 
-      {/* 1. 변경 전 확인 모달 (변경하기, 취소 버튼) */}
+      {/* 1. 변경 전 확인 모달 */}
       {modalType === 'confirm' && (
         <CustomModal 
           isOpen={true} 
@@ -182,7 +177,7 @@ const AdminMyPage = () => {
         </CustomModal>
       )}
 
-      {/* 2. 성공 완료 모달 (확인 버튼 1개만) */}
+      {/* 2. 성공 완료 모달 */}
       {modalType === 'success' && (
         <CustomModal 
           isOpen={true} 

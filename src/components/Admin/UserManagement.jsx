@@ -10,14 +10,14 @@ const UserManagement = () => {
     const [selectedUser, setSelectedUser] = useState(null);
     const [selectedRowId, setSelectedRowId] = useState(null);
 
-    // ★ 알림(Alert) 모달 상태 관리 추가
+    // 공통 모달 상태
     const [alertModal, setAlertModal] = useState({
         isOpen: false,
         title: '',
         message: ''
     });
 
-    // ★ 알림 모달을 쉽게 띄우기 위한 헬퍼 함수
+    // 공통 모달에서 사용할 알림 함수
     const showAlert = (title, message) => {
         setAlertModal({ isOpen: true, title, message });
     };
@@ -72,8 +72,7 @@ const UserManagement = () => {
 
             if (response.ok) {
                 const result = await response.json();
-                if (result.result === 'SUCCESS') {
-                    // alert 대신 공통 모달 사용
+                if (result.result === 'SUCCESS') {               
                     showAlert('성공', selectedUser ? '멤버가 성공적으로 수정되었습니다.' : '멤버가 성공적으로 등록되었습니다.');
                     fetchMembers();
                 } else {
@@ -222,7 +221,7 @@ const UserManagement = () => {
                 onClose={() => setIsDeleteModalOpen(false)} 
                 title="구성원 영구 삭제" 
                 onConfirm={confirmDelete}
-                onCancel={() => setIsDeleteModalOpen(false)} // 삭제 모달에는 취소 버튼 추가
+                onCancel={() => setIsDeleteModalOpen(false)} 
                 confirmText="삭제 실행"
                 cancelText="취소"
             >
@@ -241,14 +240,13 @@ const UserManagement = () => {
                 </div>
             </CustomModal>
 
-            {/* ★ 공통 알림(Alert) 모달 (등록 성공, 실패, 삭제 완료 등) */}
+            {/* 공통 모달 (등록 성공, 실패, 삭제 완료 등) */}
             <CustomModal
                 isOpen={alertModal.isOpen}
                 onClose={() => setAlertModal({ ...alertModal, isOpen: false })}
                 title={alertModal.title}
                 onConfirm={() => setAlertModal({ ...alertModal, isOpen: false })}
                 confirmText="확인"
-                // onCancel을 넘기지 않아서 '취소' 버튼 없이 '확인' 버튼만 렌더링 됩니다.
             >
                 <p className={styles.alertText}>
                     {alertModal.message}
