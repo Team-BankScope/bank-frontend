@@ -14,6 +14,7 @@ const Navbar = () => {
             </div>
 
             <ul className={styles.navLinks}>
+
                 <li><Link to="/My">마이페이지</Link></li>
                 {user ? (
                     <li><button onClick={logout} className={styles.logoutButton}>로그아웃</button></li>
