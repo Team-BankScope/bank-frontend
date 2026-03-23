@@ -390,6 +390,22 @@ const BankerWorkSpace = () => {
     // 대기 중인 업무와 처리 중인 업무 모두 표시
     const visibleTasks = tasks.filter(task => task.status === 'WAITING' || task.status === 'IN_PROGRESS');
 
+    // 연령대 계산 로직 추가
+    const determineAgeGroup = (age) => {
+        console.log("Customer Age:", age); // 💡 연령대 확인용 콘솔 로그 추가
+        if (!age) return null;
+        const numAge = Number(age);
+        if (isNaN(numAge)) return null;
+        
+        if (numAge < 20) return "10대";
+        if (numAge < 30) return "20대";
+        if (numAge < 40) return "30대";
+        if (numAge < 50) return "40대";
+        if (numAge < 60) return "50대";
+        return "60대";
+    };
+
+
     return (
         <div className={styles.container}>
             <img src={WorkSpaceBackground} alt="WorkSpace Background" className={styles.backgroundImage} />
@@ -465,7 +481,6 @@ const BankerWorkSpace = () => {
                                             <div className={styles.cardInfo}>
                                                 <span className={styles.time}>🕗 {task.createdAt ? new Date(task.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</span>
                                                 <span className={styles.taskLine}></span>
-
                                                 <span className={styles.task}>{task.taskDetailType}</span>
                                             </div>
                                             <div className={styles.riskBarContainer}>
@@ -604,17 +619,19 @@ const BankerWorkSpace = () => {
                                             </ul>
                                         </div>
                                         <h4>연령대 분석</h4>
-                                        {/*이부분 건들지말것*/}
                                         <div className={styles.ageGrid}>
-                                            <div className={styles.ageItem}>10대</div>
-                                            <div className={styles.ageItem}>20대</div>
-                                            <div className={styles.ageItem}>30대</div>
-                                            <div className={styles.ageItem}>40대</div>
-                                            <div className={styles.ageItem}>50대</div>
-                                            <div className={`${styles.ageItem} ${styles.ageActive}`}>60대</div>
+                                            {['10대', '20대', '30대', '40대', '50대', '60대'].map((ageGroup) => (
+                                                <div 
+                                                    key={ageGroup} 
+                                                    className={`${styles.ageItem} ${determineAgeGroup(selectedTask.age) === ageGroup ? styles.ageActive : ''}`}
+                                                >
+                                                    {ageGroup}
+                                                </div>
+                                            ))}
                                         </div>
                                         <div className={styles.ageDescription}>
-                                            <strong>60대+ 고객 주요 관심사</strong><br />
+                                            <strong>{determineAgeGroup(selectedTask.age) || '연령 미상'}+ 고객 주요 관심사</strong><br />
+                                            {/* 연령대에 따른 설명 변경 로직 추가 가능 */}
                                             : 노후자산관리, 역모기지, 시니어 우대상품
                                         </div>
                                     </aside>
