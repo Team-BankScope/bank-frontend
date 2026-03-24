@@ -1,22 +1,62 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './BankerWorkSpace.module.css';
 import WorkSpaceBackground from '../../images/Banker/WorkSpaceBackground.png';
 import { useAuth } from '../../context/AuthContext';
-import BankerModal from '../../components/Banker/BankerModal.jsx';
+import AccountCreateForm from "../../pages/Banker/AccountCreate";
+import ChatModal from "../../pages/Banker/ChatModal.jsx";
+import CustomModal from '../../components/common/CustomModal';
 
 const BankerWorkSpace = () => {
     const [tasks, setTasks] = useState([]);
     const [selectedTask, setSelectedTask] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isChatOpen, setIsChatOpen] = useState(false);
+    const [messages, setMessages] = useState([
+        { sender: "customer", text: "안녕하세요 상담 요청드립니다." },
+        { sender: "banker", text: "네 고객님 무엇을 도와드릴까요?" }
+    ]);
+
+    const [selectedWorkType, setSelectedWorkType] = useState(null);
+
+    const [accountType, setAccountType] = useState("");
+    const [accountAlias, setAccountAlias] = useState("");
+    const [accountPassword, setAccountPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+
+    const [input, setInput] = useState("");
+    const chatEndRef = useRef(null);
+
     const { user, logout, loading } = useAuth();
     const navigate = useNavigate();
 
+    // 💡 공통 모달 상태 추가
+    const [modalConfig, setModalConfig] = useState({
+        isOpen: false,
+        message: '',
+        onConfirm: null
+    });
+    const modalActionHandled = useRef(false);
+
+    const showAlert = (message, onConfirm = null) => {
+        modalActionHandled.current = false;
+        setModalConfig({ isOpen: true, message, onConfirm });
+    };
+
+    const handleModalClose = () => {
+        if (modalActionHandled.current) return;
+        modalActionHandled.current = true;
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+        if (modalConfig.onConfirm) {
+            modalConfig.onConfirm();
+        }
+    };
+
     useEffect(() => {
         if (!loading && !user) {
-            alert("로그인이 필요한 서비스입니다.");
-            navigate("/AdminLogin");
+            showAlert("로그인이 필요한 서비스입니다.", () => {
+                navigate("/AdminLogin");
+            });
         }
     }, [user, loading, navigate]);
 
@@ -51,7 +91,50 @@ const BankerWorkSpace = () => {
             const interval = setInterval(fetchTasks, 10000);
             return () => clearInterval(interval);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user]);
+
+    // 자동 스크롤
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
+
+    // 고객 바뀌면 채팅 초기화
+    useEffect(() => {
+        setSelectedWorkType(null);
+
+        if (selectedTask) {
+            setMessages([
+                { sender: "customer", text: "안녕하세요 상담 요청드립니다." },
+                { sender: "banker", text: "네 고객님 무엇을 도와드릴까요?" }
+            ]);
+            
+            // selectedTask가 IN_PROGRESS이고 계좌 개설 업무이면 폼을 바로 염
+            if (selectedTask.status === 'IN_PROGRESS' && 
+                (selectedTask.taskType === "계좌 개설" || selectedTask.taskDetailType === "계좌 개설")) {
+                setSelectedWorkType("ACCOUNT_CREATE");
+            }
+        }
+    }, [selectedTask]);
+
+    useEffect(() => {
+        if (selectedTask) {
+            const currentTaskInList = tasks.find(t => t.taskId === selectedTask.taskId);
+            
+            // 만약 목록에 아예 없거나(필터링됨), 상태가 COMPLETED라면 선택 해제
+            if (!currentTaskInList || currentTaskInList.status === 'COMPLETED') {
+                setSelectedTask(null);
+                setSelectedWorkType(null);
+            } else {
+                // 목록의 상태와 selectedTask의 상태가 다르다면 동기화
+                if(currentTaskInList.status !== selectedTask.status) {
+                    setSelectedTask(currentTaskInList);
+                }
+            }
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tasks]);
+
 
     if (loading) return <div>Loading...</div>;
     if (!user) return null;
@@ -61,82 +144,266 @@ const BankerWorkSpace = () => {
         navigate('/AdminLogin');
     };
 
+    /*채팅 전송 함수*/
+    const handleSend = () => {
+        if (!input.trim()) return;
+
+        setMessages(prev => [
+            ...prev,
+            { sender: "banker", text: input }
+        ]);
+
+        setInput("");
+    };
+
+    /* 계좌 생성 함수 */
+    const handleCreateAccount = async () => {
+        // 1. 사전 검증
+        if (!selectedTask) return;
+
+        if (accountPassword !== confirmPassword) {
+            showAlert("비밀번호가 일치하지 않습니다.");
+            return;
+        }
+
+        try {
+            const params = new URLSearchParams({
+                userId: selectedTask.userId,
+                accountType: accountType,
+                accountAlias: accountAlias,
+                accountPassword: accountPassword
+            });
+
+            // [STEP 1] 계좌 생성 API 호출
+            const response = await fetch(`/api/account/register?${params}`, {
+                method: "POST"
+            });
+
+            if (!response.ok) {
+                showAlert("서버 응답 오류로 계좌 생성에 실패하였습니다.");
+                return;
+            }
+
+            const data = await response.json(); // 리턴값: AccountResult (SUCCESS, FAILURE, FAILURE_USER_NOT_EXIST)
+
+            // 계좌 생성 결과 확인 (AccountResult 분기)
+            switch (data.result) {
+                case 'SUCCESS':
+                    // 생성 성공 시에만 다음 단계(업무 종료)로 진행
+                    break;
+                case 'FAILURE_USER_NOT_EXIST':
+                    showAlert("존재하지 않는 사용자입니다.");
+                    return;
+                case 'FAILURE':
+                    showAlert("계좌 생성에 실패하였습니다.");
+                    return;
+                default:
+                    showAlert("알수없는 이유로 계좌 생성에 실패하였습니다.");
+                    return;
+            }
+
+            // [STEP 2] 업무 상태를 COMPLETED로 변경
+            const completeResponse = await fetch(`/api/member/task/${selectedTask.taskId}/status?status=COMPLETED`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!completeResponse.ok) {
+                showAlert("계좌는 생성되었으나, 업무 상태 업데이트 중 오류가 발생했습니다.");
+                return;
+            }
+
+            const completeData = await completeResponse.json(); // 리턴값: TaskResult (SUCCESS, FAILURE, FAILURE_TASK_IN_PROGRESS, FAILURE_SESSION)
+
+            // 업무 상태 업데이트 결과 확인 (TaskResult 분기)
+            switch (completeData.result) {
+                case 'SUCCESS':
+                    showAlert(`계좌가 생성되었습니다.\n계좌번호: ${data.account?.accountNumber}`);
+
+                    // 로컬 목록 즉시 갱신 (UI 반영)
+                    setTasks(prevTasks =>
+                        prevTasks.map(t => t.taskId === selectedTask.taskId ? { ...t, status: 'COMPLETED' } : t)
+                    );
+
+                    // 선택 상태 및 폼 초기화
+                    setSelectedWorkType(null);
+                    setSelectedTask(null);
+                    setAccountType("");
+                    setAccountAlias("");
+                    setAccountPassword("");
+                    setConfirmPassword("");
+
+                    // 서버와 목록 동기화
+                    await fetchTasks();
+                    break;
+
+                case 'FAILURE_TASK_IN_PROGRESS':
+                    showAlert("해당 업무가 현재 처리 가능한 상태가 아닙니다.");
+                    break;
+
+                case 'FAILURE_SESSION':
+                    showAlert("세션이 만료되었습니다. 다시 로그인해주세요.");
+                    break;
+
+                case 'FAILURE':
+                default:
+                    showAlert(`업무 종료 처리 실패: ${completeData.result}`);
+                    break;
+            }
+
+        } catch (error) {
+            console.error("계좌 생성 프로세스 오류:", error);
+            showAlert("처리 중 예기치 못한 오류가 발생했습니다.");
+        }
+    };
+
+
+    // 업무 수락 취소 (IN_PROGRESS -> WAITING)
+    const handleCancelAcceptTask = async (task) => {
+        try {
+            const response = await fetch(`/api/member/task/${task.taskId}/status?status=WAITING`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            if (!response.ok) {
+                showAlert('서버 오류 발생');
+                return;
+            }
+
+            const data = await response.json();
+
+            switch (data.result) {
+                case 'SUCCESS':
+                    { const updatedTask = { ...task, status: 'WAITING' };
+                    setSelectedTask(updatedTask);
+                    setTasks(prevTasks => prevTasks.map(t => t.taskId === task.taskId ? updatedTask : t));
+                    setSelectedWorkType(null);
+                    await fetchTasks();
+                    break; }
+
+                case 'FAILURE_SESSION':
+                    showAlert('세션이 만료되었습니다. 다시 로그인해주세요.');
+                    break;
+
+                case 'FAILURE':
+                default:
+                    showAlert(`업무 취소 실패: ${data.result}`);
+                    break;
+            }
+        } catch (error) {
+            console.error('Error canceling task:', error);
+            showAlert('오류가 발생했습니다.');
+        }
+    };
+
     // 업무 수락 (WAITING -> IN_PROGRESS)
     const handleAcceptTask = async (task) => {
         try {
             const response = await fetch(`/api/member/task/${task.taskId}/status?status=IN_PROGRESS`, {
                 method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                if (data.result === 'SUCCESS') {
-                    // 상태 변경 성공 시 모달 열기
-                    setSelectedTask(task);
-                    setIsModalOpen(true);
-                    fetchTasks(); // 목록 갱신
-                    
-                    // 3초 후 모달 닫기 (하지만 selectedTask는 유지하여 화면에 계속 표시)
-                    setTimeout(() => {
-                        setIsModalOpen(false);
-                    }, 3000);
-                } else {
-                    alert('업무 수락 실패');
-                }
-            } else {
-                alert('서버 오류 발생');
+            if (!response.ok) {
+                showAlert('서버 오류 발생');
+                return;
+            }
+
+            const data = await response.json();
+
+            switch (data.result) {
+                case 'SUCCESS':
+                    { const updatedTask = { ...task, status: 'IN_PROGRESS' };
+                    setSelectedTask(updatedTask);
+                    setTasks(prevTasks => prevTasks.map(t => t.taskId === task.taskId ? updatedTask : t));
+                    await fetchTasks();
+                    break; }
+
+                case 'FAILURE_TASK_IN_PROGRESS':
+                    showAlert('이미 다른 담당자가 처리 중인 업무입니다.');
+                    await fetchTasks(); // 목록 동기화해서 화면 갱신
+                    break;
+
+                case 'FAILURE_SESSION':
+                    showAlert('세션이 만료되었습니다.');
+                    break;
+
+                case 'FAILURE':
+                default:
+                    showAlert('업무 수락에 실패했습니다.');
+                    break;
             }
         } catch (error) {
             console.error('Error accepting task:', error);
-            alert('오류가 발생했습니다.');
+            showAlert('오류가 발생했습니다.');
         }
     };
 
     // 업무 종료 (IN_PROGRESS -> COMPLETED)
-    const handleCompleteTask = async () => {
-        if (!selectedTask) return;
+    const handleCompleteTask = async (taskToComplete) => {
+        const targetTask = taskToComplete || selectedTask;
+        if (!targetTask) return;
 
         try {
-            const response = await fetch(`/api/member/task/${selectedTask.taskId}/status?status=COMPLETED`, {
+            const response = await fetch(`/api/member/task/${targetTask.taskId}/status?status=COMPLETED`, {
                 method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                if (data.result === 'SUCCESS') {
-                    alert('업무가 종료되었습니다.');
-                    setSelectedTask(null); // 업무 종료 시에만 selectedTask 초기화
-                    fetchTasks(); // 목록 갱신
-                } else {
-                    alert('업무 종료 실패');
-                }
-            } else {
-                alert('서버 오류 발생');
+            if (!response.ok) {
+                showAlert('서버 오류 발생');
+                return;
+            }
+
+            const data = await response.json();
+
+            switch (data.result) {
+                case 'SUCCESS':
+                    showAlert('업무가 종료되었습니다.');
+                    setTasks(prevTasks => prevTasks.map(t =>
+                        t.taskId === targetTask.taskId ? { ...t, status: 'COMPLETED' } : t
+                    ));
+                    if (selectedTask?.taskId === targetTask.taskId) {
+                        setSelectedTask(null);
+                        setSelectedWorkType(null);
+                    }
+                    await fetchTasks();
+                    break;
+
+                case 'FAILURE_SESSION':
+                    showAlert('로그인 정보가 유효하지 않습니다.');
+                    break;
+
+                default:
+                    showAlert('업무 종료 처리에 실패했습니다.');
+                    break;
             }
         } catch (error) {
             console.error('Error completing task:', error);
-            alert('오류가 발생했습니다.');
+            showAlert('오류가 발생했습니다.');
         }
     };
 
     // 대기 중인 업무와 처리 중인 업무 모두 표시
     const visibleTasks = tasks.filter(task => task.status === 'WAITING' || task.status === 'IN_PROGRESS');
-    
-    // 초기 로드 시 또는 갱신 시 IN_PROGRESS 상태인 업무가 있다면 자동으로 선택 (선택된 업무가 없을 때만)
-    useEffect(() => {
-        if (!selectedTask && tasks.length > 0) {
-            const inProgressTask = tasks.find(task => task.status === 'IN_PROGRESS');
-            if (inProgressTask) {
-                setSelectedTask(inProgressTask);
-            }
-        }
-    }, [tasks, selectedTask]);
+
+    // 연령대 계산 로직 추가
+    const determineAgeGroup = (age) => {
+        console.log("Customer Age:", age); // 💡 연령대 확인용 콘솔 로그 추가
+        if (!age) return null;
+        const numAge = Number(age);
+        if (isNaN(numAge)) return null;
+        
+        if (numAge < 20) return "10대";
+        if (numAge < 30) return "20대";
+        if (numAge < 40) return "30대";
+        if (numAge < 50) return "40대";
+        if (numAge < 60) return "50대";
+        return "60대";
+    };
 
 
     return (
@@ -175,9 +442,15 @@ const BankerWorkSpace = () => {
                             </div>
 
                             {selectedTask && (
-                                <div className={styles.notificationBanner}>
-                                    {/*이부분은 건들지말것*/}
-                                    🔔고객님의 채팅 상담업무가 도착 했습니다
+                                <div
+                                    className={styles.notificationBanner}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        console.log("chat open");
+                                        setIsChatOpen(true);
+                                    }}
+                                >
+                                    🔔 고객님의 채팅 상담업무가 도착했습니다
                                 </div>
                             )}
                         </div>
@@ -218,19 +491,10 @@ const BankerWorkSpace = () => {
                                                 {task.status === 'IN_PROGRESS' ? (
                                                     <>
                                                         <button className={styles.btnProcessing}>처리중..</button>
-                                                        <button 
-                                                            className={styles.btnComplete}
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleCompleteTask(task); // task를 인자로 전달
-                                                            }}
-                                                        >
-                                                            처리 완료
-                                                        </button>
                                                     </>
                                                 ) : (
-                                                    <button 
-                                                        className={styles.btnAccept} 
+                                                    <button
+                                                        className={styles.btnAccept}
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             handleAcceptTask(task);
@@ -266,14 +530,79 @@ const BankerWorkSpace = () => {
                                             </div>
                                         </div>
                                         <div className={styles.accountList}>
+
                                             <div className={styles.accountCard}>
+
                                                 <div className={styles.accountHeader}>
                                                     <h3>요청 업무</h3>
                                                     <span className={styles.tagBlue}>{selectedTask.taskType}</span>
                                                 </div>
-                                                <p>상세 내용: {selectedTask.taskDetailType}</p>
-                                                <p>접수 시간: {selectedTask.createdAt}</p>
+
+                                                {selectedTask.status !== 'IN_PROGRESS' && (
+                                                    <>
+                                                        <p>상세 내용: {selectedTask.taskDetailType}</p>
+                                                        <p>접수 시간: {selectedTask.createdAt}</p>
+                                                    </>
+                                                )}
+                                                {!selectedWorkType && (
+                                                    selectedTask.status === 'WAITING' ? (
+                                                        <button
+                                                            className={styles.btnAccept}
+                                                            style={{ marginTop: "10px" }}
+                                                            onClick={() => handleAcceptTask(selectedTask)}
+                                                        >
+                                                            업무 수락
+                                                        </button>
+                                                    ) : (
+                                                        <div style={{ display: 'flex',flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px', marginTop: '20px' }}>
+                                                            <div>
+                                                                테스트용 취소/ 업무종료 버튼
+                                                            </div>
+                                                            <div style={{display: 'flex' , width: '100%', gap: '10px'}}>
+                                                            <button
+                                                                className={styles.btnAccept}
+                                                                onClick={() => handleCancelAcceptTask(selectedTask)}
+                                                                style={{color: '#eaeaea'}}
+                                                            >
+                                                                취소
+                                                            </button>
+                                                            <button
+                                                                className={styles.btnAccept}
+                                                                onClick={() => handleCompleteTask(selectedTask)}
+                                                            >
+                                                                업무 종료
+                                                            </button>
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                )}
+
+                                                {selectedWorkType === "ACCOUNT_CREATE" && (
+                                                    <AccountCreateForm
+                                                        accountType={accountType}
+                                                        setAccountType={setAccountType}
+                                                        accountAlias={accountAlias}
+                                                        setAccountAlias={setAccountAlias}
+                                                        accountPassword={accountPassword}
+                                                        setAccountPassword={setAccountPassword}
+                                                        confirmPassword={confirmPassword}
+                                                        setConfirmPassword={setConfirmPassword}
+                                                        onCancel={() => {
+                                                            setSelectedWorkType(null);
+                                                            handleCancelAcceptTask(selectedTask); // 폼에서 취소 누를때 대기상태로
+                                                        }}
+                                                        onCreate={handleCreateAccount}
+                                                    />
+                                                )}
+
+
+                                                {/* 아래에 계좌개설때 처럼 계속 추가하기 */}
+
+
+
+
                                             </div>
+
                                         </div>
                                     </div>
 
@@ -290,17 +619,19 @@ const BankerWorkSpace = () => {
                                             </ul>
                                         </div>
                                         <h4>연령대 분석</h4>
-                                        {/*이부분 건들지말것*/}
                                         <div className={styles.ageGrid}>
-                                            <div className={styles.ageItem}>10대</div>
-                                            <div className={styles.ageItem}>20대</div>
-                                            <div className={styles.ageItem}>30대</div>
-                                            <div className={styles.ageItem}>40대</div>
-                                            <div className={styles.ageItem}>50대</div>
-                                            <div className={`${styles.ageItem} ${styles.ageActive}`}>60대</div>
+                                            {['10대', '20대', '30대', '40대', '50대', '60대'].map((ageGroup) => (
+                                                <div 
+                                                    key={ageGroup} 
+                                                    className={`${styles.ageItem} ${determineAgeGroup(selectedTask.age) === ageGroup ? styles.ageActive : ''}`}
+                                                >
+                                                    {ageGroup}
+                                                </div>
+                                            ))}
                                         </div>
                                         <div className={styles.ageDescription}>
-                                            <strong>60대+ 고객 주요 관심사</strong><br />
+                                            <strong>{determineAgeGroup(selectedTask.age) || '연령 미상'}+ 고객 주요 관심사</strong><br />
+                                            {/* 연령대에 따른 설명 변경 로직 추가 가능 */}
                                             : 노후자산관리, 역모기지, 시니어 우대상품
                                         </div>
                                     </aside>
@@ -321,14 +652,29 @@ const BankerWorkSpace = () => {
 
             </div>
 
-            {/* BankerModal 추가 */}
-            {isModalOpen && selectedTask && (
-                <BankerModal 
-                    task={selectedTask} 
-                    onClose={() => setIsModalOpen(false)} 
-                    onComplete={() => handleCompleteTask(selectedTask)} // selectedTask를 인자로 전달
+            {isChatOpen && (
+                <ChatModal
+                    messages={messages}
+                    input={input}
+                    setInput={setInput}
+                    onSend={handleSend}
+                    onClose={() => setIsChatOpen(false)}
+                    chatEndRef={chatEndRef}
                 />
             )}
+
+            {/* CustomModal 추가 (Alert 대체용) */}
+            <CustomModal 
+                isOpen={modalConfig.isOpen} 
+                onClose={handleModalClose} 
+                title="안내"
+                onConfirm={handleModalClose}
+                confirmText="확인"
+            >
+                <div style={{ padding: '20px', textAlign: 'center', fontSize: '1.2rem', color: '#333', whiteSpace: 'pre-line', lineHeight: '1.5' }}>
+                    {modalConfig.message}
+                </div>
+            </CustomModal>
         </div>
     );
 };
