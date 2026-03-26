@@ -17,7 +17,6 @@ import styles from './Home.module.css';
 const Home = () => {
     const navigate=  useNavigate();
 
-    // 모달창 상태 관리
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalContent, setModalContent] = useState('');
 
@@ -44,35 +43,30 @@ const Home = () => {
         { id: 3, title: '부도 및 연체 관리', icon: Warning, isVisitRequired: false },
     ];
 
-    // [API 연동] 게시글 데이터 및 탭 상태 관리
     const [boardList, setBoardList] = useState([]);
     const [isLoadingBoard, setIsLoadingBoard] = useState(true);
     const [activeTab, setActiveTab] = useState('notice'); // 'notice' (새소식) 또는 'event' (이벤트)
 
-    // activeTab이 변경될 때마다 데이터를 새로 불러옵니다.
     useEffect(() => {
         const fetchBoardData = async () => {
             setIsLoadingBoard(true);
             try {
-                // boardType 전달 및 세션 검증(credentials) 포함
-                // 실제 백엔드 API 주소 형태에 맞게 쿼리 파라미터나 경로를 수정 (예: /api/board?boardType=notice)
                 const response = await fetch(`/api/board?boardType=${activeTab}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    credentials: 'include', // 세션(쿠키) 정보를 서버로 함께 보내기 위한 필수 설정
+                    credentials: 'include',
                 }); 
                 
                 if (!response.ok) throw new Error('API 연결 실패');
                 
                 const data = await response.json();
-                setBoardList(data); // 응답 데이터 구조에 맞게 수정 (예: data.content, data.list 등)
+                setBoardList(data);
 
             } catch (error) {
                 console.log(`${activeTab} API 연결 실패. 개발용 임시 데이터를 표시합니다.`, error);
                 
-                // 아직 ERP에서 글을 안 썼거나 통신 전일 때 화면 구성을 확인하기 위한 목업 데이터
                 const mockData = activeTab === 'notice' 
                     ? [
                         { id: 1, title: '[공지] 일부 참가기관 디지털금융영업부 일시중단 안내', date: '2026.02.27' },
@@ -90,9 +84,8 @@ const Home = () => {
         };
 
         fetchBoardData();
-    }, [activeTab]); // activeTab이 바뀔 때마다 useEffect 재실행
+    }, [activeTab]);
 
-    // 특정 업무 클릭 시 모달창 띄우기
     const handleCardClick = (title) => {
         let message = '';
 
@@ -224,7 +217,6 @@ const Home = () => {
                                         이벤트
                                     </span>
                                 </div>
-                                {/* 👉 더보기 버튼 (클릭 시 게시판 이동) */}
                                 <span 
                                     className={styles.moreBtn} 
                                     onClick={() => navigate(`/board/${activeTab}`)}
@@ -240,8 +232,11 @@ const Home = () => {
                                 <ul className={styles.newsList}>
                                     {boardList.length > 0 ? (
                                         boardList.map((board) => (
-                                            /* 👉 글 제목 부분 (오류 방지를 위해 클릭 이벤트 제거) */
-                                            <li key={board.id}>
+                                            <li 
+                                                key={board.id}
+                                                onClick={() => navigate(`/board/detail/${board.id}`)}
+                                                style={{cursor: 'pointer'}}
+                                            >
                                                 <span className={styles.newsTitle}>• {board.title}</span>
                                                 <span className={styles.newsDate}>{board.date}</span>
                                             </li>
@@ -269,7 +264,6 @@ const Home = () => {
                 </main>
             </div>
 
-            {/*isModalOpen이 true일 때만 렌더링*/}
             {isModalOpen && (
                 <div className={styles.modalBackdrop} onClick={() => setIsModalOpen(false)}>
                     <div className={styles.modalContainer} onClick={(e) => e.stopPropagation()}>
