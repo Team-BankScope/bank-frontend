@@ -63,7 +63,6 @@ const MyPage = () => {
         <div className={styles.managementWrapper}>
             <h2 className={styles.managementTitle}>개인 정보 변경</h2>
             <div className={styles.formWrapper}>
-                {/* 닉네임 -> 이름으로 변경, defaultValue에 DB 데이터(user.name) 연결 */}
                 <div className={styles.formGroup}>
                     <label className={styles.formLabel}>이름</label>
                     <input 

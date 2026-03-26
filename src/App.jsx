@@ -12,6 +12,8 @@ import Kiosk from './pages/Kiosk/Kiosk.jsx';
 import BankerWorkSpace from './pages/Banker/BankerWorkSpace.jsx';
 import ModalTestPage from './components/common/ModalTestPage.jsx';
 import LoadingTestPage from './components/common/LoadingTestPage.jsx';
+import BoardList from './pages/Customer/BoardList';
+import BoardDetail from './pages/Customer/BoardDetail';
 
 function App() {
   return (
@@ -24,7 +26,9 @@ function App() {
         
         {/* Customer 전용 페이지 */}
         <Route path="/My" element={<PrivateRoute allowedRoles={['customer']}><MyPage /></PrivateRoute>} />
-        
+        <Route path="/board/:boardType" element={<BoardList />} />
+        <Route path="/board/detail/:boardId" element={<BoardDetail />} />
+
         <Route path="/AdminLogin" element={<AdminLogin />} />
         
         {/* Admin 전용 페이지 */}

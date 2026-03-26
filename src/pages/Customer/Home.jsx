@@ -15,6 +15,7 @@ import Warning from '../../images/Home/Warning.png';
 import styles from './Home.module.css';
 
 const Home = () => {
+    const navigate=  useNavigate();
 
     // 모달창 상태 관리
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -223,7 +224,14 @@ const Home = () => {
                                         이벤트
                                     </span>
                                 </div>
-                                <span className={styles.moreBtn}>더보기</span>
+                                {/* 👉 더보기 버튼 (클릭 시 게시판 이동) */}
+                                <span 
+                                    className={styles.moreBtn} 
+                                    onClick={() => navigate(`/board/${activeTab}`)}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    더보기
+                                </span>
                             </div>
 
                             {isLoadingBoard ? (
@@ -232,6 +240,7 @@ const Home = () => {
                                 <ul className={styles.newsList}>
                                     {boardList.length > 0 ? (
                                         boardList.map((board) => (
+                                            /* 👉 글 제목 부분 (오류 방지를 위해 클릭 이벤트 제거) */
                                             <li key={board.id}>
                                                 <span className={styles.newsTitle}>• {board.title}</span>
                                                 <span className={styles.newsDate}>{board.date}</span>
