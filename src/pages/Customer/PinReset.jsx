@@ -1,13 +1,12 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect} from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './PinReset.module.css';
 import Loading from '../../components/common/Loading';
-import CustomModal from "../../components/common/CustomModal.jsx";
-
+import { useModal } from '../../context/ModalContext';
 const PinReset = () => {
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
-    
+    const { openModal } = useModal();
     // Step 1: 본인 확인
     const [name, setName] = useState('');
     const [rrnFirst, setRrnFirst] = useState('');
@@ -28,29 +27,13 @@ const PinReset = () => {
 
     const isValidPhone = /^01[016789]\d{8}$/.test(phone);
     const isFormFilled = name.trim() !== '' && rrnFirst.length === 6 && rrnSecond.length === 7 && isValidPhone;
-    const [modalConfig, setModalConfig] = useState({
-        isOpen: false,
-        message: '',
-        onConfirm: null
-    });
-    const modalActionHandled = useRef(false);
 
     const showAlert = (message, callback = null) => {
-        modalActionHandled.current = false; // 핸들러 리셋
-        setModalConfig({
-            isOpen: true,
+        openModal({
             message: message,
-            onConfirm: callback // 확인 버튼 클릭 시 실행할 함수 (필요할 때만 사용)
+            onConfirm: callback
         });
-    };
-    const handleModalClose = () => {
-        if (modalActionHandled.current) return;
-        modalActionHandled.current = true;
-        setModalConfig(prev => ({ ...prev, isOpen: false }));
-        if (modalConfig.onConfirm) {
-            modalConfig.onConfirm();
-        }
-    };
+    }
     // --- 1단계: 본인 확인 로직 ---
     const handleSendCode = async () => {
         if (!isFormFilled) {
@@ -403,17 +386,7 @@ const PinReset = () => {
                     )}
                 </div>
             </div>
-            <CustomModal
-                isOpen={modalConfig.isOpen}
-                onClose={handleModalClose}
-                title="안내"
-                onConfirm={handleModalClose}
-                confirmText="확인"
-            >
-                <div style={{ padding: '20px', textAlign: 'center', fontSize: '1.2rem', color: '#333', whiteSpace: 'pre-line', lineHeight: '1.5' }}>
-                    {modalConfig.message}
-                </div>
-            </CustomModal>
+
         </div>
     );
 };

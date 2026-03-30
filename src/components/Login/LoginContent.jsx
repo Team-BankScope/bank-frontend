@@ -4,10 +4,16 @@ import styles from './LoginContent.module.css';
 import { useAuth } from '../../context/AuthContext';
 import LoginBackgroundImage from "../../images/Login/background.png";
 import LeftContentImage from "../../images/Login/frame.png";
-// 이 경로는 src/images/... 를 찾습니다.
+import { useModal } from '../../context/ModalContext';
 
 const LoginContent = () => {
-    // 주민등록번호 필드 포함
+    const { openModal } = useModal();
+    const showAlert = (message, callback = null) => {
+        openModal({
+            message: message,
+            onConfirm: callback
+        });
+    }
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -65,18 +71,19 @@ const LoginContent = () => {
                     } else {
                         localStorage.removeItem('savedEmail');
                     }
-
-                    alert('로그인 성공!');
-                    navigate(from, { replace: true });
+                    showAlert('로그인성공!', () => {
+                        navigate(from, { replace: true });
+                    })
                 } else {
-                    alert('로그인 실패: 정보를 확인하세요.');
+
+                    showAlert('로그인 실패 : 정보를 확인하세요')
                 }
             } else {
-                alert('서버 오류가 발생했습니다.');
+                showAlert('서버 오류가 발생했습니다.')
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('오류가 발생했습니다.');
+            showAlert('오류가 발생했습니다.')
         }
     };
 

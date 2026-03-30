@@ -4,8 +4,16 @@ import styles from './AdminLoginContent.module.css';
 import { useAuth } from '../../context/AuthContext';
 import emailIcon from '../../images/AdminLogin/Vector.png';
 import passwordIcon from '../../images/AdminLogin/pw.png';
+import { useModal } from '../../context/ModalContext';
 
 const AdminLoginContent = () => {
+     const { openModal } = useModal();
+     const showAlert = (message, callback = null) => {
+        openModal({
+            message: message,
+            onConfirm: callback
+        });
+     };
     const [formData, setFormData] = useState({
         email: '',
         password: ''
@@ -39,8 +47,9 @@ const AdminLoginContent = () => {
                 const data = await response.json();
                 if (data.result === 'SUCCESS') {
                     await login(); 
-                    alert('관리자 로그인 성공!');
-                    navigate('/AdminMain'); // 관리자 메인 페이지로 이동
+                    showAlert('관리자 로그인 성공!', ()=> {
+                        navigate('/AdminMain'); // 관리자 메인 페이지로 이동
+                    } )
                     return;
                 }
             }
@@ -55,18 +64,20 @@ const AdminLoginContent = () => {
                 const data = await response.json();
                 if (data.result === 'SUCCESS') {
                     await login();
-                    alert('행원 로그인 성공!');
-                    navigate('/BankerWorkSpace'); // 행원 업무 공간으로 이동
+                    showAlert('행원 로그인 성공', () => {
+                        navigate('/BankerWorkSpace'); // 행원 업무 공간으로 이동
+                    })
                     return;
                 }
             }
 
             // 둘 다 실패한 경우
-            alert('로그인 실패: 정보를 확인하세요.');
+            showAlert('로그인 실패 : 정보를 확인하세요.')
 
         } catch (error) {
             console.error('Error:', error);
-            alert('오류가 발생했습니다.');
+            showAlert('오류가 발생했습니다.')
+
         }
     };
 

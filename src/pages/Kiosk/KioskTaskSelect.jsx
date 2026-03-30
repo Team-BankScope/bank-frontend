@@ -11,7 +11,7 @@ const KioskTaskSelect = ({ formData, setFormData, onNext, onPrev, userName }) =>
             id: 0,
             title: '빠른 업무',
             subtitle: 'EXPRESS SERVICE',
-            items: ['계좌개설','입금', '출금','이체','체크카드 발급','통장 비밀번호 변경'],
+            items: ['계좌개설','입금', '출금','이체','체크카드 발급','통장 비밀번호 변경','카드수령'],
             footer: '건당 3~5분·대기 3명',
             columns: 1 // 버튼 배열을 1열로
         },
