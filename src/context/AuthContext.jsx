@@ -1,10 +1,19 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { useModal } from './ModalContext.jsx';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const { openModal } = useModal();
     const [loading, setLoading] = useState(true);
+
+    const showAlert = (message, callback = null) => {
+        openModal({
+            message: message,
+            onConfirm: callback
+        });
+    };
 
     useEffect(() => {
         checkSession();
@@ -15,7 +24,6 @@ export const AuthProvider = ({ children }) => {
             const response = await fetch('/api/user/session');
             if (response.ok) {
                 const data = await response.json();
-                console.log("Session API Response:", data); // 디버깅 로그 추가
                 if (data.result === "SUCCESS") {
                     if (data.type === 'member') {
                         setUser({ 
@@ -29,7 +37,7 @@ export const AuthProvider = ({ children }) => {
                     } else if (data.type === 'user') {
                         setUser({ 
                             type: 'user',
-                            userType: data.userType, // 백엔드에서 userType을 보내줌
+                            userType: data.userType,
                             email: data.email, 
                             name: data.name, 
                             residentNumber: data.residentNumber,
@@ -60,10 +68,12 @@ export const AuthProvider = ({ children }) => {
     const logout = async () => {
         try {
             await fetch('/api/user/logout', { method: 'POST' });
+            showAlert('로그아웃 되었습니다.', () => {
+                setUser(null);
+            });
         } catch (error) {
             console.error("Logout failed", error);
-        } finally {
-            setUser(null);
+            showAlert('로그아웃에 실패했습니다.');
         }
     };
 

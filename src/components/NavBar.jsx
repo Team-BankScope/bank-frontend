@@ -15,11 +15,11 @@ const Navbar = () => {
 
             <ul className={styles.navLinks}>
 
-                <li><Link to="/My">마이페이지</Link></li>
+                <li><Link to="/My">My</Link></li>
                 {user ? (
-                    <li><button onClick={logout} className={styles.logoutButton}>로그아웃</button></li>
+                    <li><button onClick={logout} className={styles.logoutButton}>Logout</button></li>
                 ) : (
-                    <li><Link to="/Login">로그인</Link></li>
+                    <li><Link to="/Login">Login</Link></li>
                 )}
             </ul>
         </nav>

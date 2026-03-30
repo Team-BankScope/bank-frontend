@@ -1,47 +1,60 @@
-import React, { useEffect } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useModal } from '../context/ModalContext.jsx';
 
 const PrivateRoute = ({ children, allowedRoles }) => {
     const { user, loading } = useAuth();
     const location = useLocation();
+    const navigate = useNavigate();
+    const { openModal } = useModal();
+    const [navigationBlocked, setNavigationBlocked] = useState(false);
+
+    const showAlert = (message, callback = null) => {
+        openModal({
+            message: message,
+            onConfirm: callback
+        });
+    };
 
     useEffect(() => {
-        if (!loading && !user) {
-            alert("로그인이 필요한 서비스입니다.");
-        } else if (!loading && user && allowedRoles) {
-            // 권한 체크
+        if (loading || navigationBlocked) {
+            return;
+        }
+
+        const handleNavigation = (path) => {
+            setNavigationBlocked(true); // Prevent further alerts/navigation
+            navigate(path, { state: { from: location }, replace: true });
+        };
+
+        if (!user) {
+            const targetPath = location.pathname.startsWith('/AdminMain') || location.pathname.startsWith('/BankerWorkSpace')
+                ? "/AdminLogin"
+                : "/Login";
+            showAlert("로그인이 필요한 서비스입니다.", () => handleNavigation(targetPath));
+            return; // Stop further execution in this effect
+        }
+
+        if (allowedRoles) {
             const userRole = user.type === 'member' ? 'member' : user.userType;
             if (!allowedRoles.includes(userRole)) {
-                alert("접근 권한이 없습니다.");
+                const fallbackPath = userRole === 'admin' ? "/AdminMain" : (userRole === 'member' ? "/BankerWorkSpace" : "/");
+                showAlert("접근 권한이 없습니다.", () => handleNavigation(fallbackPath));
             }
         }
-    }, [loading, user, allowedRoles]);
+    }, [loading, user, location, navigate, allowedRoles, navigationBlocked]);
 
     if (loading) {
-        return <div>Loading...</div>;
+        return <div>Loading...</div>; // Or a spinner component
     }
 
-    if (!user) {
-        // 현재 경로가 관리자 또는 행원 페이지인 경우 AdminLogin으로 리디렉션
-        if (location.pathname.startsWith('/AdminMain') || location.pathname.startsWith('/BankerWorkSpace')) {
-            return <Navigate to="/AdminLogin" state={{ from: location }} replace />;
-        }
-        // 그 외(일반 고객 페이지)는 일반 로그인 페이지로 리디렉션
-        return <Navigate to="/Login" state={{ from: location }} replace />;
+    // Render children only if user is authenticated and has the correct role
+    if (user && (!allowedRoles || allowedRoles.includes(user.type === 'member' ? 'member' : user.userType))) {
+        return children;
     }
 
-    if (allowedRoles) {
-        const userRole = user.type === 'member' ? 'member' : user.userType;
-        if (!allowedRoles.includes(userRole)) {
-            // 권한이 없는 경우 메인 페이지나 적절한 곳으로 리디렉션
-            if (userRole === 'admin') return <Navigate to="/AdminMain" replace />;
-            if (userRole === 'member') return <Navigate to="/BankerWorkSpace" replace />;
-            return <Navigate to="/" replace />;
-        }
-    }
-
-    return children;
+    // While waiting for the modal confirmation and navigation, render nothing or a loading indicator
+    return null;
 };
 
 export default PrivateRoute;
