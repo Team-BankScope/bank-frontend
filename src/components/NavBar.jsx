@@ -15,11 +15,11 @@ const Navbar = () => {
 
             <ul className={styles.navLinks}>
 
-                <li><Link to="/My">My</Link></li>
+                <li><Link to="/my">My</Link></li>
                 {user ? (
                     <li><button onClick={logout} className={styles.logoutButton}>Logout</button></li>
                 ) : (
-                    <li><Link to="/Login">Login</Link></li>
+                    <li><Link to="/login">Login</Link></li>
                 )}
             </ul>
         </nav>
