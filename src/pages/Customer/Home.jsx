@@ -17,6 +17,12 @@ import ChatBot from "./ChatBot";
 
 const Home = () => {
     const navigate=  useNavigate();
+    
+    //유저 상태 관리
+    const [user, setUser] = useState(null);
+    //권한 모달 상태 관ㄹ
+    const [isAccessModalOpen, setIsAccessModalOpen] = useState(false);
+    const [modalMessage, setModalMessage] = useState('');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalContent, setModalContent] = useState('');
@@ -41,7 +47,7 @@ const Home = () => {
     const corporateTasks = [
         { id: 1, title: '기업 대출 신청', icon: Briefcase, isVisitRequired: true },
         { id: 2, title: '법인 계좌 개설', icon: Corporation, isVisitRequired: true },
-        { id: 3, title: '부도 및 연체 관리', icon: Warning, isVisitRequired: false },
+        { id: 3, title: '기업 연체 관리', icon: Warning, isVisitRequired: false },
     ];
 
     const [boardList, setBoardList] = useState([]);
@@ -87,7 +93,29 @@ const Home = () => {
         fetchBoardData();
     }, [activeTab]);
 
+    // 세션에서 유저 정보 가져오기
+    useEffect(() => {
+        const fetchUserSession = async () => {
+            try {
+                const response = await fetch('/api/user/session');
+                const data = await response.json();
+                if (data.result === 'SUCCESS' && data.type === 'user') {
+                    setUser(data);
+                }
+            } catch (error) {
+                console.error('세션 정보 로드 실패:', error);
+            }
+        };
+        fetchUserSession();
+    }, []);
+
     const handleCardClick = (title) => {
+        if (!user) {
+            setModalMessage('로그인이 필요한 서비스입니다.\n먼저 로그인 해주세요.');
+            setIsAccessModalOpen(true);
+            return;
+        }
+
         let message = '';
 
         switch (title) {
@@ -100,12 +128,31 @@ const Home = () => {
             case '퇴직연금 관리':
                 message = '퇴직연금은 세무 및 자산 설계가 통방되어\n전문 상담사의 대면 안내가 필수적입니다.';
                 break;
+                
             case '기업 대출 신청':
-                message = '전문적인 상담과 법적 절차 확인을 위해\n오프라인 창구 방문이 필요합니다.';
-                break;
             case '법인 계좌 개설':
-                message = '전문적인 상담과 법적 절차 확인을 위해\n오프라인 창구 방문이 필요합니다.';
-                break;
+                if (user.userType === 'corporate' || user.userType === 'admin') {
+                    message = '전문적인 상담과 법적 절차 확인을 위해\n오프라인 창구 방문이 필요합니다.';
+                    break; 
+                } else {
+                    setModalMessage('기업회원만 접근 가능합니다.\n기업 계정으로 로그인해주세요.');
+                    setIsAccessModalOpen(true);
+                    return;
+                }
+
+            case '기업 연체 관리':
+                switch (user.userType) {
+                    case 'corporate':
+                    case 'admin':
+                        navigate('/overdue'); 
+                        break;
+                    default:
+                        setModalMessage('기업회원만 접근 가능합니다.\n기업 계정으로 로그인해주세요.');
+                        setIsAccessModalOpen(true);
+                        break;
+                }
+                return;
+
             default:
                 console.log(`${title} 페이지로 이동합니다.`);
                 return;
@@ -113,7 +160,7 @@ const Home = () => {
 
         setModalContent(message);
         setIsModalOpen(true);
-    }
+    };
 
     return (
         <>            
@@ -293,6 +340,30 @@ const Home = () => {
                         </div>
                         <button className={styles.modalButton} onClick={() => setIsModalOpen(false)}>
                             메인으로 돌아가기
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {isAccessModalOpen && (
+                <div className={styles.modalBackdrop} onClick={() => setIsAccessModalOpen(false)}>
+                    <div className={styles.modalContainer} onClick={(e) => e.stopPropagation()}>
+                        <div className={styles.modalIconWrapper}>
+                            {/* 엑스(X) 아이콘 */}
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#E63946" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="15" y1="9" x2="9" y2="15"></line>
+                                <line x1="9" y1="9" x2="15" y2="15"></line>
+                            </svg>
+                        </div>
+                        <h2 className={styles.modalTitle}>접근 권한 안내</h2>
+                        <div className={styles.modalMessageContainer}>
+                            <p className={styles.modalMessage} style={{ whiteSpace: 'pre-line' }}>
+                                {modalMessage}
+                            </p>
+                        </div>
+                        <button className={styles.modalButton} onClick={() => setIsAccessModalOpen(false)}>
+                            확인
                         </button>
                     </div>
                 </div>

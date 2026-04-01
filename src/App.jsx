@@ -16,6 +16,8 @@ import BoardList from './pages/Customer/BoardList';
 import BoardDetail from './pages/Customer/BoardDetail';
 import PinSetup from './pages/Customer/PinSetup.jsx';
 import PinReset from "./pages/Customer/PinReset.jsx";
+import OverdueIntro from './pages/Customer/OverdueIntro.jsx';
+import OverdueRepay from './pages/Customer/OverdueRepay.jsx';
 
 function App() {
   return (
@@ -32,6 +34,8 @@ function App() {
         <Route path="/PinReset" element={<PrivateRoute allowedRoles={['customer']}><PinReset /></PrivateRoute>} />
         <Route path="/board/:boardType" element={<BoardList />} />
         <Route path="/board/detail/:id" element={<BoardDetail />} />
+        <Route path="/overdue" element={<OverdueIntro />} />
+        <Route path="/overdue/repay" element={<OverdueRepay />} />
 
         <Route path="/AdminLogin" element={<AdminLogin />} />
         
