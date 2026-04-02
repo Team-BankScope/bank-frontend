@@ -28,29 +28,29 @@ function App() {
         <Route path="/Main" element={<Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
 
-        <Route path="/Kiosk" element={<Kiosk/>} />
+        <Route path="/kiosk" element={<Kiosk/>} />
         <Route path="/" element={<Home />} />
-        <Route path="/Login" element={<Login />} />
-        <Route path="/Register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         
         {/* Customer 전용 페이지 */}
-        <Route path="/My" element={<PrivateRoute allowedRoles={['customer']}><MyPage /></PrivateRoute>} />
-        <Route path="/PinSetup" element={<PrivateRoute allowedRoles={['customer']}><PinSetup /></PrivateRoute>} />
-        <Route path="/PinReset" element={<PrivateRoute allowedRoles={['customer']}><PinReset /></PrivateRoute>} />
+        <Route path="/my" element={<PrivateRoute allowedRoles={['customer']}><MyPage /></PrivateRoute>} />
+        <Route path="/pinsetup" element={<PrivateRoute allowedRoles={['customer']}><PinSetup /></PrivateRoute>} />
+        <Route path="/pinreset" element={<PrivateRoute allowedRoles={['customer']}><PinReset /></PrivateRoute>} />
         <Route path="/board/:boardType" element={<BoardList />} />
         <Route path="/board/detail/:id" element={<BoardDetail />} />
         <Route path="/overdue" element={<OverdueIntro />} />
         <Route path="/overdue/repay" element={<OverdueRepay />} />
         <Route path="/CheckCard" element={<CheckCard />} />
 
-        <Route path="/AdminLogin" element={<AdminLogin />} />
+        <Route path="/adminlogin" element={<AdminLogin />} />
         
         {/* Admin 전용 페이지 */}
-        <Route path="/AdminMain" element={<PrivateRoute allowedRoles={['admin']}><AdminMain /></PrivateRoute>} />
+        <Route path="/adminmain" element={<PrivateRoute allowedRoles={['admin']}><AdminMain /></PrivateRoute>} />
 
         
         {/* Member 전용 페이지 */}
-        <Route path="/BankerWorkSpace" element={<PrivateRoute allowedRoles={['member']}><BankerWorkSpace /></PrivateRoute>} />
+        <Route path="/bankerworkspace" element={<PrivateRoute allowedRoles={['member']}><BankerWorkSpace /></PrivateRoute>} />
 
 
         {/* 테스트용 페이지 (개발용) */}
