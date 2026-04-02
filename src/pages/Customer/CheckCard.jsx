@@ -1,10 +1,22 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useModal } from '../../context/ModalContext';
 import styles from './CheckCard.module.css';
 import checkIcon from '../../images/Common/Check.png';
+import greenCardImg from '../../images/Home/Card1.png';
+import blueCardImg from '../../images/Home/Card2.png';
 
 const CheckCard = () => {
   const navigate = useNavigate();
+  const { openModal } = useModal();
+
+  const showAlert = (message, callback = null) => {
+    openModal({
+        message: message,
+        onConfirm: callback
+    });
+  };
+
   const [step, setStep] = useState(1);
   const [step1Phase, setStep1Phase] = useState('account'); 
 
@@ -24,7 +36,7 @@ const CheckCard = () => {
     setActiveAgreementModal(null);
   };
 
-  const [selectedDesign, setSelectedDesign] = useState(1);
+  const [selectedDesign, setSelectedDesign] = useState('GREEN_BASIC');
   const [cardPwd, setCardPwd] = useState('');
   const [cardPwdConfirm, setCardPwdConfirm] = useState('');
   
@@ -37,16 +49,52 @@ const CheckCard = () => {
       setPinInput(prev => prev + val);
     }
   };
-
-  const handleDelete = () => {
+  const handleDelete = async () => {
     setPinInput(prev => prev.slice(0, -1));
   };
 
-  const handlePinConfirm = () => {
+  const handlePinConfirm = async () => {
     if (pinInput.length !== 6) return;
-    // user_pin api 연결
-    setIsPinModalOpen(false);
-    setStep(4);
+
+    try {
+      const response = await fetch(`/api/pin/confirm?pin=${pinInput}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      switch (data.result) {
+        case 'SUCCESS':
+          console.log("핀 번호 일치 확인! 카드 발급을 진행합니다.");
+
+          setIsPinModalOpen(false);
+          setStep(4);
+          break;
+
+        case 'FAILURE':
+          showAlert('핀 번호가 일치하지 않습니다. 다시 입력해주세요.');
+          setPinInput('');
+          break;
+
+        case 'FAILURE_SESSION':
+          showAlert('로그인이 필요하거나 세션이 만료되었습니다.\n다시 로그인해주세요.');
+          setIsPinModalOpen(false);
+          navigate('/Login');
+          break;
+
+        default:
+          showAlert('핀 번호 확인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.');
+          setPinInput('');
+          break;
+      }
+    } catch (error) {
+      console.error('핀 번호 API 통신 오류:', error);
+      alert('서버와 연결할 수 없습니다.');
+    }
   };
 
   const steps = [
@@ -123,11 +171,20 @@ const CheckCard = () => {
             <div className={styles.stepBox}>
               <h3 className={styles.stepTitle}>디자인을 선택해주세요</h3>
               <div className={styles.designGrid}>
-                <div className={`${styles.designItem} ${selectedDesign === 1 ? styles.selected : ''}`} onClick={() => setSelectedDesign(1)}>
-                  <div className={styles.mockCardImage}></div>
+                <div 
+                  className={`${styles.designItem} ${selectedDesign === 'GREEN_BASIC' ? styles.selected : ''}`} 
+                  onClick={() => setSelectedDesign('GREEN_BASIC')}
+                >
+                  <img src={greenCardImg} alt="그린 베이직 카드" className={styles.realCardImage} />
+                  <span className={styles.designLabel}>그린 베이직</span>
                 </div>
-                <div className={`${styles.designItem} ${selectedDesign === 2 ? styles.selected : ''}`} onClick={() => setSelectedDesign(2)}>
-                  <div className={`${styles.mockCardImage} ${styles.blue}`}></div>
+
+                <div 
+                  className={`${styles.designItem} ${selectedDesign === 'BLUE_PREMIUM' ? styles.selected : ''}`} 
+                  onClick={() => setSelectedDesign('BLUE_PREMIUM')}
+                >
+                  <img src={blueCardImg} alt="블루 프리미엄 카드" className={styles.realCardImage} />
+                  <span className={styles.designLabel}>블루 프리미엄</span>
                 </div>
               </div>
               <button className={styles.nextBtn} onClick={() => setStep(3)}>선택 완료</button>

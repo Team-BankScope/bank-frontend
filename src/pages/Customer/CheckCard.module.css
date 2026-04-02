@@ -136,27 +136,32 @@
   flex: 1;
   border: 2px solid transparent;
   border-radius: 16px;
-  padding: 10px;
+  padding: 20px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
   background-color: #f9f9f9;
 }
 .designItem.selected {
   border-color: #4A9C82;
   background-color: #f0f7f5;
 }
-.mockCardImage {
+.realCardImage {
   width: 100%;
-  max-width: 250px;
-  height: 160px;
+  max-width: 220px;
+  height: auto;
   border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  background: linear-gradient(135deg, #6ba993, #4A9C82); /* 가짜 카드 색상 */
+  box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+  object-fit: contain;
 }
-.mockCardImage.blue {
-  background: linear-gradient(135deg, #4b6cb7, #182848);
+
+.designLabel {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
 }
 
 .pwdInput {
@@ -204,7 +209,6 @@
 .completeTitle { font-size: 24px; font-weight: 700; margin: 0; }
 .completeDesc { color: #888; font-size: 16px; line-height: 1.5; }
 
-/* --- 약관 동의 --- */
 .agreementBox {
   border: 1px solid #ddd;
   border-radius: 12px;
@@ -224,7 +228,6 @@
   border-color: #4A9C82;
 }
 
-/* 동의 완료 상태 */
 .agreementBox.agreed {
   background-color: #f0f2f5;
   border-color: #e4e6e8;
@@ -243,7 +246,6 @@
   cursor: not-allowed !important;
 }
 
-/* 약관 스크롤 박스 */
 .termsContentBox {
   height: 200px;
   overflow-y: auto;
@@ -257,7 +259,6 @@
   text-align: left;
 }
 
-/* --- 키패드 --- */
 .pinDisplay {
   display: flex;
   justify-content: center;
