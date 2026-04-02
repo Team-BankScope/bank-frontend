@@ -322,7 +322,7 @@ const Home = () => {
                                     <span style={{ fontSize: '40px' }}>🪙</span>
                                 </div>
                                 <div className={styles.promoText}>
-                                    <h3>추천 상품</h3>
+                                    <h3>AI 추천 상품</h3>
                                     <p>고객님께 추천드리는 상품</p>
                                 </div>
                             </div>

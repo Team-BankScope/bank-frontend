@@ -76,7 +76,7 @@
 .resultList {
   display: flex;
   flex-direction: column;
-  gap: 15px; /* 카드 사이의 간격 */
+  gap: 15px;
   width: 100%;
   max-width: 600px;
   margin-bottom: 30px;
@@ -87,7 +87,7 @@
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 16px;
-  padding: 20px 25px; /* 위아래 패딩을 살짝 줄여서 3개가 잘 들어가게 조절 */
+  padding: 20px 25px;
   width: 100%;
   text-align: left;
   display: flex;
@@ -104,7 +104,7 @@
 
 .badge {
   display: inline-block;
-  background-color: rgba(255, 218, 121, 0.2); /* 노란색 반투명 */
+  background-color: rgba(255, 218, 121, 0.2);
   color: #ffda79;
   font-size: 12px;
   font-weight: 700;
