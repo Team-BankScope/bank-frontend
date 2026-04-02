@@ -18,7 +18,7 @@ import ChatBot from "./ChatBot";
 const Home = () => {
     const navigate=  useNavigate();
     const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
-const [termsType, setTermsType] = useState(''); // 'loan' 또는 'subscription'
+    const [termsType, setTermsType] = useState(''); // 'loan' 또는 'subscription'
     
     //유저 상태 관리
     const [user, setUser] = useState(null);
@@ -196,10 +196,8 @@ const [termsType, setTermsType] = useState(''); // 'loan' 또는 'subscription'
                     </div>
                 </div>
 
-                {/* 2. 메인 콘텐츠 (메뉴들) */}
                 <main className={styles.mainContent}>
                     
-                    {/* 빠른 업무 */}
                     <section className={styles.menuSection}>
                         <div className={styles.sectionHeader}>
                             <h2>빠른 업무</h2>
@@ -220,7 +218,6 @@ const [termsType, setTermsType] = useState(''); // 'loan' 또는 'subscription'
                         </div>
                     </section>
 
-                    {/* 상담 및 금융 상품 */}
                     <section className={styles.menuSection}>
                         <div className={styles.sectionHeader}>
                             <h2>상담 및 금융 상품</h2>
@@ -241,7 +238,6 @@ const [termsType, setTermsType] = useState(''); // 'loan' 또는 'subscription'
                         </div>
                     </section>
 
-                    {/* 기업 및 특수 관리 */}
                     <section className={styles.menuSection}>
                         <div className={styles.sectionHeader}>
                             <h2>기업 및 특수 관리</h2>
@@ -262,9 +258,7 @@ const [termsType, setTermsType] = useState(''); // 'loan' 또는 'subscription'
                         </div>
                     </section>
 
-                    {/* 하단 위젯 (새소식 & 추천상품) */}
                     <section className={styles.bottomWidgets}>
-                        {/* 새소식/이벤트 위젯 */}
                         <div className={styles.newsWidget}>
                             <div className={styles.widgetHeader}>
                                 <div className={styles.tabs}>
@@ -318,8 +312,11 @@ const [termsType, setTermsType] = useState(''); // 'loan' 또는 'subscription'
                             )}
                         </div>
 
-                        {/* 추천상품 위젯 (마우스 오버 시 애니메이션 효과) */}
-                        <div className={styles.promoWidget}>
+                        <div 
+                            className={styles.promoWidget}
+                            onClick={() => navigate('/AiRecommend')}
+                            style={{ cursor: 'pointer' }}
+                        >
                             <div className={styles.promoContent}>
                                 <div className={styles.promoIcon}>
                                     <span style={{ fontSize: '40px' }}>🪙</span>
@@ -426,11 +423,9 @@ const [termsType, setTermsType] = useState(''); // 'loan' 또는 'subscription'
                         </div>
                         
                         <div className={styles.modalSingleButtonWrapper}>
-                            {/* 💡 취소 버튼은 과감히 삭제! */}
                             <button 
                                 className={styles.singleButton}
                                 onClick={() => {
-                                    // alert창 없이 모달만 닫기
                                     setIsTermsModalOpen(false);
                                 }}
                             >

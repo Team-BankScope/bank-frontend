@@ -19,7 +19,6 @@ const OverdueRepay = () => {
     <div className={styles.pageContainer}>
       <div className={styles.stepperLayout}>
         
-        {/* 좌측 사이드바*/}
         <aside className={styles.sidebar}>
           <h2 className={styles.sidebarTitle}>
             BANKSCOPE<br />연체금 즉시 상환
@@ -34,10 +33,8 @@ const OverdueRepay = () => {
           </div>
         </aside>
 
-        {/* 우측 메인 콘텐츠 */}
         <main className={styles.mainContent}>
           
-          {/* Step 1: 내역 확인 */}
           {step === 1 && (
             <div className={styles.stepBox}>
               <h3 className={styles.stepTitle}>기업 자금 대출</h3>
@@ -57,7 +54,6 @@ const OverdueRepay = () => {
             </div>
           )}
 
-          {/* Step 2: 상환 금액 입력 */}
           {step === 2 && (
             <div className={styles.stepBox}>
               <h3 className={styles.stepTitle}>상환 금액을 입력해주세요.</h3>
@@ -72,12 +68,10 @@ const OverdueRepay = () => {
             </div>
           )}
 
-          {/* Step 3: 출금 계좌 선택 */}
           {step === 3 && (
             <div className={styles.stepBox}>
               <h3 className={styles.stepTitle}>출금 계좌를 선택해주세요.</h3>
               
-              {/* 계좌 카드 1 */}
               <div className={styles.accountCard}>
                 <div className={styles.accountInfo}>
                   <h4>ㅇㅇ기업 계좌 <span style={{fontSize:'10px', background:'#4A9C82', color:'white', padding:'2px 6px', borderRadius:'10px', marginLeft:'4px'}}>주계좌</span></h4>
@@ -85,12 +79,10 @@ const OverdueRepay = () => {
                 </div>
                 <div className={styles.accountRight}>
                   <span>1,000,000 원</span>
-                  {/* 선택 버튼 클릭 시 바로 다음 단계로 넘어가게 구현 */}
                   <button className={styles.selectBtn} onClick={() => setStep(4)}>선택</button>
                 </div>
               </div>
 
-              {/* 계좌 카드 2 */}
               <div className={styles.accountCard}>
                 <div className={styles.accountInfo}>
                   <h4>ㅇㅇ기업 계좌</h4>
@@ -104,7 +96,6 @@ const OverdueRepay = () => {
             </div>
           )}
 
-          {/* Step 4: 상환 완료 */}
           {step === 4 && (
             <div className={styles.stepBox}>
               <div className={styles.completeBox}>
