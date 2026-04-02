@@ -308,3 +308,75 @@
   background: none;
   pointer-events: none;
 }
+
+@media screen and (max-width: 768px) {
+  .stepperLayout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    padding: 0 0 20px 0;
+  }
+
+  .sidebarTitle {
+    font-size: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .stepList {
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 0 10px;
+  }
+
+  .stepItem {
+    flex-direction: column;
+    font-size: 12px;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .mainContent {
+    padding: 30px 20px;
+    min-height: auto;
+    border-radius: 20px;
+  }
+
+  .stepTitle {
+    font-size: 18px;
+    margin-bottom: 20px;
+  }
+
+  .accountCard {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 15px 20px;
+  }
+
+  .accountRight {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .designGrid {
+    flex-direction: column;
+  }
+
+  .pinModalContent {
+    width: 90%;
+    padding: 30px 20px;
+  }
+
+  .pinDisplay {
+    gap: 10px;
+  }
+
+  .keyBtn {
+    padding: 12px 0;
+    font-size: 18px;
+  }
+}
