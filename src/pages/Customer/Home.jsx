@@ -37,7 +37,7 @@ const Home = () => {
     ];
 
     const consultTasks = [
-        { id: 1, title: '대출(전체/주택담보)', icon: Loans, isVisitRequired: false },
+        { id: 1, title: '대출(전세/주택담보)', icon: Loans, isVisitRequired: false },
         { id: 2, title: '청약저축 가입', icon: House, isVisitRequired: false },
         { id: 3, title: '신용카드 신청', icon: Card, isVisitRequired: true },
         { id: 4, title: '펀드/보험 상담', icon: Counseling, isVisitRequired: true },
@@ -119,6 +119,9 @@ const Home = () => {
         let message = '';
 
         switch (title) {
+            case '입/출금 및 이체':
+                navigate("/my");
+                return;
             case '통장 비밀번호 재설정':
                 message = '통장 비밀번호 재설정은 본인 확인 서류 원본 대조를 위해\n영업점 방문이 필수적인 업무입니다.';
                 break;
