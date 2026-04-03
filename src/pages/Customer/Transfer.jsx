@@ -112,7 +112,6 @@ const Transfer = () => {
                   type="text" 
                   name="amount"
                   className={styles.inputBox} 
-                  style={{ width: '100%', boxSizing: 'border-box' }}
                   placeholder="보낼 금액 입력"
                   value={transferData.amount ? Number(transferData.amount).toLocaleString() : ''}
                   onChange={handleInputChange}
