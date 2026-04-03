@@ -232,7 +232,7 @@ const CheckCard = () => {
               <div className={styles.completeBox}>
                 <img src={checkIcon} alt="완료 체크" className={styles.checkIcon} />
                 <h3 className={styles.completeTitle}>카드 발급 신청 완료!</h3>
-                <p className={styles.completeDesc}>영업점에 방문해 실물카드를<br/>발급 받아주세요</p>
+                <p className={styles.completeDesc}>영업점에 방문해 실물카드를<br/>수령해 주세요</p>
               </div>
               <button className={styles.nextBtn} onClick={() => navigate('/Main')}>홈 화면으로 이동</button>
             </div>

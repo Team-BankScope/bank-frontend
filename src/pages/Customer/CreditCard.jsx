@@ -4,7 +4,7 @@ import styles from './Card.module.css'
 import checkIcon from '../../images/Common/Check.png';
 import greenCardImg from '../../images/Home/Card1.png';
 import blueCardImg from '../../images/Home/Card2.png';
-import Loading from '../../components/Common/Loading';
+import Loading from '../../components/common/Loading.jsx';
 
 const CreditCard = () => {
     const navigate = useNavigate();
@@ -92,7 +92,7 @@ const CreditCard = () => {
         setActiveModal(null);
     };
 
-    // 💡 나중에 백엔드 API와 연동될 자동 심사 로직 (가짜 로딩)
+    // 가짜 로딩
     useEffect(() => {
         if (step === 2) {
             // 발급불가조건 조회
@@ -253,7 +253,7 @@ const CreditCard = () => {
                                 <h3 className={styles.completeTitle}>카드 발급 신청 완료!</h3>
                                 <p className={styles.completeDesc}>
                                     신용카드 발급 신청이 성공적으로 접수되었습니다.<br/>
-                                    실물 카드는 영업일 기준 3~5일 내에 배송됩니다.
+                                    실물 카드는 영업점에 방문해 수령해 주세요.
                                 </p>
                             </div>
                             <button className={styles.nextBtn} onClick={() => navigate('/Main')}>홈 화면으로 이동</button>
@@ -265,14 +265,12 @@ const CreditCard = () => {
 
             {activeModal && (
                 <div className={styles.pinModalBackdrop} onClick={() => setActiveModal(null)}>
-                    {/* 💡 maxWidth를 800px로 넓히고, 텍스트는 중앙 정렬로 변경 */}
                     <div className={styles.pinModalContent} onClick={(e) => e.stopPropagation()} style={{ width: '90%', maxWidth: '800px', textAlign: 'center', padding: '40px' }}>
                         
                         {activeModal === 'term1' && (
                             <>
                                 <h3 style={{ marginBottom: '20px', fontSize: '20px' }}>[필수] 신용카드 개인회원 표준약관</h3>
                                 
-                                {/* 💡 내부 텍스트 박스는 배경색을 주고 좌측 정렬 유지 */}
                                 <div className={styles.termsContentBox} style={{ maxHeight: '300px', overflowY: 'auto', marginBottom: '30px', padding: '25px', background: '#f4f5f6', borderRadius: '12px', fontSize: '14px', lineHeight: '1.8', textAlign: 'left', color: '#333' }}>
                                     <strong>제 1조 (목적)</strong><br />
                                     본 약관은 신용카드업자와 회원 간의 신용카드 이용에 관한 제반 사항을 정함을 목적으로 합니다.<br /><br />
@@ -306,7 +304,6 @@ const CreditCard = () => {
                             </>
                         )}
 
-                        {/* 혜택 안내 모달 (이것도 넓게 통일) */}
                         {activeModal.startsWith('benefits_') && (() => {
                             const card = cardList.find(c => c.id === activeModal.split('_')[1]);
                             return (

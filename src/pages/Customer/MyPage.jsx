@@ -175,9 +175,7 @@ const MyPage = () => {
         <div className={styles.container}>
             <div className={styles.layoutWrapper}>
                 
-                {/* 왼쪽 사이드바 */}
                 <div className={styles.sidebar}>
-                    {/* 프로필 영역 */}
                     <div className={styles.profileArea}>
                         <img src={profileImg} alt="Profile" className={styles.profileImage} />
                         <div className={styles.textCenter}>
@@ -188,7 +186,6 @@ const MyPage = () => {
                         </div>
                     </div>
 
-                    {/* 메뉴 영역 */}
                     <div className={styles.menuArea}>
                         <div 
                             className={`${styles.menuItem} ${activeTab === 'account' ? styles.active : ''}`}
@@ -214,7 +211,6 @@ const MyPage = () => {
                     </div>
                 </div>
 
-                {/* 오른쪽 콘텐츠 영역 */}
                 <div className={styles.contentArea}>
                     {activeTab === 'account' && renderAccountManagement()}
                     {activeTab === 'security' && renderSecurity()}
