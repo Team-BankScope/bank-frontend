@@ -15,7 +15,7 @@ const AccountCreate = ({
 }) => {
   return (
     <div className={styles.accountForm}>
-      <h4>계좌 개설 정보 입력</h4>
+      <h4>입출금 계좌 개설 정보 입력</h4>
 
       <div className={styles.formGroup}>
         <label>계좌 종류</label>
@@ -23,10 +23,10 @@ const AccountCreate = ({
           value={accountType}
           onChange={(e) => setAccountType(e.target.value)}
         >
-          <option value="">선택</option>
-          <option value="입출금">입출금</option>
-          <option value="적금">적금</option>
-          <option value="예금">예금</option>
+          {/*<option value="">선택</option>*/}
+           <option value="CHECKING">입출금</option>
+           {/*<option value="적금">적금</option>
+           <option value="예금">예금</option>*/}
         </select>
       </div>
 

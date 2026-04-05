@@ -19,7 +19,8 @@ const BankerWorkSpace = () => {
 
     const [selectedWorkType, setSelectedWorkType] = useState(null);
 
-    const [accountType, setAccountType] = useState("");
+    // 계좌 유형의 초기값을 "CHECKING"으로 설정
+    const [accountType, setAccountType] = useState("CHECKING");
     const [accountAlias, setAccountAlias] = useState("");
     const [accountPassword, setAccountPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -91,7 +92,6 @@ const BankerWorkSpace = () => {
             const interval = setInterval(fetchTasks, 10000);
             return () => clearInterval(interval);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user]);
 
     // 자동 스크롤
@@ -230,7 +230,7 @@ const BankerWorkSpace = () => {
                     // 선택 상태 및 폼 초기화
                     setSelectedWorkType(null);
                     setSelectedTask(null);
-                    setAccountType("");
+                    setAccountType("CHECKING"); // 초기값으로 리셋
                     setAccountAlias("");
                     setAccountPassword("");
                     setConfirmPassword("");
