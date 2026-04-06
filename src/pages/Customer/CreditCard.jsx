@@ -78,7 +78,6 @@ const CreditCard = () => {
     const handlePinConfirm = async () => {
         if (pinInput.length !== 6) return;
         try {
-            // 1. PIN 번호 일치 조회
             const response = await fetch(`/api/pin/confirm?pin=${pinInput}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -89,7 +88,6 @@ const CreditCard = () => {
             if (data.result === 'SUCCESS') {
                 console.log("핀 번호 일치 확인! 카드 발급을 진행합니다.");
                 
-                // 2. 카드 발급 신청 (POST /api/card/)
                 const cardData = {
                     accountId: selectedAccountId,
                     cardType: "CREDIT",

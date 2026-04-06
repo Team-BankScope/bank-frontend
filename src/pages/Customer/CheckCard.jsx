@@ -20,11 +20,9 @@ const CheckCard = () => {
   const [step, setStep] = useState(1);
   const [step1Phase, setStep1Phase] = useState('account'); 
 
-  // 계좌 목록 상태 추가
   const [accounts, setAccounts] = useState([]);
   const [selectedAccountId, setSelectedAccountId] = useState(null);
 
-  // 계좌 목록 조회 API 호출 (MyPage.jsx 참고)
   useEffect(() => {
       const fetchAccounts = async () => {
           try {
@@ -97,7 +95,6 @@ const CheckCard = () => {
     if (pinInput.length !== 6) return;
 
     try {
-      // 1. PIN 번호 일치 조회
       const response = await fetch(`/api/pin/confirm?pin=${pinInput}`, {
         method: 'POST',
         headers: {
@@ -111,7 +108,6 @@ const CheckCard = () => {
       if (data.result === 'SUCCESS') {
           console.log("핀 번호 일치 확인! 카드 발급을 진행합니다.");
           
-          // 2. 카드 발급 신청 (POST /api/card/)
           const cardData = {
               accountId: selectedAccountId,
               cardType: "CHECK",
@@ -157,7 +153,6 @@ const CheckCard = () => {
     }
   };
 
-  // 계좌 비밀번호 확인 핸들러 (POST /api/account/account-password)
   const handleAccountPasswordConfirm = async () => {
        if (cardPwd.length !== 4) return;
        try {
@@ -322,8 +317,7 @@ const CheckCard = () => {
                 value={cardPwd}
                 onChange={(e) => setCardPwd(e.target.value.replace(/[^0-9]/g, ''))}
               />
-              {/* 카드 비밀번호 설정이 아니라 확인이므로 재입력은 제거함 */}
-              <button 
+              <button
                 className={`${styles.nextBtn} ${cardPwd.length !== 4 ? styles.disabledBtn : ''}`}
                 disabled={cardPwd.length !== 4}
                 onClick={handleAccountPasswordConfirm} // 비밀번호 확인 함수 호출
