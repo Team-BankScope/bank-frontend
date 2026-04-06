@@ -5,9 +5,11 @@ import checkIcon from '../../images/Common/Check.png';
 import greenCardImg from '../../images/Home/Card1.png';
 import blueCardImg from '../../images/Home/Card2.png';
 import Loading from '../../components/common/Loading.jsx';
+import { useModal } from '../../context/ModalContext';
 
 const CreditCard = () => {
     const navigate = useNavigate();
+    const { openModal } = useModal();
     
     // 내부 상태 관리
     const [step, setStep] = useState(1);
@@ -16,12 +18,57 @@ const CreditCard = () => {
     const [expandedCardId, setExpandedCardId] = useState(null); // 더보기 아코디언
     const [activeModal, setActiveModal] = useState(null);
     const [cardPwd, setCardPwd] = useState('');
-    const [cardPwdConfirm, setCardPwdConfirm] = useState('');
     const [agreements, setAgreements] = useState({ term1: false, term2: false });
 
     const [isPinModalOpen, setIsPinModalOpen] = useState(false);
     const [pinInput, setPinInput] = useState('');
     const keypadLayout = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'];
+
+    // 카드 별칭 및 결제일
+    const [cardName, setCardName] = useState('');
+    const [paymentDay, setPaymentDay] = useState(''); // 결제일 상태 추가
+
+    // 계좌 목록 상태 추가
+    const [accounts, setAccounts] = useState([]);
+    const [selectedAccountId, setSelectedAccountId] = useState(null);
+
+    const showAlert = (message, callback = null) => {
+        openModal({
+            message: message,
+            onConfirm: callback
+        });
+    };
+
+    // 계좌 목록 조회 API 호출 (결제계좌 선택 단계인 step 2에서 호출)
+    useEffect(() => {
+        if (step === 2) {
+            const fetchAccounts = async () => {
+                try {
+                    const response = await fetch('/api/account/list', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.result === 'SUCCESS') {
+                        // 입출금 계좌(CHECKING)만 필터링
+                        const checkingAccounts = data.accounts.filter(acc => acc.accountType === 'CHECKING' || acc.accountType === 'DEMAND');
+                        setAccounts(checkingAccounts);
+                    } else {
+                        console.error("계좌 불러오기 실패:", data.message);
+                    }
+                } catch (error) {
+                    console.error("API 호출 중 에러 발생:", error);
+                }
+            };
+  
+            fetchAccounts();
+        }
+    }, [step]);
+
 
     const handleKeyClick = (val) => {
         if (pinInput.length < 6) setPinInput(prev => prev + val);
@@ -31,6 +78,7 @@ const CreditCard = () => {
     const handlePinConfirm = async () => {
         if (pinInput.length !== 6) return;
         try {
+            // 1. PIN 번호 일치 조회
             const response = await fetch(`/api/pin/confirm?pin=${pinInput}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -39,15 +87,82 @@ const CreditCard = () => {
             const data = await response.json();
             
             if (data.result === 'SUCCESS') {
+                console.log("핀 번호 일치 확인! 카드 발급을 진행합니다.");
+                
+                // 2. 카드 발급 신청 (POST /api/card/)
+                const cardData = {
+                    accountId: selectedAccountId,
+                    cardType: "CREDIT",
+                    paymentDay: Number(paymentDay), // 문자열을 숫자로 변환
+                    cardColor: selectedCard === 'MRLIFE' ? "green" : "blue",
+                    cardName: cardName || (selectedCard === 'MRLIFE' ? "BankScope Mr.Life" : "뱅크스코프 트래블 플러스")
+                };
+      
+                const cardResponse = await fetch('/api/card/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(cardData)
+                });
+      
+                if (cardResponse.ok) {
+                    const cardResult = await cardResponse.json();
+                    if(cardResult.result === 'SUCCESS' || cardResult.result) { 
+                        setIsPinModalOpen(false);
+                        setStep(6); // 심사 로딩 화면으로 이동
+                    } else {
+                        showAlert('카드 발급에 실패했습니다.');
+                        setPinInput('');
+                    }
+                } else {
+                    showAlert('카드 발급 서버와 연결할 수 없습니다.');
+                    setPinInput('');
+                }
+            } else if (data.result === 'FAILURE') {
+                showAlert('핀 번호가 일치하지 않습니다. 다시 입력해주세요.');
+                setPinInput('');
+            } else if (data.result === 'FAILURE_SESSION') {
+                showAlert('로그인이 필요하거나 세션이 만료되었습니다.\n다시 로그인해주세요.');
                 setIsPinModalOpen(false);
-                setStep(4);
+                navigate('/Login');
             } else {
-                alert('핀 번호가 일치하지 않습니다.\n다시 입력해주세요.');
+                showAlert('핀 번호 확인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.');
                 setPinInput('');
             }
         } catch (error) {
             console.error('API 오류:', error);
-            alert('서버와 연결할 수 없습니다.');
+            showAlert('서버와 연결할 수 없습니다.');
+        }
+    };
+
+    // 계좌 비밀번호 확인 핸들러 (POST /api/account/account-password)
+    const handleAccountPasswordConfirm = async () => {
+        if (cardPwd.length !== 4) return;
+        try {
+            const params = new URLSearchParams();
+            params.append('accountId', String(selectedAccountId));
+            params.append('accountPassword', cardPwd);
+ 
+            const response = await fetch('/api/account/account-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: params.toString()
+            });
+ 
+            const data = await response.json();
+            
+            if (data.result === 'SUCCESS') {
+                setIsPinModalOpen(true);
+            } else {
+                showAlert('계좌 비밀번호가 일치하지 않습니다.');
+                setCardPwd('');
+            }
+        } catch (error) {
+            console.error("계좌 비밀번호 확인 오류:", error);
+            showAlert("서버와 통신 중 오류가 발생했습니다.");
         }
     };
 
@@ -56,8 +171,8 @@ const CreditCard = () => {
         {
             id: 'MRLIFE',
             highlight: '최대 52만원 캐시백',
-            name: '신한카드 Mr.Life',
-            subtitle: '신한카드',
+            name: 'BankScope Mr.Life',
+            subtitle: '뱅크스코프',
             benefits: ['스타벅스, 커피빈 등 커피전문점 10% 결제일 할인', '이마트, 홈플러스, 롯데마트 주말 10% 할인', 'SKT, KT, LG U+ 통신요금 10% 할인'],
             image: greenCardImg
         },
@@ -72,18 +187,22 @@ const CreditCard = () => {
     ];
 
     const isAllRequiredAgreed = agreements.term1 && agreements.term2;
-    const isPwdValid = cardPwd.length === 4 && cardPwd === cardPwdConfirm;
-    const isStep3Valid = isAllRequiredAgreed && isPwdValid;
 
     // 더보기 토글
     const toggleExpand = (id) => {
         setExpandedCardId(prev => prev === id ? null : id);
     };
 
-    // 가입하기 클릭
+    // 상품 선택하기 클릭
     const handleJoinClick = (cardId) => {
         setSelectedCard(cardId);
-        setStep(2); // 1단계 -> 조건 조회로 이동
+        setStep(2); 
+    };
+
+    // 계좌 선택 핸들러 (선택 즉시 다음 단계로 이동)
+    const handleAccountSelect = (accountId) => {
+        setSelectedAccountId(accountId);
+        setStep(3); // 약관 동의로 넘어감
     };
 
     // 약관 동의
@@ -92,30 +211,30 @@ const CreditCard = () => {
         setActiveModal(null);
     };
 
-    // 가짜 로딩
+    // 가짜 로딩 (결제능력 심사)
     useEffect(() => {
-        if (step === 2) {
-            // 발급불가조건 조회
-            const timer = setTimeout(() => setStep(3), 2000);
-            return () => clearTimeout(timer);
-        }
-        if (step === 4) {
+        if (step === 6) {
             // 결제능력 심사
-            const timer = setTimeout(() => setStep(5), 3000);
+            const timer = setTimeout(() => setStep(7), 3000);
             return () => clearTimeout(timer);
         }
     }, [step]);
 
     const getSidebarActiveStep = () => {
-        if (step <= 2) return 1;
-        if (step <= 4) return 2;
-        return 3;
+        if (step === 1) return 1;
+        if (step === 2) return 2;
+        if (step === 3) return 3;
+        if (step === 4) return 4;
+        if (step >= 5) return 5;
+        return 1;
     };
 
     const sidebarSteps = [
-        { id: 1, title: '상품 선택/동의' },
-        { id: 2, title: '비밀번호 설정' },
-        { id: 3, title: '발급 완료' },
+        { id: 1, title: '상품 선택' },
+        { id: 2, title: '결제계좌 선택' },
+        { id: 3, title: '약관 동의' },
+        { id: 4, title: '카드 설정' },
+        { id: 5, title: '인증 및 완료' },
     ];
 
     return (
@@ -123,10 +242,10 @@ const CreditCard = () => {
             <div className={styles.stepperLayout}>
                 
                 <aside className={styles.sidebar}>
-                    <h2 className={styles.sidebarTitle} style={{ fontSize: '20px', fontWeight: '800' }}>
-                        BANKSCOPE<br /><span style={{ fontSize: '26px' }}>카드 발급</span>
+                    <h2 className={styles.sidebarTitle}>
+                        BANKSCOPE<br /><span className={styles.subTitle}>신용카드 발급 신청</span>
                     </h2>
-                    <div className={styles.stepList} style={{ marginTop: '40px' }}>
+                    <div className={styles.stepList}>
                         {sidebarSteps.map((s) => (
                             <div key={s.id} className={`${styles.stepItem} ${getSidebarActiveStep() >= s.id ? styles.active : ''}`}>
                                 <div className={styles.stepCircle}>{s.id}</div>
@@ -138,9 +257,10 @@ const CreditCard = () => {
 
                 <main className={styles.mainContent}>
                     
+                    {/* 1. 상품 선택 */}
                     {step === 1 && (
                         <div className={styles.stepBox}>
-                            <h3 className={styles.stepTitle} style={{ marginBottom: '30px' }}>발급을 원하시는 카드를 선택해주세요</h3>
+                            <h3 className={styles.stepTitle}>발급을 원하시는 카드를 선택해주세요</h3>
                             
                             <div className={styles.cardListContainer}>
                                 {cardList.map((card) => (
@@ -156,7 +276,7 @@ const CreditCard = () => {
                                             </div>
                                             <div className={styles.cardListRight}>
                                                 <button className={styles.joinBtn} onClick={() => handleJoinClick(card.id)}>
-                                                    가입하기
+                                                    선택하기
                                                 </button>
                                                 <button className={styles.moreBtn} onClick={() => toggleExpand(card.id)}>
                                                     더보기 {expandedCardId === card.id ? '∧' : '∨'}
@@ -166,7 +286,7 @@ const CreditCard = () => {
                                         
                                         {expandedCardId === card.id && (
                                             <div className={styles.expandedBenefits}>
-                                                <strong style={{ display: 'block', marginBottom: '10px' }}>주요 혜택 안내</strong>
+                                                <strong>주요 혜택 안내</strong>
                                                 <ul>
                                                     {card.benefits.map((benefit, idx) => (
                                                         <li key={idx}>{benefit}</li>
@@ -180,18 +300,48 @@ const CreditCard = () => {
                         </div>
                     )}
 
+                    {/* 2. 결제계좌 선택 */}
                     {step === 2 && (
-                        <div className={styles.stepBox} style={{ textAlign: 'center', padding: '100px 0' }}>
-                            <Loading />
-                            <h3 className={styles.stepTitle} style={{ marginTop: '30px' }}>발급 가능 여부를 조회하고 있습니다...</h3>
-                            <p style={{ color: '#888' }}>연체 이력 및 타사 발급 거절 이력을 확인 중입니다.</p>
+                        <div className={styles.stepBox}>
+                            <h3 className={styles.stepTitle}>결제 계좌 선택</h3>
+                            <p style={{ color: '#888', marginBottom: '20px' }}>신용카드 대금이 출금될 계좌를 선택해주세요.</p>
+
+                            <div style={{ marginBottom: '20px' }}>
+                                {accounts.length === 0 ? (
+                                    <div style={{ textAlign: 'center', padding: '40px', color: '#999', background: '#f4f5f6', borderRadius: '12px' }}>
+                                        연결 가능한 입출금 계좌가 없습니다.
+                                    </div>
+                                ) : (
+                                    <div>
+                                        {accounts.map((account) => (
+                                            <div key={account.accountId} className={styles.accountCard}>
+                                                <div className={styles.accountInfo}>
+                                                    <h4>{account.accountAlias || '기본 입출금'}</h4>
+                                                    <p>{account.accountNumber}</p>
+                                                </div>
+                                                <div className={styles.accountRight}>
+                                                    <span>{account.balance?.toLocaleString()} 원</span>
+                                                    <button 
+                                                        className={styles.selectBtn} 
+                                                        onClick={() => handleAccountSelect(account.accountId)}
+                                                    >
+                                                        선택
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     )}
 
+                    {/* 3. 약관 동의 */}
                     {step === 3 && (
                         <div className={styles.stepBox}>
-                            <h3 className={styles.stepTitle}>약관 동의 및 비밀번호 설정</h3>
-                            
+                            <h3 className={styles.stepTitle}>약관 동의</h3>
+                            <p style={{ color: '#888', marginBottom: '20px' }}>카드 발급을 위해 아래 약관에 동의해주세요.</p>
+
                             <div className={`${styles.agreementBox} ${agreements.term1 ? styles.agreed : ''}`} onClick={() => setActiveModal('term1')}>
                                 <span>[필수] 신용카드 개인회원 표준약관</span>
                                 {agreements.term1 && <span className={styles.agreedBadge}>동의 완료 ✔</span>}
@@ -201,44 +351,84 @@ const CreditCard = () => {
                                 {agreements.term2 && <span className={styles.agreedBadge}>동의 완료 ✔</span>}
                             </div>
 
-                            <h4 style={{ marginBottom: '10px' }}>카드 비밀번호 설정 (4자리)</h4>
-                            <input 
-                                type="password" 
-                                className={styles.pwdInput}
-                                placeholder="비밀번호 4자리 입력 (쇼핑 사이트 결제 시 사용)"
-                                maxLength={4}
-                                value={cardPwd}
-                                onChange={(e) => setCardPwd(e.target.value.replace(/[^0-9]/g, ''))}
-                                style={{ marginBottom: '10px' }}
-                            />
-                            <input 
-                                type="password" 
-                                className={styles.pwdInput}
-                                placeholder="비밀번호 재입력"
-                                maxLength={4}
-                                value={cardPwdConfirm}
-                                onChange={(e) => setCardPwdConfirm(e.target.value.replace(/[^0-9]/g, ''))}
-                                style={{ marginBottom: '40px' }}
-                            />
-                            <div style={{ height: '20px', marginBottom: '20px', marginLeft: '5px' }}>
-                                {cardPwdConfirm.length > 0 && cardPwd !== cardPwdConfirm && (
-                                    <span style={{ color: '#E63946', fontSize: '13px', fontWeight: '600' }}>
-                                        비밀번호가 동일하지 않습니다.
-                                    </span>
-                                )}
-                            </div>
-
                             <button 
-                                className={`${styles.nextBtn} ${!isStep3Valid ? styles.disabledBtn : ''}`}
-                                disabled={!isStep3Valid}
-                                onClick={() => setIsPinModalOpen(true)}
+                                className={`${styles.nextBtn} ${!isAllRequiredAgreed ? styles.disabledBtn : ''}`}
+                                disabled={!isAllRequiredAgreed}
+                                onClick={() => setStep(4)}
                             >
-                                신청서 제출하기
+                                다음 단계로
                             </button>
                         </div>
                     )}
 
+                    {/* 4. 카드 설정 (별칭 + 결제일) */}
                     {step === 4 && (
+                        <div className={styles.stepBox}>
+                            <h3 className={styles.stepTitle}>카드 설정</h3>
+                            <p style={{ color: '#888', marginBottom: '20px' }}>카드 별칭과 대금 결제일을 선택해주세요.</p>
+                            
+                            <h4 style={{ marginBottom: '10px' }}>카드 별칭 설정 (선택)</h4>
+                            <input
+                                type="text"
+                                className={styles.pwdInput}
+                                placeholder="예: 내 첫 신용카드"
+                                value={cardName}
+                                onChange={(e) => setCardName(e.target.value)}
+                                style={{ marginBottom: '20px' }}
+                            />
+
+                            {/* 결제일 선택 추가 */}
+                            <h4 style={{ marginBottom: '10px' }}>결제일 선택</h4>
+                            <select
+                                className={styles.pwdInput}
+                                value={paymentDay}
+                                onChange={(e) => setPaymentDay(e.target.value)}
+                                style={{ marginBottom: '40px', appearance: 'auto' }}
+                            >
+                                <option value="">결제일을 선택해주세요</option>
+                                {[1, 5, 10, 14, 15, 20, 25].map(day => (
+                                    <option key={day} value={day}>매월 {day}일</option>
+                                ))}
+                            </select>
+
+                            <button 
+                                className={`${styles.nextBtn} ${!paymentDay ? styles.disabledBtn : ''}`}
+                                disabled={!paymentDay}
+                                onClick={() => setStep(5)}
+                            >
+                                다음 단계로
+                            </button>
+                        </div>
+                    )}
+
+                    {/* 5. 통장 비밀번호 입력 */}
+                    {step === 5 && (
+                        <div className={styles.stepBox}>
+                            <h3 className={styles.stepTitle}>계좌 비밀번호 확인</h3>
+                            <p style={{ color: '#888', fontSize: '14px', marginBottom: '20px' }}>본인 확인을 위해 선택하신 결제 계좌의 비밀번호 4자리를 입력해주세요.</p>
+                            
+                            <input 
+                                type="password" 
+                                className={styles.pwdInput}
+                                placeholder="계좌 비밀번호 4자리 입력"
+                                maxLength={4}
+                                value={cardPwd}
+                                onChange={(e) => setCardPwd(e.target.value.replace(/[^0-9]/g, ''))}
+                                style={{ marginBottom: '40px' }}
+                            />
+
+                            <button 
+                                className={`${styles.nextBtn} ${cardPwd.length !== 4 ? styles.disabledBtn : ''}`}
+                                disabled={cardPwd.length !== 4}
+                                onClick={handleAccountPasswordConfirm}
+                            >
+                                본인 인증 및 신청
+                            </button>
+                        </div>
+                    )}
+
+                    {/* 6. 심사 중 가짜 로딩 */}
+                    {step === 6 && (
                         <div className={styles.stepBox} style={{ textAlign: 'center', padding: '100px 0' }}>
                             <Loading />
                             <h3 className={styles.stepTitle} style={{ marginTop: '30px' }}>결제능력 및 신용점수를 심사 중입니다...</h3>
@@ -246,14 +436,15 @@ const CreditCard = () => {
                         </div>
                     )}
 
-                    {step === 5 && (
+                    {/* 7. 발급 완료 */}
+                    {step === 7 && (
                         <div className={styles.stepBox}>
                             <div className={styles.completeBox}>
                                 <img src={checkIcon} alt="완료 체크" className={styles.checkIcon} />
                                 <h3 className={styles.completeTitle}>카드 발급 신청 완료!</h3>
                                 <p className={styles.completeDesc}>
-                                    신용카드 발급 신청이 성공적으로 접수되었습니다.<br/>
-                                    실물 카드는 영업점에 방문해 수령해 주세요.
+                                    발급신청이 완료되었습니다. 카드 수령은 발급 심사 후에<br/>
+                                    창구에서 가능합니다.
                                 </p>
                             </div>
                             <button className={styles.nextBtn} onClick={() => navigate('/Main')}>홈 화면으로 이동</button>
@@ -263,15 +454,16 @@ const CreditCard = () => {
                 </main>
             </div>
 
+            {/* 약관 모달 */}
             {activeModal && (
                 <div className={styles.pinModalBackdrop} onClick={() => setActiveModal(null)}>
-                    <div className={styles.pinModalContent} onClick={(e) => e.stopPropagation()} style={{ width: '90%', maxWidth: '800px', textAlign: 'center', padding: '40px' }}>
+                    <div className={styles.pinModalContent} onClick={(e) => e.stopPropagation()}>
                         
                         {activeModal === 'term1' && (
                             <>
-                                <h3 style={{ marginBottom: '20px', fontSize: '20px' }}>[필수] 신용카드 개인회원 표준약관</h3>
+                                <h3>[필수] 신용카드 개인회원 표준약관</h3>
                                 
-                                <div className={styles.termsContentBox} style={{ maxHeight: '300px', overflowY: 'auto', marginBottom: '30px', padding: '25px', background: '#f4f5f6', borderRadius: '12px', fontSize: '14px', lineHeight: '1.8', textAlign: 'left', color: '#333' }}>
+                                <div className={styles.termsContentBox}>
                                     <strong>제 1조 (목적)</strong><br />
                                     본 약관은 신용카드업자와 회원 간의 신용카드 이용에 관한 제반 사항을 정함을 목적으로 합니다.<br /><br />
                                     
@@ -282,15 +474,15 @@ const CreditCard = () => {
                                     <strong>제 3조 (비밀번호 관리 의무)</strong><br />
                                     회원은 카드 비밀번호 및 PIN 번호가 타인에게 노출되지 않도록 철저히 관리해야 하며, 고의 또는 중대한 과실로 인한 유출로 발생한 손해는 회원이 책임집니다.
                                 </div>
-                                <button className={styles.nextBtn} onClick={handleAgreeClick} style={{ width: '100%', padding: '16px', fontSize: '18px' }}>위 약관에 동의합니다</button>
+                                <button className={styles.nextBtn} onClick={handleAgreeClick}>위 약관에 동의합니다</button>
                             </>
                         )}
 
                         {activeModal === 'term2' && (
                             <>
-                                <h3 style={{ marginBottom: '20px', fontSize: '20px' }}>[필수] 신용조회 및 제공 동의</h3>
+                                <h3>[필수] 신용조회 및 제공 동의</h3>
                                 
-                                <div className={styles.termsContentBox} style={{ maxHeight: '300px', overflowY: 'auto', marginBottom: '30px', padding: '25px', background: '#f4f5f6', borderRadius: '12px', fontSize: '14px', lineHeight: '1.8', textAlign: 'left', color: '#333' }}>
+                                <div className={styles.termsContentBox}>
                                     <strong>1. 수집 및 이용 목적</strong><br />
                                     신용카드 발급 심사, 결제능력 평가, 신용 질서 문란 행위 조사 및 카드 이용 한도 산정<br /><br />
                                     
@@ -300,7 +492,7 @@ const CreditCard = () => {
                                     <strong>3. 보유 및 이용 기간</strong><br />
                                     본 동의서의 효력은 카드 발급 심사 완료 시점 또는 고객의 동의 철회 시까지 유지됩니다.
                                 </div>
-                                <button className={styles.nextBtn} onClick={handleAgreeClick} style={{ width: '100%', padding: '16px', fontSize: '18px' }}>위 약관에 동의합니다</button>
+                                <button className={styles.nextBtn} onClick={handleAgreeClick}>위 약관에 동의합니다</button>
                             </>
                         )}
 
@@ -308,15 +500,15 @@ const CreditCard = () => {
                             const card = cardList.find(c => c.id === activeModal.split('_')[1]);
                             return (
                                 <>
-                                    <h3 style={{ marginBottom: '20px', fontSize: '20px' }}>{card.name} 주요 혜택</h3>
-                                    <div className={styles.termsContentBox} style={{ maxHeight: '300px', overflowY: 'auto', marginBottom: '30px', padding: '25px', background: '#f4f5f6', borderRadius: '12px', fontSize: '15px', lineHeight: '1.8', textAlign: 'left', color: '#333' }}>
+                                    <h3>{card.name} 주요 혜택</h3>
+                                    <div className={styles.termsContentBox}>
                                         <ul style={{ margin: 0, paddingLeft: '20px' }}>
                                             {card.benefits.map((benefit, idx) => (
                                                 <li key={idx} style={{ marginBottom: '10px' }}><strong>{benefit}</strong></li>
                                             ))}
                                         </ul>
                                     </div>
-                                    <button className={styles.nextBtn} onClick={() => setActiveModal(null)} style={{ width: '100%', padding: '16px', fontSize: '18px' }}>닫기</button>
+                                    <button className={styles.nextBtn} onClick={() => setActiveModal(null)}>닫기</button>
                                 </>
                             );
                         })()}
@@ -325,25 +517,33 @@ const CreditCard = () => {
                 </div>
             )}
 
+            {/* 핀 번호 입력 모달 */}
             {isPinModalOpen && (
                 <div className={styles.pinModalBackdrop} onClick={() => setIsPinModalOpen(false)}>
-                    <div className={styles.pinModalContent} onClick={(e) => e.stopPropagation()} style={{ width: '90%', maxWidth: '400px', textAlign: 'center', padding: '40px' }}>
-                        <h3 style={{ marginTop: 0, marginBottom: '20px' }}>보안 핀(PIN) 번호를 입력해주세요</h3>
+                    <div className={styles.pinModalContent} onClick={(e) => e.stopPropagation()}>
+                        <h3>보안 핀(PIN) 번호를 입력해주세요</h3>
                         
-                        <div className={styles.pinDisplay} style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginBottom: '30px' }}>
+                        <div className={styles.pinDisplay}>
                             {[...Array(6)].map((_, i) => (
-                                <div key={i} className={`${styles.pinDot} ${i < pinInput.length ? styles.pinDotFilled : ''}`} style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: i < pinInput.length ? '#4A9C82' : '#e0e0e0' }} />
+                                <div key={i} className={`${styles.pinDot} ${i < pinInput.length ? styles.pinDotFilled : ''}`} />
                             ))}
                         </div>
 
-                        <div className={styles.keypad} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '20px' }}>
+                        <div className={styles.keypad}>
                             {keypadLayout.map((key, idx) => {
                                 if (key === '') return <div key={idx} className={styles.emptyKey} />;
                                 if (key === 'del') {
-                                    return <button key={idx} className={styles.keyBtn} onClick={handleDelete} style={{ background: '#f4f5f6', border: 'none', borderRadius: '12px', padding: '15px 0', fontSize: '16px', fontWeight: '600', cursor: 'pointer' }}>지우기</button>;
+                                    return (
+                                        <button key={idx} className={styles.keyBtn} onClick={handleDelete}>
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
+                                                <line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line>
+                                            </svg>
+                                        </button>
+                                    );
                                 }
                                 return (
-                                    <button key={idx} className={styles.keyBtn} onClick={() => handleKeyClick(key)} style={{ background: '#f4f5f6', border: 'none', borderRadius: '12px', padding: '15px 0', fontSize: '20px', fontWeight: '600', cursor: 'pointer' }}>
+                                    <button key={idx} className={styles.keyBtn} onClick={() => handleKeyClick(key)}>
                                         {key}
                                     </button>
                                 );
@@ -354,7 +554,6 @@ const CreditCard = () => {
                             className={`${styles.nextBtn} ${pinInput.length !== 6 ? styles.disabledBtn : ''}`} 
                             disabled={pinInput.length !== 6}
                             onClick={handlePinConfirm}
-                            style={{ width: '100%', padding: '15px', fontSize: '18px', borderRadius: '12px', backgroundColor: pinInput.length === 6 ? '#4A9C82' : '#ccc', color: 'white', border: 'none' }}
                         >
                             확인
                         </button>

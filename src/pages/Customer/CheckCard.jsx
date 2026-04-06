@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useModal } from '../../context/ModalContext';
 import styles from './Card.module.css';
@@ -20,6 +20,44 @@ const CheckCard = () => {
   const [step, setStep] = useState(1);
   const [step1Phase, setStep1Phase] = useState('account'); 
 
+  // 계좌 목록 상태 추가
+  const [accounts, setAccounts] = useState([]);
+  const [selectedAccountId, setSelectedAccountId] = useState(null);
+
+  // 계좌 목록 조회 API 호출 (MyPage.jsx 참고)
+  useEffect(() => {
+      const fetchAccounts = async () => {
+          try {
+              const response = await fetch('/api/account/list', {
+                  method: 'GET',
+                  headers: {
+                      'Content-Type': 'application/json'
+                  }
+              });
+              
+              const data = await response.json();
+              
+              if (data.result === 'SUCCESS') {
+                  // 입출금 계좌(CHECKING)만 필터링
+                  const checkingAccounts = data.accounts.filter(acc => acc.accountType === 'CHECKING' || acc.accountType === 'DEMAND'); // 기존 DEMAND 고려
+                  setAccounts(checkingAccounts);
+              } else {
+                  console.error("계좌 불러오기 실패:", data.message);
+              }
+          } catch (error) {
+              console.error("API 호출 중 에러 발생:", error);
+          }
+      };
+
+      fetchAccounts();
+  }, []);
+
+  // 계좌 선택 핸들러
+  const handleAccountSelect = (accountId) => {
+      setSelectedAccountId(accountId);
+      setStep1Phase('agreement');
+  };
+
   // 약관 동의 상태 관리
   const [agreements, setAgreements] = useState({
     term1: false, // 개인회원 약관 (필수)
@@ -37,8 +75,10 @@ const CheckCard = () => {
   };
 
   const [selectedDesign, setSelectedDesign] = useState('GREEN_BASIC');
+  
+  const [cardName, setCardName] = useState(''); // 별칭 작성 추가
+
   const [cardPwd, setCardPwd] = useState('');
-  const [cardPwdConfirm, setCardPwdConfirm] = useState('');
   
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const [pinInput, setPinInput] = useState('');
@@ -57,6 +97,7 @@ const CheckCard = () => {
     if (pinInput.length !== 6) return;
 
     try {
+      // 1. PIN 번호 일치 조회
       const response = await fetch(`/api/pin/confirm?pin=${pinInput}`, {
         method: 'POST',
         headers: {
@@ -67,29 +108,48 @@ const CheckCard = () => {
 
       const data = await response.json();
 
-      switch (data.result) {
-        case 'SUCCESS':
+      if (data.result === 'SUCCESS') {
           console.log("핀 번호 일치 확인! 카드 발급을 진행합니다.");
+          
+          // 2. 카드 발급 신청 (POST /api/card/)
+          const cardData = {
+              accountId: selectedAccountId,
+              cardType: "CHECK",
+              cardColor: selectedDesign === 'GREEN_BASIC' ? "green" : "blue",
+              cardName: cardName || (selectedDesign === 'GREEN_BASIC' ? "그린 베이직" : "블루 프리미엄") // 기본값 제공
+          };
 
-          setIsPinModalOpen(false);
-          setStep(4);
-          break;
+          const cardResponse = await fetch('/api/card/', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(cardData)
+          });
 
-        case 'FAILURE':
+          if (cardResponse.ok) {
+              const cardResult = await cardResponse.json();
+              if(cardResult.result === 'SUCCESS' || cardResult.result) { // result 형태에 따라 수정 필요할 수 있음
+                  setIsPinModalOpen(false);
+                  setStep(4);
+              } else {
+                  showAlert('카드 발급에 실패했습니다.');
+                  setPinInput('');
+              }
+          } else {
+              showAlert('카드 발급 서버와 연결할 수 없습니다.');
+              setPinInput('');
+          }
+      } else if (data.result === 'FAILURE') {
           showAlert('핀 번호가 일치하지 않습니다. 다시 입력해주세요.');
           setPinInput('');
-          break;
-
-        case 'FAILURE_SESSION':
+      } else if (data.result === 'FAILURE_SESSION') {
           showAlert('로그인이 필요하거나 세션이 만료되었습니다.\n다시 로그인해주세요.');
           setIsPinModalOpen(false);
           navigate('/Login');
-          break;
-
-        default:
+      } else {
           showAlert('핀 번호 확인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.');
           setPinInput('');
-          break;
       }
     } catch (error) {
       console.error('핀 번호 API 통신 오류:', error);
@@ -97,10 +157,42 @@ const CheckCard = () => {
     }
   };
 
+  // 계좌 비밀번호 확인 핸들러 (POST /api/account/account-password)
+  const handleAccountPasswordConfirm = async () => {
+       if (cardPwd.length !== 4) return;
+       try {
+           const params = new URLSearchParams({
+               accountId: String(selectedAccountId), // URLSearchParams를 위해 문자열로 변환
+               accountPassword: cardPwd
+           });
+
+           const response = await fetch('/api/account/account-password', {
+               method: 'POST',
+               headers: {
+                   'Content-Type': 'application/x-www-form-urlencoded', // RequestParam은 urlencoded
+               },
+               body: params.toString()
+           });
+
+           const data = await response.json();
+           
+           // TODO: 백엔드 응답 result 값에 맞춰 수정 필요
+           if (data.result === 'SUCCESS') {
+               setIsPinModalOpen(true);
+           } else {
+               showAlert('계좌 비밀번호가 일치하지 않습니다.');
+               setCardPwd('');
+           }
+       } catch (error) {
+           console.error("계좌 비밀번호 확인 오류:", error);
+           showAlert("서버와 통신 중 오류가 발생했습니다.");
+       }
+  };
+
   const steps = [
     { id: 1, title: '계좌 선택/동의' },
-    { id: 2, title: '디자인 선택' },
-    { id: 3, title: '비밀번호 설정' },
+    { id: 2, title: '카드 설정' },
+    { id: 3, title: '비밀번호 확인' }, // 타이틀 변경
     { id: 4, title: '발급 완료' },
   ];
 
@@ -109,7 +201,7 @@ const CheckCard = () => {
       <div className={styles.stepperLayout}>
         
         <aside className={styles.sidebar}>
-          <h2 className={styles.sidebarTitle}>BANKSCOPE<br />카드 발급</h2>
+          <h2 className={styles.sidebarTitle}>BANKSCOPE<br /><span className={styles.subTitle}>체크카드 발급 신청</span></h2>
           <div className={styles.stepList}>
             {steps.map((s) => (
               <div key={s.id} className={`${styles.stepItem} ${step >= s.id ? styles.active : ''}`}>
@@ -125,16 +217,30 @@ const CheckCard = () => {
           {step === 1 && step1Phase === 'account' && (
             <div className={styles.stepBox}>
               <h3 className={styles.stepTitle}>카드를 연결할 계좌를 선택해주세요.</h3>
-              <div className={styles.accountCard}>
-                <div className={styles.accountInfo}>
-                  <h4>ㅇㅇ예금(입출금) <span className={styles.mainBadge}>주계좌</span></h4>
-                  <p>000-00000000-0</p>
-                </div>
-                <div className={styles.accountRight}>
-                  <span>1,000,000 원</span>
-                  <button className={styles.selectBtn} onClick={() => setStep1Phase('agreement')}>선택</button>
-                </div>
-              </div>
+              
+              {accounts.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
+                      연결 가능한 입출금 계좌가 없습니다.
+                  </div>
+              ) : (
+                  accounts.map((account) => (
+                      <div key={account.accountId} className={styles.accountCard}>
+                          <div className={styles.accountInfo}>
+                              <h4>{account.accountAlias || '기본 입출금'}</h4>
+                              <p>{account.accountNumber}</p>
+                          </div>
+                          <div className={styles.accountRight}>
+                              <span>{account.balance?.toLocaleString()} 원</span>
+                              <button 
+                                  className={styles.selectBtn} 
+                                  onClick={() => handleAccountSelect(account.accountId)}
+                              >
+                                  선택
+                              </button>
+                          </div>
+                      </div>
+                  ))
+              )}
             </div>
           )}
 
@@ -169,7 +275,7 @@ const CheckCard = () => {
 
           {step === 2 && (
             <div className={styles.stepBox}>
-              <h3 className={styles.stepTitle}>디자인을 선택해주세요</h3>
+              <h3 className={styles.stepTitle}>디자인 및 별칭을 설정해주세요</h3>
               <div className={styles.designGrid}>
                 <div 
                   className={`${styles.designItem} ${selectedDesign === 'GREEN_BASIC' ? styles.selected : ''}`} 
@@ -187,40 +293,40 @@ const CheckCard = () => {
                   <span className={styles.designLabel}>블루 프리미엄</span>
                 </div>
               </div>
+              
+              {/* 별칭 입력 필드 추가 */}
+              <div style={{ marginTop: '20px', width: '100%', maxWidth: '400px', display : 'flex', flexDirection : 'column', alignSelf: 'center' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>카드 별칭 설정 (선택)</label>
+                  <input
+                      type="text"
+                      className={styles.pwdInput} // 스타일 재사용
+                      placeholder="내 체크카드"
+                      value={cardName}
+                      onChange={(e) => setCardName(e.target.value)}
+                  />
+              </div>
+
               <button className={styles.nextBtn} onClick={() => setStep(3)}>선택 완료</button>
             </div>
           )}
 
           {step === 3 && (
             <div className={styles.stepBox}>
-              <h3 className={styles.stepTitle}>카드 비밀번호 설정</h3>
+              <h3 className={styles.stepTitle}>계좌 비밀번호 확인</h3>
+              <p style={{ color: '#888', fontSize: '14px', marginBottom: '20px' }}>선택하신 계좌의 비밀번호를 입력해주세요.</p>
               <input 
                 type="password" 
                 className={styles.pwdInput}
-                placeholder="사용하실 카드 비밀번호 4자리 입력"
+                placeholder="계좌 비밀번호 4자리 입력"
                 maxLength={4}
                 value={cardPwd}
                 onChange={(e) => setCardPwd(e.target.value.replace(/[^0-9]/g, ''))}
               />
-              <input 
-                type="password" 
-                className={styles.pwdInput}
-                placeholder="카드 비밀번호 재입력"
-                maxLength={4}
-                value={cardPwdConfirm}
-                onChange={(e) => setCardPwdConfirm(e.target.value.replace(/[^0-9]/g, ''))}
-              />
-              <div style={{ height: '20px', marginBottom: '20px', marginLeft: '5px' }}>
-                                {cardPwdConfirm.length > 0 && cardPwd !== cardPwdConfirm && (
-                                    <span style={{ color: '#E63946', fontSize: '13px', fontWeight: '600' }}>
-                                        비밀번호가 동일하지 않습니다.
-                                    </span>
-                                )}
-                            </div>
+              {/* 카드 비밀번호 설정이 아니라 확인이므로 재입력은 제거함 */}
               <button 
-                className={`${styles.nextBtn} ${cardPwd.length !== 4 || cardPwd !== cardPwdConfirm ? styles.disabledBtn : ''}`}
-                disabled={cardPwd.length !== 4 || cardPwd !== cardPwdConfirm}
-                onClick={() => setIsPinModalOpen(true)}
+                className={`${styles.nextBtn} ${cardPwd.length !== 4 ? styles.disabledBtn : ''}`}
+                disabled={cardPwd.length !== 4}
+                onClick={handleAccountPasswordConfirm} // 비밀번호 확인 함수 호출
               >
                 다음 단계로
               </button>
@@ -232,7 +338,7 @@ const CheckCard = () => {
               <div className={styles.completeBox}>
                 <img src={checkIcon} alt="완료 체크" className={styles.checkIcon} />
                 <h3 className={styles.completeTitle}>카드 발급 신청 완료!</h3>
-                <p className={styles.completeDesc}>영업점에 방문해 실물카드를<br/>수령해 주세요</p>
+                <p className={styles.completeDesc}>발급신청이 완료되었습니다. 카드 수령은 발급 심사 후에<br/>창구에서 가능합니다.</p>
               </div>
               <button className={styles.nextBtn} onClick={() => navigate('/Main')}>홈 화면으로 이동</button>
             </div>

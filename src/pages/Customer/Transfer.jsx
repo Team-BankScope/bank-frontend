@@ -9,39 +9,53 @@ const Transfer = () => {
   const location = useLocation();
   const { openModal } = useModal();
 
-  const sourceAccount = location.state?.account || { balance: 1000000 };
+  const sourceAccount = location.state?.account || { balance: 0, accountNumber: '', accountAlias: '' };
 
   const [step, setStep] = useState(1); // 1: 이체 정보 입력, 2: 이체 완료
   
   const [transferData, setTransferData] = useState({
-    bank: '',
+    bank: 'BANKSCOPE', // 기본값
     accountNumber: '',
-    amount: ''
+    amount: '',
+    accountPassword: '' // 계좌 비밀번호 추가
   });
-
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const keypadLayout = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    const onlyNumber = value.replace(/[^0-9]/g, '');
-    setTransferData(prev => ({ ...prev, [name]: name === 'bank' ? value : onlyNumber }));
+    if (name === 'accountNumber' || name === 'amount') {
+        const onlyNumber = value.replace(/[^0-9]/g, '');
+        setTransferData(prev => ({ ...prev, [name]: onlyNumber }));
+    } else {
+        setTransferData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const isInsufficientBalance = Number(transferData.amount) > sourceAccount.balance;
 
-  const isFormValid = transferData.bank && transferData.accountNumber && transferData.amount && !isInsufficientBalance; // 잔액 부족이 아닐 때만 버튼 활성화
+  const isFormValid = transferData.bank && transferData.accountNumber && transferData.amount && transferData.accountPassword && !isInsufficientBalance; 
 
   const handleKeyClick = (val) => {
     if (pinInput.length < 6) setPinInput(prev => prev + val);
   };
   const handleDelete = () => setPinInput(prev => prev.slice(0, -1));
 
+  // 하이픈 추가 포맷팅 함수
+  const formatAccountNumber = (accountNumber) => {
+      if (!accountNumber) return '';
+      if (accountNumber.length === 12) {
+          return `${accountNumber.slice(0, 3)}-${accountNumber.slice(3, 6)}-${accountNumber.slice(6)}`;
+      }
+      return accountNumber;
+  };
+
   const handlePinConfirm = async () => {
     if (pinInput.length !== 6) return;
 
     try {
+      // 1. PIN 번호 검증
       const pinResponse = await fetch(`/api/pin/confirm?pin=${pinInput}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -50,10 +64,46 @@ const Transfer = () => {
       const pinData = await pinResponse.json();
 
       if (pinData.result === 'SUCCESS') {
-        console.log("핀 번호 일치! 이체 정보 전송:", transferData);
-        
-        setIsPinModalOpen(false);
-        setStep(2);
+        // 2. PIN 번호 일치 시 이체 API 호출
+        // 하이픈을 넣어서 서버로 전송
+        const formattedToAccountNumber = formatAccountNumber(transferData.accountNumber);
+
+        const params = new URLSearchParams({
+            fromAccountNumber: sourceAccount.accountNumber,
+            accountPassword: transferData.accountPassword,
+            toAccountNumber: formattedToAccountNumber,
+            amount: transferData.amount,
+            description: '이체'
+        });
+
+        const transferResponse = await fetch('/api/transaction/transfer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: params.toString()
+        });
+
+        const transferResult = await transferResponse.json();
+
+        if (transferResult.result === 'SUCCESS') {
+            setIsPinModalOpen(false);
+            setStep(2);
+        } else {
+            setIsPinModalOpen(false);
+            setPinInput('');
+            if (transferResult.result === 'FAILURE_INVALID_PASSWORD') {
+                openModal({ message: '계좌 비밀번호가 일치하지 않습니다.' });
+            } else if (transferResult.result === 'FAILURE_INSUFFICIENT_BALANCE') {
+                openModal({ message: '잔액이 부족합니다.' });
+            } else if (transferResult.result === 'FAILURE_INVALID_TO_ACCOUNT') {
+                openModal({ message: '입금하실 계좌가 유효하지 않거나 존재하지 않습니다.' });
+            } else if (transferResult.result === 'FAILURE_INVALID_ACCOUNT') {
+                openModal({ message: '출금 계좌 정보가 올바르지 않습니다.' });
+            } else {
+                openModal({ message: '이체 처리에 실패했습니다. 다시 시도해주세요.' });
+            }
+        }
       } else {
         openModal({ message: '핀 번호가 일치하지 않습니다.\n다시 입력해주세요.' });
         setPinInput('');
@@ -61,6 +111,8 @@ const Transfer = () => {
     } catch (error) {
       console.error('API 오류:', error);
       openModal({ message: '서버와 연결할 수 없습니다.' });
+      setIsPinModalOpen(false);
+      setPinInput('');
     }
   };
 
@@ -75,27 +127,24 @@ const Transfer = () => {
               
               <div className={styles.balanceBox}>
                 <div className={styles.balanceLabel}>
-                    출금 계좌: {sourceAccount.accoutAlias || '기본 입출금'} [{sourceAccount.accountNumber}]
+                    출금 계좌: {sourceAccount.accountAlias || '기본 입출금'} [{sourceAccount.accountNumber}]
                 </div>
                 <div className={styles.balanceLabel}>출금 가능 금액</div>
                 <div className={styles.balanceAmount}>
-                  {sourceAccount.balance.toLocaleString()} 원
+                  {sourceAccount.balance?.toLocaleString()} 원
                 </div>
               </div>
 
               <div className={styles.inputGroup}>
                 <div className={styles.inputRow}>
-                  <select 
+                  <select
                     name="bank" 
-                    className={styles.selectBox} 
+                    className={styles.selectBox}
                     value={transferData.bank}
                     onChange={handleInputChange}
                   >
                     <option value="">은행 선택</option>
-                    <option value="BANKSCOPE">뱅크스코프</option>
-                    <option value="KB">국민은행</option>
-                    <option value="SHINHAN">신한은행</option>
-                    <option value="HANA">하나은행</option>
+                    <option value="BANKSCOPE">BankScope</option>
                   </select>
                   
                   <input 
@@ -109,16 +158,27 @@ const Transfer = () => {
                 </div>
 
                 <input 
+                  type="password" 
+                  name="accountPassword"
+                  className={styles.inputBox} 
+                  placeholder="계좌 비밀번호 입력"
+                  value={transferData.accountPassword}
+                  onChange={handleInputChange}
+                  style={{ marginTop: '10px' }}
+                />
+
+                <input 
                   type="text" 
                   name="amount"
                   className={styles.inputBox} 
                   placeholder="보낼 금액 입력"
                   value={transferData.amount ? Number(transferData.amount).toLocaleString() : ''}
                   onChange={handleInputChange}
+                  style={{ marginTop: '10px' }}
                 />
                 
                 {isInsufficientBalance && (
-                  <div style={{ color: '#E63946', fontSize: '14px', marginTop: '-10px', marginLeft: '5px', fontWeight: '600' }}>
+                  <div style={{ color: '#E63946', fontSize: '14px', marginTop: '5px', marginLeft: '5px', fontWeight: '600' }}>
                     출금 가능 금액을 초과했습니다.
                   </div>
                 )}

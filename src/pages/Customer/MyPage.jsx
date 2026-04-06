@@ -352,7 +352,7 @@ const MyPage = () => {
                                 
                                 <div className={styles.accountActions}>
                                     <span className={styles.balance}>{account.balance?.toLocaleString()} 원</span>
-                                    {account.accountType === 'DEMAND' && account.status == 'ACTIVE' && (
+                                    {account.accountType === 'CHECKING' && account.status == 'ACTIVE' && (
                                         <button 
                                             className={styles.transferBtn}
                                             onClick={() => navigate('/Transfer', { state: { account } })}
@@ -405,6 +405,10 @@ const MyPage = () => {
                             onClick={() => setActiveTab('accounts')}
                         >
                             <span>계좌 관리</span>
+                            <img src={arrowImg} alt="Select" className={styles.chevronImg} />
+                        </div>
+                        <div className={styles.menuItem}>
+                            <span>내 카드 관리</span>
                             <img src={arrowImg} alt="Select" className={styles.chevronImg} />
                         </div>
                     </div>
