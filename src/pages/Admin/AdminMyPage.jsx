@@ -5,7 +5,7 @@ import CustomModal from '../../components/common/CustomModal.jsx';
 import styles from './AdminMyPage.module.css';
 
 const AdminMyPage = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth(); // logout 함수 추가
   const navigate = useNavigate();
 
   // 비밀번호 입력 상태
@@ -37,9 +37,9 @@ const AdminMyPage = () => {
   };
 
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!passwords.currentPassword || !passwords.newPassword || !passwords.confirmPassword) {
       setMessage({ type: 'error', text: '모든 필드를 입력해주세요.' });
       return;
@@ -48,20 +48,62 @@ const AdminMyPage = () => {
       setMessage({ type: 'error', text: '새 비밀번호가 일치하지 않습니다.' });
       return;
     }
-    
+
+    // 비밀번호 정규식 검사 (영문, 숫자 포함 8자리 이상) - 백엔드와 동일한 기준 적용
+    /*const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
+    if (!passwordRegex.test(passwords.newPassword)) {
+        setMessage({ type: 'error', text: '비밀번호는 영문, 숫자를 포함하여 8자 이상이어야 합니다.' });
+        return;
+    }*/
+
     // 모든 검증 통과 시 모달 열기
     setMessage({ type: '', text: '' });
     setModalType('confirm'); 
   };
 
-  // 비밀번호 변경 로직 실행
-  const executePasswordChange = () => {
-    setTimeout(() => {
-      setModalType('success');
-    }, 150);
-  };
+  const executePasswordChange = async () => {
+    try {
+        const requestBody = {
+            oldPassword: passwords.currentPassword,
+            newPassword: passwords.confirmPassword
+        };
 
-  // 성공 모달 확인 버튼 클릭 시 실행되는 함수
+        const response = await fetch('/api/user/password', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+
+            switch (data.result) {
+                case 'SUCCESS':
+                    setModalType('success');
+                break;
+                case 'FAILURE'  :
+                    setModalType('');
+                    setMessage({ type: 'error', text: '기존 비밀번호가 일치하지 않거나 변경에 실패했습니다.' });
+                break;
+                case 'FAILURE_SESSION'  :
+                    setModalType('');
+                    setMessage({ type: 'error', text: '세션 정보가 만료되었습니다. 다시 로그인해주세요.' });
+                    if (logout) await logout();
+                    navigate('/adminlogin');
+                break;
+            }
+        } else {
+            setModalType('');
+            setMessage({ type: 'error', text: '서버 오류가 발생했습니다.' });
+        }
+    } catch (error) {
+        console.error("비밀번호 변경 오류:", error);
+        setModalType('');
+        setMessage({ type: 'error', text: '네트워크 오류가 발생했습니다.' });
+    }
+  };
   const handleSuccessConfirm = () => {
     setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
     setModalType('');
