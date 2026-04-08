@@ -305,6 +305,7 @@ const MyPage = () => {
     // 2. 계정 보안
     const renderSecurity = () => (
         <div className={styles.securityWrapper}>
+
             <div className={styles.securityCard} onClick={() => navigate('/PinSetup')} style={{ cursor: 'pointer' }}>
                 <img src={lockImg} alt="Lock" className={styles.securityIconImg} />
                 <span className={styles.securityTitle}>핀번호 생성</span>

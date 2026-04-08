@@ -219,8 +219,8 @@
 }
 
 .empty {
-    padding: 40px;
-    color: #9ca3af;
+    padding: 60px !important;
+    color: rgb(153, 153, 153) !important;
 }
 
 .adminModalOverlay {

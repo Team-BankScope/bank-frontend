@@ -15,7 +15,7 @@ const ProductManagement = () => {
 
     const categories = [
         { id: 'DEPOSIT', label: '예금' },
-        { id: 'SAVING', label: '적금' },
+        { id: 'SAVINGS', label: '적금' },
         { id: 'LOAN', label: '대출' },
         { id: 'FUND', label: '펀드' }
     ];
@@ -37,21 +37,30 @@ const ProductManagement = () => {
 
     const [formData, setFormData] = useState(initialFormState);
 
-    // ==========================================
-    // [백엔드 연동] 금융 상품 리스트 조회
-    // ==========================================
+
     const fetchProducts = async () => {
         setIsLoading(true);
-        // 로딩 애니메이션 확인용 
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        const mockData = [
-            { productId: 1, productCategory: 'DEPOSIT', productName: 'Star 정기예금', targetAudience: '개인', minDurationMonths: 6, maxDurationMonths: 12, minAmount: 1000000, maxAmount: 50000000, baseInterestRate: 3.20, maxInterestRate: 3.50, interestType: '단리', isActive: true },
-            { productId: 2, productCategory: 'DEPOSIT', productName: '쏠편한 정기예금', targetAudience: '개인/법인', minDurationMonths: 1, maxDurationMonths: 6, minAmount: 500000, maxAmount: 100000000, baseInterestRate: 3.30, maxInterestRate: 3.60, interestType: '복리', isActive: true },
-        ];
-        
-        setProductList(activeTab === 'DEPOSIT' ? mockData : []);
-        setIsLoading(false);
+        try {
+            const response = await fetch(`/api/product/?category=${activeTab}&page=1`);
+            const data = await response.json();
+            
+            switch (data.result) {
+                case 'SUCCESS':
+                    setProductList(data.products || []);
+                    break;
+                case 'FAILURE_SESSION':
+                    openModal({ message: "세션이 만료되었습니다. 다시 로그인해주세요.", confirmText: "확인" });
+                    break;
+                default:
+                    openModal({ message: "상품 목록을 불러오는데 실패했습니다.", confirmText: "확인" });
+                    break;
+            }
+        } catch (error) {
+            console.error("상품 조회 에러:", error);
+            openModal({ message: "서버와 통신 중 오류가 발생했습니다.", confirmText: "확인" });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     useEffect(() => {
@@ -63,20 +72,18 @@ const ProductManagement = () => {
         const { name, value, type, checked } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked : value
+            [name]: type === 'checkbox' ? checked : (type === 'number' ? Number(value) : value)
         }));
     };
 
     const handleCheck = (id) => {
         setCheckedItems(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
     };
+    
     const handleCheckAll = (e) => {
         setCheckedItems(e.target.checked ? productList.map(item => item.productId) : []);
     };
 
-    // ==========================================
-    // [백엔드 연동] 상품 추가 / 수정
-    // ==========================================
     const handleSubmit = async () => {
         if (!formData.productName) {
             openModal({ message: "상품명을 입력해주세요.", confirmText: "확인" });
@@ -84,23 +91,46 @@ const ProductManagement = () => {
         }
 
         setIsLoading(true);
-        // 백엔드 연동 시 여기에 API 전송 로직 작성
-        await new Promise(resolve => setTimeout(resolve, 500)); // 가짜 딜레이
-
         const isEdit = selectedItem !== null;
         
-        setIsFormModalOpen(false); 
-        openModal({
-            message: isEdit ? "상품 정보가 수정되었습니다." : "상품이 등록되었습니다.",
-            confirmText: "확인",
-            onConfirm: () => fetchProducts() // 임시로 다시 목록 불러오기
-        });
-        setIsLoading(false);
+        try {
+            const url = isEdit ? `/api/product/${formData.productId}` : '/api/product/';
+            const method = isEdit ? 'PATCH' : 'POST';
+            
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            const data = await response.json();
+
+            switch (data.result) {
+                case 'SUCCESS':
+                    setIsFormModalOpen(false); 
+                    openModal({
+                        message: isEdit ? "상품 정보가 수정되었습니다." : "상품이 등록되었습니다.",
+                        confirmText: "확인",
+                        onConfirm: () => fetchProducts()
+                    });
+                    break;
+                case 'FAILURE_SESSION':
+                    openModal({ message: "세션이 만료되었습니다. 다시 로그인해주세요.", confirmText: "확인" });
+                    break;
+                case 'FAILURE_UNAUTHORIZED':
+                    openModal({ message: "관리자 권한이 필요합니다.", confirmText: "확인" });
+                    break;
+                default:
+                    openModal({ message: "상품 처리에 실패했습니다.", confirmText: "확인" });
+                    break;
+            }
+        } catch (error) {
+            console.error("상품 저장 에러:", error);
+            openModal({ message: "서버와 통신 중 오류가 발생했습니다.", confirmText: "확인" });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    // ==========================================
-    // [백엔드 연동] 상품 삭제
-    // ==========================================
     const handleDelete = (id) => {
         openModal({
             message: "정말로 이 상품을 삭제하시겠습니까?",
@@ -108,14 +138,30 @@ const ProductManagement = () => {
             cancelText: "취소",
             onConfirm: async () => {
                 setIsLoading(true);
-                // 백엔드 연동 시 여기에 API 호출
-                await new Promise(resolve => setTimeout(resolve, 500)); // 가짜 딜레이
-                
-                // 화면에서 임시로 삭제 처리 보여주기
-                setProductList(prev => prev.filter(item => item.productId !== id));
-                openModal({ message: "삭제되었습니다.", confirmText: "확인" });
-                
-                setIsLoading(false);
+                try {
+                    const response = await fetch(`/api/product/${id}`, {
+                        method: 'DELETE'
+                    });
+                    const data = await response.json();
+
+                    switch (data.result) {
+                        case 'SUCCESS':
+                            setProductList(prev => prev.filter(item => item.productId !== id));
+                            openModal({ message: "삭제되었습니다.", confirmText: "확인" });
+                            break;
+                        case 'FAILURE_SESSION':
+                            openModal({ message: "세션이 만료되었습니다. 다시 로그인해주세요.", confirmText: "확인" });
+                            break;
+                        default:
+                            openModal({ message: "상품 삭제에 실패했습니다.", confirmText: "확인" });
+                            break;
+                    }
+                } catch (error) {
+                    console.error("상품 삭제 에러:", error);
+                    openModal({ message: "서버와 통신 중 오류가 발생했습니다.", confirmText: "확인" });
+                } finally {
+                    setIsLoading(false);
+                }
             }
         });
     };
@@ -126,10 +172,31 @@ const ProductManagement = () => {
         setIsFormModalOpen(true);
     };
 
-    const handleEditClick = (item) => {
-        setSelectedItem(item);
-        setFormData({ ...item }); 
-        setIsFormModalOpen(true);
+    const handleEditClick = async (item) => {
+        setIsLoading(true);
+        try {
+            const response = await fetch(`/api/product/${item.productId}`);
+            const data = await response.json();
+            
+            switch (data.result) {
+                case 'SUCCESS':
+                    setSelectedItem(data.product);
+                    setFormData({ ...data.product });
+                    setIsFormModalOpen(true);
+                    break;
+                case 'FAILURE_PRODUCT_NOT_FOUND':
+                    openModal({ message: "상품을 찾을 수 없습니다.", confirmText: "확인" });
+                    break;
+                default:
+                    openModal({ message: "상품 정보를 불러오는데 실패했습니다.", confirmText: "확인" });
+                    break;
+            }
+        } catch (error) {
+            console.error("상품 상세 조회 에러:", error);
+            openModal({ message: "서버와 통신 중 오류가 발생했습니다.", confirmText: "확인" });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -186,14 +253,14 @@ const ProductManagement = () => {
                                             <input type="checkbox" checked={checkedItems.includes(item.productId)} onChange={() => handleCheck(item.productId)} />
                                         </td>
                                         <td className={`${styles.leftAlign} ${styles.productName}`}>{item.productName}</td>
-                                        <td className={styles.subText}>{item.targetAudience}</td>
+                                        <td className={styles.subText}>{item.targetAudience || '개인'}</td>
                                         <td className={styles.subText}>{item.minDurationMonths} ~ {item.maxDurationMonths}개월</td>
                                         <td className={styles.subText}>
-                                            {(item.minAmount / 10000).toLocaleString()}만 ~ {(item.maxAmount / 10000).toLocaleString()}만
+                                            {item.minAmount ? (item.minAmount / 10000).toLocaleString() : 0}만 ~ {item.maxAmount ? (item.maxAmount / 10000).toLocaleString() : 0}만
                                         </td>
-                                        <td className={styles.baseRate}>{item.baseInterestRate?.toFixed(2)}%</td>
-                                        <td className={styles.maxRate}>{item.maxInterestRate?.toFixed(2)}%</td>
-                                        <td><span className={styles.typeBadge}>{item.interestType}</span></td>
+                                        <td className={styles.baseRate}>{item.baseInterestRate?.toFixed(2) || '0.00'}%</td>
+                                        <td className={styles.maxRate}>{item.maxInterestRate?.toFixed(2) || '0.00'}%</td>
+                                        <td><span className={styles.typeBadge}>{item.interestType || '단리'}</span></td>
                                         <td>
                                             <span className={`${styles.statusBadge} ${item.isActive ? styles.active : styles.inactive}`}>
                                                 {item.isActive ? '판매중' : '판매종료'}
@@ -245,7 +312,7 @@ const ProductManagement = () => {
 
                                     <div className={styles.adminFormRow}>
                                         <label>가입 대상</label>
-                                        <select name="targetAudience" value={formData.targetAudience} onChange={handleInputChange}>
+                                        <select name="targetAudience" value={formData.targetAudience || '개인'} onChange={handleInputChange}>
                                             <option value="개인">개인</option>
                                             <option value="법인">법인</option>
                                             <option value="개인/법인">개인/법인</option>
@@ -253,7 +320,7 @@ const ProductManagement = () => {
                                     </div>
                                     <div className={styles.adminFormRow}>
                                         <label>이자 방식</label>
-                                        <select name="interestType" value={formData.interestType} onChange={handleInputChange}>
+                                        <select name="interestType" value={formData.interestType || '단리'} onChange={handleInputChange}>
                                             <option value="단리">단리</option>
                                             <option value="복리">복리</option>
                                         </select>

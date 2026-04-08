@@ -125,11 +125,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 32px;
+
 }
 
 .managementTitle {
-  font-size: 30px;
+  font-size: 2rem;
   font-weight: bold;
   color: #333;
   margin-bottom: 48px;
@@ -241,15 +241,14 @@
    [탭 3] 계좌 조회
 ========================================== */
 .accountsWrapper {
-  padding-top: 32px;
   padding-left: 40px;
 }
 
 .sectionTitle {
-  font-size: 24px;
+  font-size: 2rem;
   font-weight: bold;
   color: #333;
-  margin-bottom: 32px;
+  /*margin-bottom: 32px;*/
 }
 
 .accountList {
@@ -441,8 +440,9 @@
   .securityTitle { font-size: 18px; }
 
   /* [탭 3] 계좌 조회 모바일 디테일 */
-  .accountsWrapper { padding-top: 10px; padding-left: 0; }
-  .sectionTitle { font-size: 20px; margin-bottom: 20px; }
+  .accountsWrapper { padding-left: 0; }
+  .sectionTitle { font-size: 24px; margin-bottom: 20px; }
+
   .accountList { 
     padding-right: 0; 
     max-height: none; /* PC 버전에 있던 600px 높이 제한 풀기 */

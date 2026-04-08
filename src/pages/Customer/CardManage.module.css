@@ -4,7 +4,7 @@
 }
 
 .sectionTitle {
-  font-size: 20px;
+  font-size: 2rem;
   font-weight: 700;
   margin-bottom: 20px;
   color: #222;
@@ -82,6 +82,7 @@
   font-size: 18px;
   font-weight: 700;
   color: #333;
+  text-align: left;
 }
 
 .cardNumber {
@@ -219,4 +220,12 @@
   .cardDetailBox { grid-template-columns: 1fr; }
   .cardLeft { margin-bottom: 10px; }
   .cardImage { transform: none; width: 40px; margin-left: 0; } /* 모바일에서는 다시 세우기 */
+
+  .sectionTitle {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #222;
+  }
+
 }

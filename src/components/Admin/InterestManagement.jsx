@@ -26,7 +26,7 @@ export default function InterestManagement() {
   useEffect(() => {
     const fetchProducts = async () => {
       setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 300));
+      /*await new Promise(resolve => setTimeout(resolve, 300))*/;
       
       let mockProducts = activeTab === 'DEPOSIT' ? [
         { id: 1, name: 'Star 정기예금', beforeRate: '3.20', currentRate: '3.50', type: '정기예금', trend: 'up' },
@@ -76,7 +76,7 @@ export default function InterestManagement() {
 
   return (
     <div className={styles.layout}>
-      {isLoading && <Loading message="데이터를 처리 중입니다..." />}
+      {/*{isLoading && <Loading message="데이터를 처리 중입니다..." />}*/}
 
       <div className={styles.header}>
         <h2 className={styles.pageTitle}>금리 관리</h2>
