@@ -195,6 +195,7 @@
 
 /* 💡 3. 노란색 알림 배너 */
 .notificationBanner {
+    position: absolute;
     background-color: #f7d77b;
     color: #ffffff;
     padding: 8px 20px;
@@ -202,10 +203,10 @@
     font-weight: bold;
     font-size: 14px;
     text-shadow: 0px 1px 2px rgba(0,0,0,0.1);
-    position: relative;
     margin-left: 20px;
     z-index: 1000;
     cursor: pointer;
+    right: 35rem;
 }
 
 /* 💡 4. 우측 돋보기 슬라이더 */
@@ -264,7 +265,7 @@
 
 /* --- 좌측 고객 대기열 (Sidebar) --- */
 .leftSidebar {
-    width: 320px;
+    width: 280px;
     border-right: 1px solid #e0e0e0;
     padding: 20px;
     display: flex;
@@ -373,21 +374,7 @@
     color: #777;
 }
 
-.cardActions {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-}
 
-.cardActions button {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-.btnAccept { background: #81e6d9; color: white; width: 100%; }
 .btnProcessing { background: #a0aec0; color: white; }
 .btnComplete { background: #35987c; color: white; }
 
@@ -471,6 +458,7 @@
     background: #f4faf9;
     padding: 20px;
     border-radius: 10px;
+    position: relative;
 }
 
 .accountHeader {
@@ -493,10 +481,12 @@
 
 /* 상세 화면 우측 사이드바 */
 .rightSidebar {
-    width: 280px;
+    width: 200px;
     display: flex;
     flex-direction: column;
     gap: 15px;
+    font-size: 0.8rem;
+    margin-top: 0.5rem ;
 }
 
 .infoBox {
@@ -748,8 +738,7 @@
     padding:10px;
     border:none;
     background:#35987c;
-    color:white;
-    border-radius:8px;
+    color:white;;
     cursor:pointer;
     font-weight:600;
     border-radius:12px;
@@ -772,4 +761,88 @@
 .btnAccept:hover{
     background:#36c2cd;
     transform:translateY(-1px);
+}
+.btnToss {
+    padding:8px 12px;
+    border:none;
+    background: #b5b5b5;
+    color: #ffffff;
+    border-radius:20px;
+    cursor:pointer;
+    font-size:13px;
+    font-weight:500;
+    transition:all 0.2s ease;
+}
+.btnToss:hover {
+    background: #8f8f8f;
+    transform:translateY(-1px);
+}
+.cardActions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.cardActions button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btnStart{
+    padding:8px 12px;
+    border:none;
+    background:#5abcb0;
+    color:white;
+    border-radius:20px;
+    cursor:pointer;
+    font-size:13px;
+    font-weight:500;
+    transition:all 0.2s ease;
+    width: 100%;
+}
+.btnStart:hover {
+    background: #36c2cd;
+    transform: translateY(-1px);
+}
+.backCard {
+    display: flex;
+}
+.backButton {
+    padding: 8px 8px;
+    color: #212121;
+    border-radius: 12px;
+    cursor:pointer;
+    font-size:13px;
+    font-weight:500;
+    transition:all 0.2s ease;
+    width:20%;
+    background-color: #ffff;
+    border : 1px solid #00a884;
+}
+.taskLog {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 1rem 0;
+    position: relative;
+}
+.taskLog  textarea {
+    width: 100%;
+    min-height: 8rem;
+    /*border: none;*/
+    padding: 20px;           /* 안쪽 여백 추가 */
+    /* 🔥 이 코드가 핵심입니다! */
+    box-sizing: border-box;
+    border: 1px solid #00a884;
+    resize: none;
+    border-radius: 0.5rem;
+}
+.taskLog  textarea:focus {
+    outline: none;
+    border: 1px solid #3f9f89;
+
 }

@@ -25,7 +25,8 @@ const calcLevel = (taskType = "") => {
 };
 
 const formatTime = (seconds) => {
-  if (!seconds) return "--:--";
+  if (seconds < 0) seconds = 0;
+  if (!seconds && seconds !== 0) return "--:--";
   const m = Math.floor(seconds / 60).toString().padStart(2, "0");
   const s = (seconds % 60).toString().padStart(2, "0");
   return `${m}:${s}`;
@@ -67,13 +68,14 @@ export default function Admin_dashboard() {
         const data = await res.json();
         if (data.result === 'SUCCESS' && Array.isArray(data.data)) {
           setQueue(data.data.map(q => ({
-            id:           q.ticketNumber,
-            taskId:       q.taskId,
-            name:         q.userName,
-            prediction:   q.taskType,
-            assignedTo:   q.memberId,
-            assignedName: q.memberName,
-            level:        calcLevel(q.taskType),
+            id:               q.ticketNumber,
+            taskId:           q.taskId,
+            name:             q.userName,
+            prediction:       q.taskType,
+            taskDetailType:   q.taskDetailType,
+            assignedTo:       q.memberId,
+            assignedName:     q.memberName,
+            level:            calcLevel(q.taskType),
           })));
         }
       }
@@ -127,15 +129,17 @@ export default function Admin_dashboard() {
             if (t.currentTaskStatus === '업무중' && t.taskStartedAt) {
               calculatedElapsed = Math.floor((now - new Date(t.taskStartedAt).getTime()) / 1000);
             }
+            console.log(rawList)
             return {
-              id:           t.memberId,
-              name:         t.memberName,
-              level:        t.memberLevel,
-              role:         t.memberRank || '행원',
-              processed:    t.todayCompletedCount || 0,
-              status:       t.currentTaskStatus,
-              startTimeRaw: t.taskStartedAt,
-              elapsedTime:  Math.max(0, calculatedElapsed),
+              id:                   t.memberId,
+              name:                 t.memberName,
+              level:                t.memberLevel,
+              role:                 t.memberRank || '행원',
+              processed:            t.todayCompletedCount || 0,
+              status:               t.currentTaskStatus,
+              startTimeRaw:         t.taskStartedAt,
+              elapsedTime:          Math.max(0, calculatedElapsed),
+              expectedWaitingTime:  t.expectedWaitingTime, // 분 단위 예상시간
             };
           });
           mappedTellers.sort((a, b) => a.level !== b.level ? a.level - b.level : a.name.localeCompare(b.name));
@@ -255,7 +259,11 @@ export default function Admin_dashboard() {
             {tellers.length === 0
               ? <div className={styles.emptyState}>활성 창구 정보가 없습니다.</div>
               : tellers.map(t => {
-                  const isDelayed = (t.elapsedTime || 0) >= 1200;
+                  // 동적 지연 기준 시간 계산 (분 -> 초)
+                  const delayThreshold = (t.expectedWaitingTime || 0) * 60;
+                  const isDelayed = t.status === "업무중" && (t.elapsedTime || 0) >= delayThreshold;
+                  const delayOverageSeconds = isDelayed ? (t.elapsedTime || 0) - delayThreshold : 0;
+
                   return (
                     <div key={t.id || t.name} className={`${styles.tellerRow} ${isDelayed ? styles.delayed : ''}`}>
                       <div className={styles.tellerLeft}>
@@ -272,7 +280,7 @@ export default function Admin_dashboard() {
                         <div className={styles.tStatusWrapper}>
                           {t.status === "업무중" ? (
                             <span className={styles.tStatusBadge} style={{ background: isDelayed ? "#fee2e2" : "#dcfce7", color: isDelayed ? "#991b1b" : "#166534" }}>
-                              {isDelayed ? "업무 지연" : "업무중"}
+                              {isDelayed ? `지연 (+${formatTime(delayOverageSeconds)})` : "업무중"}
                             </span>
                           ) : (
                             <span className={styles.tStatusBadge} style={{ background: "#f1f5f9", color: "#64748b" }}>대기중</span>
@@ -361,12 +369,15 @@ export default function Admin_dashboard() {
                 : (
                   <table className={styles.table}>
                     <colgroup>
-                      <col style={{ width: '12%' }} /><col style={{ width: '15%' }} />
-                      <col style={{ width: '23%' }} /><col style={{ width: '22%' }} />
-                      <col style={{ width: '28%' }} />
+                      <col style={{ width: '10%' }} />
+                      <col style={{ width: '13%' }} />
+                      <col style={{ width: '18%' }} />
+                      <col style={{ width: '18%' }} />
+                      <col style={{ width: '18%' }} />
+                      <col style={{ width: '23%' }} />
                     </colgroup>
                     <thead style={{ position: "sticky", top: 0, backgroundColor: "#fff", zIndex: 10 }}>
-                      <tr><th>대기번호</th><th>고객명</th><th>업무</th><th>배정된 창구</th><th>관리</th></tr>
+                      <tr><th>대기번호</th><th>고객명</th><th>업무</th><th>세부업무</th><th>배정된 창구</th><th>관리</th></tr>
                     </thead>
                     <tbody>
                       {queue.map(q => {
@@ -377,6 +388,7 @@ export default function Admin_dashboard() {
                             <td style={{ fontWeight: 800 }}>{q.id}</td>
                             <td>{q.name}</td>
                             <td><span className={styles[`levelText${q.level || 1}`]} style={{ fontWeight: 700 }}>{q.prediction}</span></td>
+                            <td>{q.taskDetailType || '-'}</td>
                             <td>
                               {assigned ? (
                                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>

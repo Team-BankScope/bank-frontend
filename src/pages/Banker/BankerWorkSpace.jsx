@@ -3,9 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import styles from './BankerWorkSpace.module.css';
 import WorkSpaceBackground from '../../images/Banker/WorkSpaceBackground.png';
 import { useAuth } from '../../context/AuthContext';
-import AccountCreateForm from "../../pages/Banker/AccountCreate";
+import AccountCreateForm from "../../components/Banker/AccountCreate.jsx";
+import Accounts from "../../components/Banker/Accounts.jsx";
 import ChatModal from "../../pages/Banker/ChatModal.jsx";
 import CustomModal from '../../components/common/CustomModal';
+import TossModal from '../../components/Banker/TossModal';
+import Deposit from '../../components/Banker/Deposit';
+import Withdraw from "../../components/Banker/Withdraw.jsx";
+import TaskSelect from "../../components/Banker/TaskSelect.jsx";
+
 
 const BankerWorkSpace = () => {
     const [tasks, setTasks] = useState([]);
@@ -16,6 +22,8 @@ const BankerWorkSpace = () => {
         { sender: "customer", text: "안녕하세요 상담 요청드립니다." },
         { sender: "banker", text: "네 고객님 무엇을 도와드릴까요?" }
     ]);
+    const [isTossModalOpen, setIsTossModalOpen] = useState(false);
+    const [taskToToss, setTaskToToss] = useState(null); // 어떤 업무를 이관할지 저장
 
     const [selectedWorkType, setSelectedWorkType] = useState(null);
 
@@ -52,6 +60,29 @@ const BankerWorkSpace = () => {
             modalConfig.onConfirm();
         }
     };
+    const handleTaskMenuSelect = (taskTitle) => {
+        // TaskSelect에서 넘어온 제목에 따라 mapping
+        switch (taskTitle) {
+            case "계좌 개설":
+                setSelectedWorkType("ACCOUNT_CREATE");
+                break;
+            case "입금":
+                setSelectedWorkType("DEPOSIT");
+                break;
+            case "출금":
+                setSelectedWorkType("WITHDRAW");
+                break;
+            case "예금":
+                setSelectedWorkType("ACCOUNTS");
+                break;
+            case "적금":
+                setSelectedWorkType("ACCOUNTS");
+                break;
+            default:
+                setSelectedWorkType(null);
+                break;
+     }
+     }
 
     useEffect(() => {
         if (!loading && !user) {
@@ -108,11 +139,71 @@ const BankerWorkSpace = () => {
                 { sender: "customer", text: "안녕하세요 상담 요청드립니다." },
                 { sender: "banker", text: "네 고객님 무엇을 도와드릴까요?" }
             ]);
-            
+
             // selectedTask가 IN_PROGRESS이고 계좌 개설 업무이면 폼을 바로 염
-            if (selectedTask.status === 'IN_PROGRESS' && 
-                (selectedTask.taskType === "계좌 개설" || selectedTask.taskDetailType === "계좌 개설")) {
+            if (selectedTask.status === 'IN_PROGRESS' &&
+                (selectedTask.taskType === "입출금 계좌 개설" || selectedTask.taskDetailType === "계좌 개설")) {
                 setSelectedWorkType("ACCOUNT_CREATE");
+            }
+            if (selectedTask.status === 'IN_PROGRESS' &&
+                ( selectedTask.taskDetailType === "예금" || selectedTask.taskDetailType === "적금" || selectedTask.taskDetailType === "법인계좌 개설")) {
+                setSelectedWorkType("ACCOUNTS");
+            }
+            if (selectedTask.status === 'IN_PROGRESS' &&
+                ( selectedTask.taskDetailType ==="입금")) {
+                setSelectedWorkType("DEPOSIT");
+            }
+            if (selectedTask.status === 'IN_PROGRESS' &&
+                ( selectedTask.taskDetailType ==="출금")) {
+                setSelectedWorkType("WITHDRAW");
+            }
+            if (selectedTask.status === 'IN_PROGRESS' &&
+                ( selectedTask.taskDetailType ==="이체")) {
+                setSelectedWorkType("TRANSFER");
+            }
+            if (selectedTask.status === 'IN_PROGRESS' &&
+                ( selectedTask.taskDetailType ==="카드수령")) {
+                setSelectedWorkType("CARD-ACCEPT");
+            }
+            if (selectedTask.status === 'IN_PROGRESS' &&
+                ( selectedTask.taskDetailType ==="카드")) {
+                setSelectedWorkType("CHECK-CARD");
+            }
+            if (selectedTask.status === 'IN_PROGRESS' &&
+                ( selectedTask.taskDetailType ==="대출상황")) {
+                setSelectedWorkType("LOAN-PAYMENT");
+            }
+            if (selectedTask.status === 'IN_PROGRESS' &&
+                ( selectedTask.taskDetailType ==="카드")) {
+                setSelectedWorkType("CREDIT-CARD");
+            }
+            if (selectedTask.status === 'IN_PROGRESS' &&
+                ( selectedTask.taskDetailType ==="금융상품")) {
+                setSelectedWorkType("FINANCIAL-PRODUCT");
+            }
+            if (selectedTask.status === 'IN_PROGRESS' &&
+                ( selectedTask.taskDetailType ==="통장비밀번호 변경")) {
+                setSelectedWorkType("CHANGE-PASSWORD");
+            }
+            if (selectedTask.status === 'IN_PROGRESS' &&
+                ( selectedTask.taskDetailType ==="기업대출")) {
+                setSelectedWorkType("CORPORATE-LOAN");
+            }
+            if (selectedTask.status === 'IN_PROGRESS' &&
+                ( selectedTask.taskDetailType ==="법인계좌")) {
+                setSelectedWorkType("CORPORATE-ACCOUNT");
+            }
+            if (selectedTask.status === 'IN_PROGRESS' &&
+                ( selectedTask.taskDetailType ==="법인카드")) {
+                setSelectedWorkType("CORPORATE-CARD");
+            }
+            if (selectedTask.status === 'IN_PROGRESS' &&
+                ( selectedTask.taskDetailType ==="부도관리")) {
+                setSelectedWorkType("BANKRUPT-MANAGEMENT");
+            }
+            if (selectedTask.status === 'IN_PROGRESS' &&
+                ( selectedTask.taskDetailType ==="연체관리")) {
+                setSelectedWorkType("DELINQUENT-MANAGEMENT");
             }
         }
     }, [selectedTask]);
@@ -120,7 +211,7 @@ const BankerWorkSpace = () => {
     useEffect(() => {
         if (selectedTask) {
             const currentTaskInList = tasks.find(t => t.taskId === selectedTask.taskId);
-            
+
             // 만약 목록에 아예 없거나(필터링됨), 상태가 COMPLETED라면 선택 해제
             if (!currentTaskInList || currentTaskInList.status === 'COMPLETED') {
                 setSelectedTask(null);
@@ -396,7 +487,7 @@ const BankerWorkSpace = () => {
         if (!age) return null;
         const numAge = Number(age);
         if (isNaN(numAge)) return null;
-        
+
         if (numAge < 20) return "10대";
         if (numAge < 30) return "20대";
         if (numAge < 40) return "30대";
@@ -440,8 +531,6 @@ const BankerWorkSpace = () => {
                                 <button className={styles.headerBtn} onClick={handleLogout}>로그아웃</button>
                                 <button className={styles.headerBtn}>비밀번호 변경</button>
                             </div>
-
-                            {selectedTask && (
                                 <div
                                     className={styles.notificationBanner}
                                     onClick={(e) => {
@@ -452,7 +541,7 @@ const BankerWorkSpace = () => {
                                 >
                                     🔔 고객님의 채팅 상담업무가 도착했습니다
                                 </div>
-                            )}
+
                         </div>
                     </header>
 
@@ -493,6 +582,7 @@ const BankerWorkSpace = () => {
                                                         <button className={styles.btnProcessing}>처리중..</button>
                                                     </>
                                                 ) : (
+                                                    <>
                                                     <button
                                                         className={styles.btnAccept}
                                                         onClick={(e) => {
@@ -502,6 +592,17 @@ const BankerWorkSpace = () => {
                                                     >
                                                         업무 수락
                                                     </button>
+                                                        <button
+                                                            className={styles.btnToss}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setTaskToToss(task); // 이관할 태스크 저장
+                                                                setIsTossModalOpen(true); // 모달 열기
+                                                            }}
+                                                        >
+                                                            창구이관
+                                                        </button>
+                                                    </>
                                                 )}
                                             </div>
                                         </div>
@@ -530,79 +631,151 @@ const BankerWorkSpace = () => {
                                             </div>
                                         </div>
                                         <div className={styles.accountList}>
-
                                             <div className={styles.accountCard}>
-
-                                                <div className={styles.accountHeader}>
-                                                    <h3>요청 업무</h3>
-                                                    <span className={styles.tagBlue}>{selectedTask.taskType}</span>
-                                                </div>
-
-                                                {selectedTask.status !== 'IN_PROGRESS' && (
+                                                {selectedWorkType === "TASK_SELECT" ? (
+                                                    <TaskSelect
+                                                        onSelectTask={(taskTitle) => handleTaskMenuSelect(taskTitle)}
+                                                    />
+                                                ) : (
                                                     <>
-                                                        <p>상세 내용: {selectedTask.taskDetailType}</p>
-                                                        <p>접수 시간: {selectedTask.createdAt}</p>
+                                                        <div className={styles.accountHeader}>
+                                                            <h3>요청 업무</h3>
+                                                            <span className={styles.tagBlue}>{selectedTask.taskType}</span>
+                                                        </div>
+
+                                                        {selectedTask.status !== 'IN_PROGRESS' && (
+                                                            <>
+                                                                <p>상세 내용: {selectedTask.taskDetailType}</p>
+                                                                <p>접수 시간: {selectedTask.createdAt}</p>
+                                                            </>
+                                                        )}
+
+                                                        {!selectedWorkType && (
+                                                            selectedTask.status === 'WAITING' ? (
+                                                                <button
+                                                                    className={styles.btnStart}
+                                                                    style={{ marginTop: "10px" }}
+                                                                    onClick={() => handleAcceptTask(selectedTask)}
+                                                                >
+                                                                    업무 수락
+                                                                </button>
+                                                            ) : (
+                                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px', marginTop: '20px' }}>
+                                                                    <div>테스트용 취소/ 업무종료 버튼</div>
+                                                                    <div style={{ display: 'flex', width: '100%', gap: '10px' }}>
+                                                                        <button
+                                                                            className={styles.btnAccept}
+                                                                            onClick={() => handleCancelAcceptTask(selectedTask)}
+                                                                            style={{ color: '#eaeaea' }}
+                                                                        >
+                                                                            취소
+                                                                        </button>
+                                                                        <button
+                                                                            className={styles.btnAccept}
+                                                                            onClick={() => handleCompleteTask(selectedTask)}
+                                                                        >
+                                                                            업무 종료
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            )
+                                                        )}
+
+                                                        {/*빠른업무*/}
+
+                                                        {/*입출금 (일반 예금) 계좌개설*/}
+                                                        {selectedWorkType === "ACCOUNT_CREATE" && (
+                                                            <AccountCreateForm
+                                                                accountType={accountType}
+                                                                setAccountType={setAccountType}
+                                                                accountAlias={accountAlias}
+                                                                setAccountAlias={setAccountAlias}
+                                                                accountPassword={accountPassword}
+                                                                setAccountPassword={setAccountPassword}
+                                                                confirmPassword={confirmPassword}
+                                                                setConfirmPassword={setConfirmPassword}
+                                                                onCancel={() => {
+                                                                    setSelectedWorkType(null);
+                                                                    handleCancelAcceptTask(selectedTask); // 원래 로직 복구
+                                                                }}
+                                                                onCreate={handleCreateAccount}
+                                                            />
+                                                        )}
+
+                                                        {/*입금*/}
+                                                        {selectedWorkType === "DEPOSIT" && (
+                                                            <Deposit
+                                                                onCancel={() => {
+                                                                    setSelectedWorkType(null);
+                                                                    handleCancelAcceptTask(selectedTask); // 원래 로직 복구
+                                                                }}
+                                                            />
+                                                        )}
+
+                                                        {/*출금*/}
+                                                        {selectedWorkType === "WITHDRAW" && (
+                                                            <Withdraw
+                                                                onCancel={() => {
+                                                                    setSelectedWorkType(null);
+                                                                    handleCancelAcceptTask(selectedTask); // 원래 로직 복구
+                                                                }}
+                                                            />
+                                                        )}
+
+                                                        {/*이체*/}
+                                                        {selectedWorkType === "TRANSFER" && (
+                                                            <Withdraw
+                                                                onCancel={() => {
+                                                                    setSelectedWorkType(null);
+                                                                    handleCancelAcceptTask(selectedTask); // 원래 로직 복구
+                                                                }}
+                                                            />
+                                                        )}
+
+                                                        {/*카드수령*/}
+                                                        {/*체크카드발급*/}
+                                                        {/*통장비번변경*/}
+
+                                                        {/*상담업무*/}
+                                                        {/*예적금계좌개설*/}
+                                                        {selectedWorkType === "ACCOUNTS" && (
+                                                            <Accounts
+                                                                onCancel={() => {
+                                                                    setSelectedWorkType(null);
+                                                                    handleCancelAcceptTask(selectedTask); // 원래 로직 복구
+                                                                }}
+                                                            />
+                                                        )}
+
+                                                        {/*신용 카드 발급*/}
+                                                        {/*대출상환*/}
+                                                        {/*금융상품가입: 보험, 펀드 ,대출등*/}
+
+                                                        {/*기업 • 특수업무*/}
+                                                        {/*기업대출*/}
+                                                        {/*법인계좌개설*/}
+                                                        {/*법인카드*/}
+                                                        {/*부도관리*/}
+                                                        {/*연체관리*/}
+
+                                                        {selectedTask.status !== 'WAITING' && (
+                                                            <>
+                                                                <div className={styles.backCard}>
+                                                                    <button
+                                                                        className={styles.backButton}
+                                                                        onClick={() => setSelectedWorkType("TASK_SELECT")}
+                                                                    >
+                                                                        ← 이전으로
+                                                                    </button>
+                                                                </div>
+                                                                <div className={styles.taskLog}>
+                                                                    <textarea placeholder="업무기록을 작성해주세요" className={styles.textArea} />
+                                                                </div>
+                                                            </>
+                                                        )}
                                                     </>
                                                 )}
-                                                {!selectedWorkType && (
-                                                    selectedTask.status === 'WAITING' ? (
-                                                        <button
-                                                            className={styles.btnAccept}
-                                                            style={{ marginTop: "10px" }}
-                                                            onClick={() => handleAcceptTask(selectedTask)}
-                                                        >
-                                                            업무 수락
-                                                        </button>
-                                                    ) : (
-                                                        <div style={{ display: 'flex',flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px', marginTop: '20px' }}>
-                                                            <div>
-                                                                테스트용 취소/ 업무종료 버튼
-                                                            </div>
-                                                            <div style={{display: 'flex' , width: '100%', gap: '10px'}}>
-                                                            <button
-                                                                className={styles.btnAccept}
-                                                                onClick={() => handleCancelAcceptTask(selectedTask)}
-                                                                style={{color: '#eaeaea'}}
-                                                            >
-                                                                취소
-                                                            </button>
-                                                            <button
-                                                                className={styles.btnAccept}
-                                                                onClick={() => handleCompleteTask(selectedTask)}
-                                                            >
-                                                                업무 종료
-                                                            </button>
-                                                            </div>
-                                                        </div>
-                                                    )
-                                                )}
-
-                                                {selectedWorkType === "ACCOUNT_CREATE" && (
-                                                    <AccountCreateForm
-                                                        accountType={accountType}
-                                                        setAccountType={setAccountType}
-                                                        accountAlias={accountAlias}
-                                                        setAccountAlias={setAccountAlias}
-                                                        accountPassword={accountPassword}
-                                                        setAccountPassword={setAccountPassword}
-                                                        confirmPassword={confirmPassword}
-                                                        setConfirmPassword={setConfirmPassword}
-                                                        onCancel={() => {
-                                                            setSelectedWorkType(null);
-                                                            handleCancelAcceptTask(selectedTask); // 폼에서 취소 누를때 대기상태로
-                                                        }}
-                                                        onCreate={handleCreateAccount}
-                                                    />
-                                                )}
-
-
-                                                {/* 아래에 계좌개설때 처럼 계속 추가하기 */}
-
-
-
-
                                             </div>
-
                                         </div>
                                     </div>
 
@@ -621,8 +794,8 @@ const BankerWorkSpace = () => {
                                         <h4>연령대 분석</h4>
                                         <div className={styles.ageGrid}>
                                             {['10대', '20대', '30대', '40대', '50대', '60대'].map((ageGroup) => (
-                                                <div 
-                                                    key={ageGroup} 
+                                                <div
+                                                    key={ageGroup}
                                                     className={`${styles.ageItem} ${determineAgeGroup(selectedTask.age) === ageGroup ? styles.ageActive : ''}`}
                                                 >
                                                     {ageGroup}
@@ -662,11 +835,20 @@ const BankerWorkSpace = () => {
                     chatEndRef={chatEndRef}
                 />
             )}
-
+            {/* 2. TossModal 렌더링 추가 */}
+            {isTossModalOpen && (
+                <TossModal
+                    task={taskToToss} // 필요시 이관할 태스크 정보 전달
+                    onClose={() => {
+                        setIsTossModalOpen(false);
+                        setTaskToToss(null);
+                    }}
+                />
+            )}
             {/* CustomModal 추가 (Alert 대체용) */}
-            <CustomModal 
-                isOpen={modalConfig.isOpen} 
-                onClose={handleModalClose} 
+            <CustomModal
+                isOpen={modalConfig.isOpen}
+                onClose={handleModalClose}
                 title="안내"
                 onConfirm={handleModalClose}
                 confirmText="확인"

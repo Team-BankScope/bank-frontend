@@ -23,7 +23,17 @@ const BankerModal = ({ name = "고객", onClose }) => {
                     </div>
                 </div>
             </div>
+            <div className={styles.accountBtnRow}>
+                <button className={styles.btnCancel} onClick={onCancel}>
+                    취소
+                </button>
+
+                <button className={styles.btnCreate} onClick={onCreate}>
+                    계좌 생성
+                </button>
+            </div>
         </div>
+
     );
 };
 

@@ -123,12 +123,12 @@ const AdminMyPage = () => {
             <section className={styles.infoSection}>
                 <h2 className={styles.sectionTitle}>기본 정보</h2>
                 <div className={styles.infoCard}>
-                    <div className={styles.statusWrapper}>
+                    {/*<div className={styles.statusWrapper}>
                         <select className={styles.statusSelect} defaultValue="active">
                             <option value="active">활성화</option>
                             <option value="inactive">비활성화</option>
                         </select>
-                    </div>
+                    </div>*/}
 
                     <div className={styles.profileIconWrapper}>
                         <svg viewBox="0 0 24 24" fill="#00c09a" width="60" height="60">

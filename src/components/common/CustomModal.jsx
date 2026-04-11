@@ -10,7 +10,7 @@ const CustomModal = ({
                          onConfirm,
                          onCancel,
                          confirmText = '확인',
-                         cancelText = '취소',
+                         cancelText, // 기본값을 없애고, prop 존재 여부로 판단
                          duration = 0
                      }) => {
     const [isRendered, setIsRendered] = useState(false);
@@ -47,6 +47,20 @@ const CustomModal = ({
         }
     };
 
+    const handleCancelClick = () => {
+        if (onCancel) {
+            onCancel();
+        }
+        onClose();
+    };
+
+    const handleConfirmClick = () => {
+        if (onConfirm) {
+            onConfirm();
+        }
+        onClose();
+    };
+
     if (!isRendered) return null;
 
     return createPortal(
@@ -65,12 +79,12 @@ const CustomModal = ({
                     {children}
                 </div>
 
-                {(onConfirm || onCancel) && (
+                {(onConfirm || cancelText) && (
                     <div className={styles.footer}>
-                        {onCancel && (
+                        {cancelText && (
                             <button
                                 className={`${styles.modalBtn} ${styles.cancel}`}
-                                onClick={() => { onCancel(); onClose(); }}
+                                onClick={handleCancelClick}
                             >
                                 {cancelText}
                             </button>
@@ -78,7 +92,7 @@ const CustomModal = ({
                         {onConfirm && (
                             <button
                                 className={`${styles.modalBtn} ${styles.confirm}`}
-                                onClick={() => { onConfirm(); onClose(); }}
+                                onClick={handleConfirmClick}
                             >
                                 {confirmText}
                             </button>
