@@ -1,0 +1,125 @@
+.container {
+    width: 100%;
+    margin: 0 auto;
+    padding: 50px 0;
+    font-family: 'Pretendard', sans-serif;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+}
+
+.formContainer {
+    width: 100%;
+    max-width: 650px;
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+}
+
+.section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    margin-bottom: 40px;
+}
+
+
+.riskSection {
+    margin-top: 50px;
+    margin-bottom: 50px;
+}
+
+.labelRow {
+    width: 100%;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #444;
+    margin-bottom: 15px;
+}
+
+
+.displayBox, 
+.inputFieldBox input, 
+.customSelectMain select, 
+.textarea {
+    width: 100% !important;
+    max-width: 650px;
+    padding: 18px 20px;
+    border: 1px solid #d1d8dc;
+    border-radius: 10px;
+    font-size: 1rem;
+    background-color: #fff;
+    box-sizing: border-box;
+    text-align: center;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+}
+
+.displayBox {
+    background-color: #f8f9fa;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 56px;
+}
+
+
+.textarea {
+    height: 200px; 
+    text-align: left;
+    padding: 20px;
+    line-height: 1.7;
+}
+
+
+.buttonRow {
+    width: 100%;
+    max-width: 650px;
+    margin-top: 40px;
+    display: flex;
+    justify-content: center; 
+    gap: 12px; 
+}
+
+.btnCancel, .btnSubmit {
+    width: 140px; 
+    height: 48px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+
+.btnCancel {
+    background-color: #f1f3f5;
+    color: #495057;
+    border: 1px solid #dee2e6;
+}
+
+.btnCancel:hover {
+    background-color: #e9ecef;
+}
+
+
+.btnSubmit {
+    background-color: #2eb086;
+    color: white;
+    border: none;
+}
+
+.btnSubmit:hover {
+    background-color: #258d6b;
+}
+
+
+.customSelectMain::after, .customSelectMain span, .arrowUp {
+    display: none !important;
+}

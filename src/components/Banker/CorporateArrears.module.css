@@ -1,0 +1,122 @@
+.container {
+    width: 100%;
+    margin: 0 auto;
+    padding: 50px 0;
+    font-family: 'Pretendard', sans-serif;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+}
+
+.formContainer {
+    width: 100%;
+    max-width: 650px; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    margin-bottom: 40px;
+}
+
+
+.rowGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    width: 100%;
+    max-width: 650px;
+    margin-bottom: 40px;
+}
+
+
+.riskSection {
+    margin-top: 40px;
+    margin-bottom: 40px;
+}
+
+.labelRow {
+    width: 100%;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #444;
+    margin-bottom: 15px;
+}
+
+
+.displayBox, 
+.section input, 
+.section select, 
+.textarea {
+    width: 100% !important;
+    padding: 18px 20px;
+    border: 1px solid #d1d8dc;
+    border-radius: 12px;
+    font-size: 1.05rem;
+    background-color: #fff;
+    box-sizing: border-box;
+    color: #333;
+    min-height: 60px; 
+    text-align: center;
+    outline: none; 
+    
+    appearance: none !important;
+    -webkit-appearance: none !important;
+}
+
+
+.section input:focus, .section select:focus {
+    border-color: #adb5bd;
+}
+
+.displayBox {
+    background-color: #f8f9fa;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.textarea {
+    height: 300px;
+    text-align: left;
+    padding: 25px;
+    line-height: 1.8;
+}
+
+
+.dDayText {
+    margin-top: 12px;
+    font-weight: 800;
+    color: #e74c3c;
+    font-size: 0.95rem;
+}
+
+
+.buttonRow {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    width: 100%;
+}
+
+.btnCancel, .btnSubmit {
+    width: 140px;
+    height: 50px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.btnCancel { background-color: #f1f3f5; color: #495057; border: 1px solid #dee2e6; }
+.btnSubmit { background-color: #2eb086; color: white; border: none; }
+.dangerText { color: #e74c3c; font-weight: 800; }

@@ -132,13 +132,13 @@ const TaskSelect = ({ onSelectTask }) => {
                         {index + 1}
                     </button>
                 ))}
-                <span className={styles.dots}>...</span>
+                {/*<span className={styles.dots}>...</span>
                 <button
                     className={styles.pageBtn}
                     onClick={() => handlePageChange(15)} // 예시: 최종 페이지로 이동
                 >
                     15
-                </button>
+                </button> */}
                 <button
                     className={`${styles.pageBtn} ${currentPage === totalPages ? styles.disabledBtn : ""}`}
                     onClick={() => handlePageChange(currentPage + 1)}
