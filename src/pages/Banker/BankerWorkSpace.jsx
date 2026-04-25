@@ -20,6 +20,7 @@ import CorporateAccount from "../../components/Banker/CorporateAccount.jsx";
 import CorporateCard from "../../components/Banker/CorporateCard.jsx";
 import CorporateBankrupt from "../../components/Banker/CorporateBankrupt.jsx";
 import CorporateArrears from "../../components/Banker/CorporateArrears.jsx";
+import ChangePassword from "../../components/Banker/ChangePassword.jsx";
 
 const BankerWorkSpace = () => {
     const [tasks, setTasks] = useState([]);
@@ -121,6 +122,9 @@ const BankerWorkSpace = () => {
                 break;
             case "연체관리":
                 setSelectedWorkType("CORPORATE-ARREARS");
+                break;
+            case "통장비밀번호 변경":
+                setSelectedWorkType("CHANGE-PASSWORD");
                 break;
             default:
                 setSelectedWorkType(null);
@@ -275,6 +279,11 @@ const BankerWorkSpace = () => {
             if (selectedTask.status === 'IN_PROGRESS' && 
                 selectedTask.taskDetailType === "연체관리") {
                 setSelectedWorkType("CORPORATE-ARREARS");
+            }
+
+            if (selectedTask.status === 'IN_PROGRESS' && 
+            (selectedTask.taskDetailType === "통장 비밀번호 변경")) {
+            setSelectedWorkType("CHANGE-PASSWORD");
             }
 
 
@@ -813,6 +822,16 @@ const BankerWorkSpace = () => {
                                                         )}
 
                                                         {/*통장비번변경*/}
+                                                        {selectedWorkType === "CHANGE-PASSWORD" && (
+                                                            <ChangePassword 
+                                                                    onCancel={() => {
+                                                                    setSelectedWorkType(null);
+                                                                    handleCancelAcceptTask(selectedTask);
+                                                                    }} 
+                                                                    onComplete={(pwData) => handleChangePassword(pwData)}
+                                                                    selectedTask={selectedTask}
+                                                                />
+                                                        )}
 
 
 
@@ -856,7 +875,7 @@ const BankerWorkSpace = () => {
                                                                 selectedTask={selectedTask}
                                                                 onCancel={() => {
                                                                     setSelectedWorkType(null);
-                                                                    handleCancelAcceptTask(selectedTask); // 다른 애들과 동일하게 취소 로직 추가
+                                                                    handleCancelAcceptTask(selectedTask); 
                                                                 }}
                                                                 onComplete={() => handleCompleteTask(selectedTask)}
                                                             />
@@ -901,9 +920,9 @@ const BankerWorkSpace = () => {
                                                                 selectedTask={selectedTask}
                                                                 onCancel={() => {
                                                                     setSelectedWorkType(null);
-                                                                    handleCancelAcceptTask(selectedTask); // 업무 취소 시 수락 전 상태로 되돌림
+                                                                    handleCancelAcceptTask(selectedTask); 
                                                                 }}
-                                                                onComplete={() => handleCompleteTask(selectedTask)} // 업무 등록 시 완료 처리
+                                                                onComplete={() => handleCompleteTask(selectedTask)} 
                                                             />
                                                         )}
 
