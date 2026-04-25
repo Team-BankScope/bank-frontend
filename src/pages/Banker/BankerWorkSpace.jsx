@@ -15,6 +15,11 @@ import Card from "../../components/Banker/Card.jsx";
 import Transfer from "../../components/Banker/Transfer.jsx";
 import LoanPayment from "../../components/Banker/LoanPayment.jsx";
 import FinancialProduct from "../../components/Banker/FinancialProduct.jsx";
+import CorporateLoan from "../../components/Banker/CorporateLoan.jsx"; 
+import CorporateAccount from "../../components/Banker/CorporateAccount.jsx";
+import CorporateCard from "../../components/Banker/CorporateCard.jsx";
+import CorporateBankrupt from "../../components/Banker/CorporateBankrupt.jsx";
+import CorporateArrears from "../../components/Banker/CorporateArrears.jsx";
 
 const BankerWorkSpace = () => {
     const [tasks, setTasks] = useState([]);
@@ -93,14 +98,29 @@ const BankerWorkSpace = () => {
             case "신용카드 발급":
                 setSelectedWorkType("CARD");
                 break;
-            case "법인카드 발급":
+            /*case "법인카드 발급":
                 setSelectedWorkType("CARD");
-                break;
+                break;*/
             case "대출 상환" :
                 setSelectedWorkType("LOAN-PAYMENT");
                 break;
             case "금융상품가입":
                 setSelectedWorkType("FINANCIAL-PRODUCT");
+                break;
+            case "기업대출": 
+                setSelectedWorkType("CORPORATE-LOAN");
+                break;
+            case "법인계좌 개설": 
+                setSelectedWorkType("CORPORATE-ACCOUNT");
+                break;
+            case "법인카드 발급":
+                setSelectedWorkType("CORPORATE-CARD");
+                break;
+            case "부도관리":
+                setSelectedWorkType("BANKRUPT-MANAGEMENT");
+                break;
+            case "연체관리":
+                setSelectedWorkType("CORPORATE-ARREARS");
                 break;
             default:
                 setSelectedWorkType(null);
@@ -231,6 +251,35 @@ const BankerWorkSpace = () => {
                 ( selectedTask.taskDetailType ==="연체관리")) {
                 setSelectedWorkType("DELINQUENT-MANAGEMENT");
             }
+
+            if (selectedTask.status === 'IN_PROGRESS' && 
+                selectedTask.taskDetailType === "기업대출") {
+                setSelectedWorkType("CORPORATE-LOAN");
+            }
+
+            if (selectedTask.status === 'IN_PROGRESS' && 
+                selectedTask.taskDetailType === "법인계좌 개설") {
+                setSelectedWorkType("CORPORATE-ACCOUNT");
+            }
+
+            if (selectedTask.status === 'IN_PROGRESS' && 
+                selectedTask.taskDetailType === "법인카드 발급") {
+                setSelectedWorkType("CORPORATE-CARD");
+            }
+
+            if (selectedTask.status === 'IN_PROGRESS' && 
+                selectedTask.taskDetailType === "부도관리") {
+                setSelectedWorkType("BANKRUPT-MANAGEMENT");
+            }
+
+            if (selectedTask.status === 'IN_PROGRESS' && 
+                selectedTask.taskDetailType === "연체관리") {
+                setSelectedWorkType("CORPORATE-ARREARS");
+            }
+
+
+
+            
         }
     }, [selectedTask]);
 
@@ -800,11 +849,63 @@ const BankerWorkSpace = () => {
                                                             />
                                                         )}
                                                         {/*기업 • 특수업무*/}
+                                                        
                                                         {/*기업대출*/}
+                                                        {selectedWorkType === "CORPORATE-LOAN" && (
+                                                            <CorporateLoan
+                                                                selectedTask={selectedTask}
+                                                                onCancel={() => {
+                                                                    setSelectedWorkType(null);
+                                                                    handleCancelAcceptTask(selectedTask); // 다른 애들과 동일하게 취소 로직 추가
+                                                                }}
+                                                                onComplete={() => handleCompleteTask(selectedTask)}
+                                                            />
+                                                        )}
+
                                                         {/*법인계좌개설*/}
+                                                        {selectedWorkType === "CORPORATE-ACCOUNT" && (
+                                                            <CorporateAccount
+                                                                selectedTask={selectedTask}
+                                                                onCancel={() => {
+                                                                    setSelectedWorkType(null);
+                                                                    handleCancelAcceptTask(selectedTask);
+                                                                }}
+                                                                onComplete={() => handleCompleteTask(selectedTask)}
+                                                            />
+                                                        )}
                                                         {/*법인카드*/}
+                                                        {selectedWorkType === "CORPORATE-CARD" && (
+                                                            <CorporateCard
+                                                                selectedTask={selectedTask}
+                                                                onCancel={() => {
+                                                                    setSelectedWorkType(null);
+                                                                    handleCancelAcceptTask(selectedTask);
+                                                                }}
+                                                                onComplete={() => handleCompleteTask(selectedTask)}
+                                                            />
+                                                        )}
                                                         {/*부도관리*/}
+                                                        {selectedWorkType === "BANKRUPT-MANAGEMENT" && (
+                                                            <CorporateBankrupt
+                                                                selectedTask={selectedTask}
+                                                                onCancel={() => {
+                                                                    setSelectedWorkType(null);
+                                                                    handleCancelAcceptTask(selectedTask);
+                                                                }}
+                                                                onComplete={() => handleCompleteTask(selectedTask)}
+                                                            />
+                                                        )}
                                                         {/*연체관리*/}
+                                                        {selectedWorkType === "CORPORATE-ARREARS" && (
+                                                            <CorporateArrears
+                                                                selectedTask={selectedTask}
+                                                                onCancel={() => {
+                                                                    setSelectedWorkType(null);
+                                                                    handleCancelAcceptTask(selectedTask); // 업무 취소 시 수락 전 상태로 되돌림
+                                                                }}
+                                                                onComplete={() => handleCompleteTask(selectedTask)} // 업무 등록 시 완료 처리
+                                                            />
+                                                        )}
 
                                                         {selectedTask.status !== 'WAITING' && (
                                                             <>
