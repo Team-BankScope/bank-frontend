@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import styles from './CorporateArrears.module.css'; 
 
-const CorporateArrears = () => {
+// 1. props 부분에 onCancel을 확실히 넣어줍니다.
+const CorporateArrears = ({ onCancel }) => {
   const [arrearsDate, setArrearsDate] = useState('2026-03-21');
   
   const calculateDDay = (date) => {
@@ -15,13 +16,11 @@ const CorporateArrears = () => {
     <div className={styles.container}>
       <div className={styles.formContainer}>
         
-   
         <div className={styles.section}>
           <label className={styles.labelRow}>법인명 / 사업자등록번호</label>
           <div className={styles.displayBox}>권정균</div>
           <div className={`${styles.displayBox} ${styles.marginTop10}`}>123-45-67890</div>
         </div>
-
 
         <div className={styles.section}>
           <label className={styles.labelRow}>최초 연체 발생일</label>
@@ -34,7 +33,6 @@ const CorporateArrears = () => {
           </div>
           <p className={styles.dDayText}>현재 연체 {calculateDDay(arrearsDate)}일째</p>
         </div>
-
 
         <div className={styles.rowGrid}>
           <div className={styles.section}>
@@ -53,7 +51,6 @@ const CorporateArrears = () => {
           </div>
         </div>
 
-      
         <div className={`${styles.section} ${styles.riskSection}`}>
           <label className={styles.labelRow}>현재 관리 등급</label>
           <div className={styles.displayBox}>
@@ -69,9 +66,15 @@ const CorporateArrears = () => {
           ></textarea>
         </div>
 
-    
         <div className={styles.buttonRow}>
-          <button className={styles.btnCancel}>업무 취소</button>
+          {/* 2. onClick에 onCancel을 연결! 여기가 핵심입니다. */}
+          <button 
+            type="button" 
+            className={styles.btnCancel} 
+            onClick={onCancel}
+          >
+            업무 취소
+          </button>
           <button className={styles.btnSubmit}>연체 등록</button>
         </div>
       </div>
