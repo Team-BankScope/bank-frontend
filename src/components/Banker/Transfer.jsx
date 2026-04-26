@@ -1,132 +1,180 @@
 import React, { useState, useEffect } from 'react';
 import styles from './Transfer.module.css';
 
-// 목업 데이터: 실제로는 props나 context를 통해 받아와야 합니다.
-const mockAccounts = [
-    { accountNumber: '110-234-567890', balance: 1500000, alias: '주거래 통장' },
-    { accountNumber: '333-90-1234567', balance: 500000, alias: '용돈 통장' },
-    { accountNumber: '123-45-6789012', balance: 10000000, alias: '비상금' }
-];
-
 const formatCurrency = (amount) => {
     return new Intl.NumberFormat('ko-KR').format(amount);
 };
 
-const Transfer = ({ onCancel, onConfirm }) => {
-    const [fromAccountNumber, setFromAccountNumber] = useState(mockAccounts[0]?.accountNumber || '');
-    const [accountPassword, setAccountPassword] = useState('');
-    const [toAccountNumber, setToAccountNumber] = useState('');
-    const [amount, setAmount] = useState('');
-    const [selectedAccountBalance, setSelectedAccountBalance] = useState(mockAccounts[0]?.balance || 0);
+const Transfer = ({ onCancel, taskId, selectedTask }) => {
+    const [accounts, setAccounts] = useState([]); 
+    const [isLoading, setIsLoading] = useState(true);
+    
+    const [formData, setFormData] = useState({
+        fromAccountNumber: '',  
+        accountPassword: '',    
+        toAccountNumber: '',    
+        amount: '',            
+        description: '이체'      
+    });
 
+  
     useEffect(() => {
-        const selected = mockAccounts.find(acc => acc.accountNumber === fromAccountNumber);
-        if (selected) {
-            setSelectedAccountBalance(selected.balance);
-        }
-    }, [fromAccountNumber]);
+        const fetchUserAccounts = async () => {
+            const userId = selectedTask?.userId;
+            if (userId) {
+                try {
+                    const response = await fetch(`/api/account/user/${userId}`);
+                    if (response.ok) {
+                        const rawData = await response.json();
+                        const data = Array.isArray(rawData) ? rawData : rawData.accounts || [];
+                        setAccounts(data);
+                        
+                       
+                        if (data.length > 0) {
+                            setFormData(prev => ({ 
+                                ...prev, 
+                                fromAccountNumber: data[0].accountNumber || data[0].accountNum 
+                            }));
+                        }
+                    }
+                } catch (error) {
+                    console.error("계좌 목록 로드 에러:", error);
+                } finally {
+                    setIsLoading(false);
+                }
+            } else {
+                setIsLoading(false);
+            }
+        };
+        fetchUserAccounts();
+    }, [selectedTask]);
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
 
     const handleAmountButtonClick = (value) => {
+        const selectedAcc = accounts.find(acc => (acc.accountNumber || acc.accountNum) === formData.fromAccountNumber);
+        const currentBalance = selectedAcc?.balance || 0;
+
         if (value === 'full') {
-            setAmount(selectedAccountBalance);
+            setFormData(prev => ({ ...prev, amount: currentBalance }));
         } else {
-            setAmount(prev => (Number(prev) || 0) + value);
+            setFormData(prev => ({ ...prev, amount: (Number(prev.amount) || 0) + value }));
         }
     };
 
-    const handleTransfer = () => {
-        // 실제 이체 로직은 여기에 구현합니다.
-        // 지금은 UI 목적으로 콘솔에 로그만 출력합니다.
-        if (!fromAccountNumber || !accountPassword || !toAccountNumber || !amount) {
-            alert("모든 필드를 입력해주세요.");
+    const handleTransferSubmit = async () => {
+        if (!formData.fromAccountNumber || !formData.toAccountNumber || !formData.amount || !formData.accountPassword) {
+            alert("모든 필드를 정확히 입력해주세요.");
             return;
         }
-        if (amount > selectedAccountBalance) {
-            alert("잔액이 부족합니다.");
-            return;
+
+  
+        const queryParams = new URLSearchParams({
+            fromAccountNumber: formData.fromAccountNumber,
+            accountPassword: formData.accountPassword,
+            toAccountNumber: formData.toAccountNumber,
+            amount: parseInt(formData.amount, 10),
+            description: formData.description,
+            taskId: taskId || 0
+        }).toString();
+
+        try {
+            const response = await fetch(`/api/transaction/transfer?${queryParams}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (response.ok) {
+                alert("이체가 완료되었습니다!");
+                onCancel();
+            } else {
+                const errorData = await response.json();
+                alert(`이체 실패: ${errorData.message || '정보를 다시 확인해주세요.'}`);
+            }
+        } catch (error) {
+            alert("서버 통신 오류가 발생했습니다.");
         }
-        console.log({
-            fromAccountNumber,
-            accountPassword,
-            toAccountNumber,
-            amount: Number(amount)
-        });
-        // onConfirm prop이 있으면 호출
-        if (onConfirm) {
-            onConfirm({ fromAccountNumber, accountPassword, toAccountNumber, amount: Number(amount) });
-        }
-        alert("이체 처리가 완료되었습니다. (콘솔 확인)");
     };
 
     return (
         <div className={styles.transferContainer}>
-            <h3 className={styles.title}>계좌 이체</h3>
+            <h3 className={styles.title}>계좌 이체 업무</h3>
 
+            {/* 1. 출금 계좌 선택 */}
             <div className={styles.inputGroup}>
-                <label htmlFor="fromAccount">출금 계좌</label>
-                <select
-                    id="fromAccount"
-                    className={styles.input}
-                    value={fromAccountNumber}
-                    onChange={(e) => setFromAccountNumber(e.target.value)}
-                >
-                    {mockAccounts.map(acc => (
-                        <option key={acc.accountNumber} value={acc.accountNumber}>
-                            {acc.alias} ({acc.accountNumber})
-                        </option>
-                    ))}
-                </select>
-                <div className={styles.balanceInfo}>
-                    출금 가능 잔액: {formatCurrency(selectedAccountBalance)}원
-                </div>
+                <label>출금 계좌</label>
+                {isLoading ? (
+                    <input type="text" value="계좌 로딩 중..." readOnly className={styles.input} />
+                ) : accounts.length > 0 ? (
+                    <select
+                        name="fromAccountNumber"
+                        className={styles.input}
+                        value={formData.fromAccountNumber}
+                        onChange={handleChange}
+                    >
+                        {accounts.map((acc, index) => (
+                            <option key={index} value={acc.accountNumber || acc.accountNum}>
+                                {acc.accountNumber || acc.accountNum} ({formatCurrency(acc.balance || 0)}원)
+                            </option>
+                        ))}
+                    </select>
+                ) : (
+                    <input name="fromAccountNumber" placeholder="출금 계좌 직접 입력" onChange={handleChange} className={styles.input} />
+                )}
             </div>
 
+            {/* 2. 비밀번호 */}
             <div className={styles.inputGroup}>
-                <label htmlFor="accountPassword">계좌 비밀번호</label>
+                <label>계좌 비밀번호</label>
                 <input
+                    name="accountPassword"
                     type="password"
-                    id="accountPassword"
                     className={styles.input}
-                    placeholder="비밀번호 4자리를 입력하세요"
+                    placeholder="비밀번호 4자리"
                     maxLength="4"
-                    value={accountPassword}
-                    onChange={(e) => setAccountPassword(e.target.value)}
+                    value={formData.accountPassword}
+                    onChange={handleChange}
                 />
             </div>
 
+            {/* 3. 입금 계좌 (상대방) */}
             <div className={styles.inputGroup}>
-                <label htmlFor="toAccount">입금 계좌번호</label>
+                <label>입금 계좌번호 (받는 분)</label>
                 <input
+                    name="toAccountNumber"
                     type="text"
-                    id="toAccount"
                     className={styles.input}
-                    placeholder="'-' 없이 계좌번호 입력"
-                    value={toAccountNumber}
-                    onChange={(e) => setToAccountNumber(e.target.value)}
+                    placeholder="계좌번호 입력"
+                    value={formData.toAccountNumber}
+                    onChange={handleChange}
                 />
             </div>
 
+            {/* 4. 이체 금액 */}
             <div className={styles.inputGroup}>
-                <label htmlFor="amount">이체 금액</label>
+                <label>이체 금액</label>
                 <input
+                    name="amount"
                     type="number"
-                    id="amount"
                     className={styles.input}
                     placeholder="금액을 입력하세요"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    value={formData.amount}
+                    onChange={handleChange}
                 />
                 <div className={styles.amountButtons}>
-                    <button onClick={() => handleAmountButtonClick(10000)}>+1만</button>
-                    <button onClick={() => handleAmountButtonClick(50000)}>+5만</button>
-                    <button onClick={() => handleAmountButtonClick(100000)}>+10만</button>
-                    <button onClick={() => handleAmountButtonClick('full')}>전액</button>
+                    <button type="button" onClick={() => handleAmountButtonClick(10000)}>+1만</button>
+                    <button type="button" onClick={() => handleAmountButtonClick(50000)}>+5만</button>
+                    <button type="button" onClick={() => handleAmountButtonClick(100000)}>+10만</button>
+                    <button type="button" onClick={() => handleAmountButtonClick('full')}>전액</button>
                 </div>
             </div>
 
             <div className={styles.buttonRow}>
                 <button className={styles.btnCancel} onClick={onCancel}>취소</button>
-                <button className={styles.btnSubmit}  onClick={handleTransfer}>이체 실행</button>
+                <button className={styles.btnSubmit} onClick={handleTransferSubmit}>이체 실행</button>
             </div>
         </div>
     );

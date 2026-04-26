@@ -838,8 +838,7 @@
     width: 100%;
     min-height: 8rem;
     /*border: none;*/
-    padding: 20px;           /* 안쪽 여백 추가 */
-    /* 🔥 이 코드가 핵심입니다! */
+    padding: 20px;          
     box-sizing: border-box;
     border: 1px solid #00a884;
     resize: none;
@@ -849,4 +848,80 @@
     outline: none;
     border: 1px solid #3f9f89;
 
+}
+
+
+.rightSidebar_infoBox_recommend {
+    background-color: white;
+    border: 1.2px solid #2eb086;
+    border-radius: 12px;
+    padding: 6px 8px;
+    margin: 4px 0;
+}
+
+.rightSidebar_infoBox_recommend_title {
+    color: #268a6a; 
+    font-size: 0.85rem;
+    font-weight: 800; 
+    text-align: center;
+    margin: 0 0 6px 0;
+}
+
+.recommendList {
+    display: flex;
+    flex-direction: column;
+    gap: 4px; 
+}
+
+.recommendItem {
+    display: flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+
+.recommendItem:nth-child(1) {
+    background: linear-gradient(135deg, #1d976c 0%, #3fe6ad 100%);
+    color: white;
+    box-shadow: 0 2px 4px rgba(29, 151, 108, 0.3); 
+}
+
+
+.recommendItem:nth-child(2) {
+    background-color: #e0f7f1;
+    color: #1d976c;
+    border: 0.5px solid #b2ebdc;
+}
+
+
+.recommendItem:nth-child(3) {
+    background-color: #f3faf8;
+    color: #666;
+}
+
+
+.recommendIcon {
+    width: 16px;
+    height: 16px;
+    background-color: #6c7ae0;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 8px;
+    font-size: 0.6rem;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.recommendItem:hover {
+    filter: brightness(1.05);
+    transform: translateX(2px);
 }
