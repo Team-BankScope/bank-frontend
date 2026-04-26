@@ -1,0 +1,155 @@
+/* 모달 배경 (어둡게 처리) */
+.modalOverlay {
+  position: fixed;
+  top: 0; left: 0; 
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.6); /* 조금 더 깊이감 있게 수정 */
+  display: flex; justify-content: center; align-items: center;
+  z-index: 2000; /* 최상단 유지 */
+  backdrop-filter: blur(4px); /* 배경 살짝 흐리게 처리하여 고급스러움 추가 */
+}
+
+/* 모달 컨텐츠 박스 */
+.modalContent {
+  background: white;
+  width: 550px; /* 조금 더 시원하게 확장 */
+  border-radius: 30px; /* 사진 속 카드와 동일하게 30px로 변경 */
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  border: 1px solid #eee;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 상단 포인트 라인 (이미지 느낌의 테두리 포인트) */
+.modalContent::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 8px;
+  background: linear-gradient(to right, #0ccda3, #2eb086); /* 추천 리스트와 동일한 그라데이션 */
+}
+
+/* 헤더 영역 */
+.header { 
+  display: flex; justify-content: space-between; align-items: center; 
+  margin-bottom: 25px; 
+}
+
+.header h2 {
+  font-size: 1.8rem;
+  color: #2eb086; /* 메인 컬러 적용 */
+  margin: 0;
+  font-weight: bold;
+}
+
+.closeBtn { 
+  background: none; border: none; 
+  font-size: 2.5rem; cursor: pointer; color: #ccc; 
+  transition: color 0.2s;
+}
+.closeBtn:hover { color: #2eb086; }
+
+/* 상품 뱃지 및 이름 */
+.productBadge { 
+  display: inline-block; 
+  background: #e7f6f2; 
+  color: #2eb086; 
+  padding: 6px 14px; 
+  border-radius: 10px; 
+  font-weight: bold; 
+  font-size: 0.9rem; 
+  margin-bottom: 10px;
+}
+
+.productName { 
+  font-size: 2.2rem; /* 제목 더 강조 */
+  margin: 10px 0; 
+  color: #333;
+  font-weight: 800;
+}
+
+.productDesc { 
+  color: #777; 
+  font-size: 1.1rem;
+  margin-bottom: 25px; 
+}
+
+.divider { border: 0; border-top: 1px solid #f0f0f0; margin: 25px 0; }
+
+/* 폼 영역 */
+.formSection label { 
+  display: block; 
+  font-weight: bold; 
+  margin-bottom: 12px; 
+  color: #444;
+  font-size: 1rem;
+}
+
+.select { 
+  width: 100%; height: 55px; 
+  border-radius: 15px; 
+  border: 2px solid #f0f0f0; 
+  padding: 0 15px; 
+  font-size: 1.1rem;
+  color: #333;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.select:focus { border-color: #2eb086; }
+
+/* 상세 설명 박스 */
+.infoBox { 
+  background: #f9fbfb; 
+  padding: 20px; 
+  border-radius: 20px; 
+  margin-top: 25px; 
+  border-left: 5px solid #2eb086; /* 포인트 바 추가 */
+}
+
+.infoBox h4 { 
+  margin-top: 0; margin-bottom: 8px;
+  font-size: 1rem; color: #2eb086; 
+}
+
+.infoBox p { 
+  font-size: 1rem; color: #555; 
+  line-height: 1.6; 
+  margin: 0;
+}
+
+/* 푸터 버튼 영역 */
+.footer { 
+  display: flex; justify-content: center; /* 버튼 중앙 정렬로 변경하여 더 안정감 있게 */
+  gap: 15px; 
+  margin-top: 40px; 
+}
+
+.cancelBtn { 
+  flex: 1; /* 버튼 너비 동일하게 */
+  padding: 18px; 
+  border-radius: 15px; 
+  border: 1px solid #ddd; 
+  background: white; 
+  color: #888;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer; 
+  transition: background 0.2s;
+}
+.cancelBtn:hover { background: #f5f5f5; }
+
+.submitBtn { 
+  flex: 2; /* 신청하기 버튼을 더 강조 */
+  padding: 18px; 
+  border-radius: 15px; 
+  border: none; 
+  background: linear-gradient(to right, #0ccda3, #2eb086); /* 리스트와 깔맞춤 */
+  color: white; 
+  font-size: 1.2rem;
+  font-weight: bold; 
+  cursor: pointer; 
+  box-shadow: 0 5px 15px rgba(46, 176, 134, 0.3);
+  transition: opacity 0.2s;
+}
+.submitBtn:hover { opacity: 0.9; }

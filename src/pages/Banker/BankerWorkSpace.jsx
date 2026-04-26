@@ -21,8 +21,38 @@ import CorporateCard from "../../components/Banker/CorporateCard.jsx";
 import CorporateBankrupt from "../../components/Banker/CorporateBankrupt.jsx";
 import CorporateArrears from "../../components/Banker/CorporateArrears.jsx";
 import ChangePassword from "../../components/Banker/ChangePassword.jsx";
+import ProductModal from '../../components/Banker/ProductModal.jsx';
+
+
+const RECOMM_PRODUCTS = [
+  { 
+    id: 1, 
+    name: "든든 직장인 우대적금", 
+    description: "최고 연 5.5% 금리 혜택!", 
+    detail: "직장인을 위한 맞춤형 적금 상품으로, 급여 이체 및 주거래 요건 충족 시 우대 금리를 제공합니다." 
+  },
+  { 
+    id: 2, 
+    name: "MZ 청년 희망 적금", 
+    description: "청년들의 목돈 마련을 위한 필수템", 
+    detail: "만 19세~34세 청년을 대상으로 하며, 높은 기본 금리에 정부 지원 혜택이 더해진 상품입니다." 
+  },
+  { 
+    id: 3, 
+    name: "시니어 상생 통장", 
+    description: "60대 이상 고객 전용 특화 상품", 
+    detail: "연금 수령 시 수수료 면제 및 병원비 할인 등 실질적인 생활 혜택을 담은 입출금 통장입니다." 
+  }
+];
 
 const BankerWorkSpace = () => {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState(null);
+
+    const handleProductClick = (product) => {
+    setSelectedProduct(product);
+    setIsModalOpen(true);
+};
     const [tasks, setTasks] = useState([]);
     const [selectedTask, setSelectedTask] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -69,6 +99,9 @@ const BankerWorkSpace = () => {
             modalConfig.onConfirm();
         }
     };
+
+
+
     const handleTaskMenuSelect = (taskTitle) => {
         // TaskSelect에서 넘어온 제목에 따라 mapping
         switch (taskTitle) {
@@ -577,7 +610,8 @@ const BankerWorkSpace = () => {
     };
 
 
-    return (
+
+ return (
         <div className={styles.container}>
             <img src={WorkSpaceBackground} alt="WorkSpace Background" className={styles.backgroundImage} />
 
@@ -761,8 +795,6 @@ const BankerWorkSpace = () => {
                                                             )
                                                         )}
 
-                                                        {/*빠른업무*/}
-
                                                         {/*입출금 (일반 예금) 계좌개설*/}
                                                         {selectedWorkType === "ACCOUNT_CREATE" && (
                                                             <AccountCreateForm
@@ -779,6 +811,9 @@ const BankerWorkSpace = () => {
                                                                     handleCancelAcceptTask(selectedTask);
                                                                 }}
                                                                 onCreate={handleCreateAccount}
+                                                                taskId={selectedTask?.id}
+                                                                selectedTask={selectedTask}
+                                                                
                                                             />
                                                         )}
 
@@ -789,6 +824,8 @@ const BankerWorkSpace = () => {
                                                                     setSelectedWorkType(null);
                                                                     handleCancelAcceptTask(selectedTask);
                                                                 }}
+                                                            taskId={selectedTask?.id || selectedTask?.taskId || 0}
+                                                            selectedTask={selectedTask}
                                                             />
                                                         )}
 
@@ -799,6 +836,8 @@ const BankerWorkSpace = () => {
                                                                     setSelectedWorkType(null);
                                                                     handleCancelAcceptTask(selectedTask);
                                                                 }}
+                                                                taskId={selectedTask?.id}
+                                                                selectedTask={selectedTask}
                                                             />
                                                         )}
 
@@ -809,6 +848,8 @@ const BankerWorkSpace = () => {
                                                                     setSelectedWorkType(null);
                                                                     handleCancelAcceptTask(selectedTask);
                                                                 }}
+                                                                taskId={selectedTask?.id}
+                                                                selectedTask={selectedTask}
                                                             />
                                                         )}
 
@@ -952,13 +993,25 @@ const BankerWorkSpace = () => {
                                             <h4>고객 특이사항</h4>
                                             <div className={styles.alertItem}>⚠️ 특이사항 없음</div>
                                         </div>
-                                        <div className={styles.infoBox}>
-                                            <h4>AI 추천 상품/서비스</h4>
-                                            <ul>
-                                                <li>1. 추천 상품 A</li>
-                                                <li>2. 추천 상품 B</li>
-                                            </ul>
+
+                                        {/*  AI 추천 상품/서비스 영역 */}
+                                        <div className={styles.rightSidebar_infoBox_recommend}>
+                                            <h4 className={styles.rightSidebar_infoBox_recommend_title}>AI 추천 상품/서비스</h4>
+                                            <div className={styles.recommendList}>
+                                                {RECOMM_PRODUCTS.map((product, index) => (
+                                                    <div 
+                                                        key={product.id} 
+                                                        className={styles.recommendItem}
+                                                        onClick={() => handleProductClick(product)}
+                                                    >
+                                                        
+                                                        <span className={styles.recommendIcon}>{index + 1}</span>
+                                                        {product.name}
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
+
                                         <h4>연령대 분석</h4>
                                         <div className={styles.ageGrid}>
                                             {['10대', '20대', '30대', '40대', '50대', '60대'].map((ageGroup) => (
@@ -972,7 +1025,6 @@ const BankerWorkSpace = () => {
                                         </div>
                                         <div className={styles.ageDescription}>
                                             <strong>{determineAgeGroup(selectedTask.age) || '연령 미상'}+ 고객 주요 관심사</strong><br />
-                                            {/* 연령대에 따른 설명 변경 로직 추가 가능 */}
                                             : 노후자산관리, 역모기지, 시니어 우대상품
                                         </div>
                                     </aside>
@@ -1003,17 +1055,24 @@ const BankerWorkSpace = () => {
                     chatEndRef={chatEndRef}
                 />
             )}
-            {/* 2. TossModal 렌더링 추가 */}
+            
             {isTossModalOpen && (
                 <TossModal
-                    task={taskToToss} // 필요시 이관할 태스크 정보 전달
+                    task={taskToToss}
                     onClose={() => {
                         setIsTossModalOpen(false);
                         setTaskToToss(null);
                     }}
                 />
             )}
-            {/* CustomModal 추가 (Alert 대체용) */}
+
+            {/* 금융상품 가입 모달 추가 */}
+            <ProductModal 
+                isOpen={isModalOpen} 
+                product={selectedProduct} 
+                onClose={() => setIsModalOpen(false)} 
+            />
+
             <CustomModal
                 isOpen={modalConfig.isOpen}
                 onClose={handleModalClose}
