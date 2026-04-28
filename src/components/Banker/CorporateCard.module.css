@@ -30,9 +30,7 @@
     font-weight: bold;
 }
 
-/* =========================================
-   [카드 발급] 탭 스타일
-   ========================================= */
+
 .registerContent {
     animation: fadeIn 0.3s ease;
 }
@@ -273,6 +271,14 @@
     border-radius: 4px;
     font-size: 1rem;
     cursor: pointer;
+}
+
+.buttonRow {
+    width: 100%;
+    display: flex;
+    justify-content: center; 
+    gap: 30px;              
+    margin-top: 40px;
 }
 
 .btnTerminate:hover {

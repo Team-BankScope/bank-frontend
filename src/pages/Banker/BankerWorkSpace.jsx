@@ -46,11 +46,22 @@ const RECOMM_PRODUCTS = [
   }
 ];
 
+
+const logData = [
+    { id: 1, date: '2026-04-28', content: '법인카드 발급 심사 승인 완료 (담당자: 김갑수)' },
+    { id: 2, date: '2026-04-28', content: '부도 관리 대상 법인 고위험군 자동 분류' },
+    { id: 3, date: '2026-04-27', content: '고객 유선 상담: 한도 증액 문의' },
+    { id: 4, date: '2026-04-27', content: '재무제표 업데이트 및 안정성 지표 분석' },
+    { id: 5, date: '2026-04-26', content: '시스템 자동 점검 로그: 정상' },
+    { id: 6, date: '2026-04-26', content: '신규 사업자 정보 유효성 검사 통과' },
+];
+
 const BankerWorkSpace = () => {
     const { openModal } = useModal();
     const [isWorking, setIsWorking] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
+    
 
     const handleProductClick = (product) => {
     setSelectedProduct(product);
@@ -103,6 +114,8 @@ const BankerWorkSpace = () => {
             modalConfig.onConfirm();
         }
     };
+
+
 
 
 
@@ -688,6 +701,12 @@ const BankerWorkSpace = () => {
         }
     };
 
+
+    const handleChangePassword = (pwData) => {
+        console.log("비밀번호 변경 요청 데이터:", pwData);
+        setSelectedWorkType(null); 
+    };
+
  return (
         <div className={styles.container}>
             <img src={WorkSpaceBackground} alt="WorkSpace Background" className={styles.backgroundImage} />
@@ -957,13 +976,27 @@ const BankerWorkSpace = () => {
                                                         {/*통장비번변경*/}
                                                         {selectedWorkType === "CHANGE-PASSWORD" && (
                                                             <ChangePassword 
-                                                                    onCancel={() => {
+                                                                onCancel={() => {
                                                                     setSelectedWorkType(null);
-                                                                    handleCancelAcceptTask(selectedTask);
-                                                                    }} 
-                                                                    onComplete={(pwData) => handleChangePassword(pwData)}
-                                                                    selectedTask={selectedTask}
-                                                                />
+                                                                    if (selectedTask) handleCancelAcceptTask(selectedTask);
+                                                                }} 
+                                                                onComplete={(pwData) => {
+                                                                    console.log("비밀번호 변경 완료:", pwData);
+
+                                                                    setSelectedWorkType(null); 
+
+                                                                    if (typeof setSelectedTask === 'function') {
+                                                                        setSelectedTask(null);
+                                                                    }
+
+                                                                    if (typeof setSelectedCustomer === 'function') {
+                                                                        setSelectedCustomer(null);
+                                                                    }
+
+                                                            
+                                                                }}
+                                                                selectedTask={selectedTask}
+                                                            />
                                                         )}
 
 
@@ -1083,10 +1116,18 @@ const BankerWorkSpace = () => {
                                     </div>
 
                                     <aside className={styles.rightSidebar}>
-                                        <div className={styles.infoBox}>
-                                            <h4>고객 특이사항</h4>
-                                            <div className={styles.alertItem}>⚠️ 특이사항 없음</div>
+                                      <div className={styles.infoBox}>
+                                        <h4 className={styles.infoTitle}>고객 특이사항</h4>
+                                        {/* 스크롤을 담당할 컨테이너 추가 */}
+                                        <div className={styles.logList}>
+                                            {logData.map((log) => (
+                                                <div key={log.id} className={styles.logItem}>
+                                                    <span className={styles.logDate}>{log.date}</span>
+                                                    <p className={styles.logContent}>{log.content}</p>
+                                                </div>
+                                            ))}
                                         </div>
+                                    </div>
 
                                         {/*  AI 추천 상품/서비스 영역 */}
                                         <div className={styles.rightSidebar_infoBox_recommend}>
