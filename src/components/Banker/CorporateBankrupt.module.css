@@ -1,125 +1,123 @@
 .container {
     width: 100%;
-    margin: 0 auto;
-    padding: 50px 0;
-    font-family: 'Pretendard', sans-serif;
-    color: #333;
     display: flex;
     flex-direction: column;
     align-items: center; 
+    background: transparent;
+    padding: 20px 0;
 }
 
-.formContainer {
+.header {
     width: 100%;
-    max-width: 650px;
+    max-width: 720px; 
     display: flex;
-    flex-direction: column;
-    align-items: center; 
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
+
+.headerMain {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+
+.warningIcon {
+    font-size: 1.2rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+}
+
+.headerTitle {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #e74c3c;
+    margin: 0;
+    line-height: 1;
+}
+
+.riskBadge {
+    background: #fff5f5;
+    color: #e74c3c;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 800;
+    border: 1px solid #feb2b2;
+}
+
+.mainGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px; 
+    width: 100%;
+    max-width: 720px; 
+}
+
+.col { display: flex; flex-direction: column; }
 
 .section {
-    width: 100%;
     display: flex;
     flex-direction: column;
-    align-items: center; 
-    margin-bottom: 40px;
-}
-
-
-.riskSection {
-    margin-top: 50px;
-    margin-bottom: 50px;
-}
-
-.labelRow {
-    width: 100%;
-    text-align: center;
-    font-size: 1rem;
-    font-weight: 700;
-    color: #444;
-    margin-bottom: 15px;
-}
-
-
-.displayBox, 
-.inputFieldBox input, 
-.customSelectMain select, 
-.textarea {
-    width: 100% !important;
-    max-width: 650px;
-    padding: 18px 20px;
-    border: 1px solid #d1d8dc;
-    border-radius: 10px;
-    font-size: 1rem;
-    background-color: #fff;
-    box-sizing: border-box;
-    text-align: center;
-    appearance: none !important;
-    -webkit-appearance: none !important;
-}
-
-.displayBox {
-    background-color: #f8f9fa;
-    display: flex;
-    justify-content: center;
     align-items: center;
-    min-height: 56px;
+    margin-bottom: 20px;
 }
 
+.label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 8px;
+}
+
+.displayBox, .fullInput, .textarea {
+    width: 100% !important;
+    height: 44px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    background-clip: padding-box;
+    outline: none;
+}
+
+.displayBox { background: rgba(241, 245, 249, 0.8); }
+
+.fullInput { text-align-last: center; padding: 0 10px; }
 
 .textarea {
-    height: 200px; 
-    text-align: left;
-    padding: 20px;
-    line-height: 1.7;
+    height: 192px; 
+    padding: 15px;
+    resize: none;
+    line-height: 1.6;
 }
-
 
 .buttonRow {
     width: 100%;
-    max-width: 650px;
-    margin-top: 40px;
+    max-width: 720px;
     display: flex;
     justify-content: center; 
-    gap: 12px; 
+    gap: 16px;
+    margin-top: 30px;
 }
 
 .btnCancel, .btnSubmit {
-    width: 140px; 
-    height: 48px;
+    padding: 12px 40px;
     border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 14px;
+    font-weight: 700;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
 }
 
-
-.btnCancel {
-    background-color: #f1f3f5;
-    color: #495057;
-    border: 1px solid #dee2e6;
-}
-
-.btnCancel:hover {
-    background-color: #e9ecef;
-}
-
-
-.btnSubmit {
-    background-color: #2eb086;
-    color: white;
-    border: none;
-}
-
-.btnSubmit:hover {
-    background-color: #258d6b;
-}
-
-
-.customSelectMain::after, .customSelectMain span, .arrowUp {
-    display: none !important;
-}
+.btnCancel { background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; }
+.btnSubmit { background: #e74c3c; color: #ffffff; border: none; }

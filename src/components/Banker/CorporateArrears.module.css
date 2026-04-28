@@ -1,122 +1,107 @@
 .container {
-    width: 100%;
+    width: 720px;
     margin: 0 auto;
-    padding: 50px 0;
-    font-family: 'Pretendard', sans-serif;
-    color: #333;
-    display: flex;
-    flex-direction: column;
-    align-items: center; 
+    padding: 20px;
+    background: transparent;
 }
 
-.formContainer {
-    width: 100%;
-    max-width: 650px; 
+.header {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
     align-items: center;
-}
-
-.section {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center; 
-    margin-bottom: 40px;
-}
-
-
-.rowGrid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 25px;
-    width: 100%;
-    max-width: 650px;
-    margin-bottom: 40px;
-}
-
-
-.riskSection {
-    margin-top: 40px;
-    margin-bottom: 40px;
-}
-
-.labelRow {
-    width: 100%;
-    text-align: center;
-    font-size: 1rem;
-    font-weight: 700;
-    color: #444;
     margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #edf2f7;
 }
 
+.title { font-size: 1.1rem; font-weight: 700; color: #333; }
 
-.displayBox, 
-.section input, 
-.section select, 
-.textarea {
-    width: 100% !important;
-    padding: 18px 20px;
-    border: 1px solid #d1d8dc;
-    border-radius: 12px;
-    font-size: 1.05rem;
-    background-color: #fff;
-    box-sizing: border-box;
-    color: #333;
-    min-height: 60px; 
+
+.headerBadge {
+    background-color: #fee2e2 !important; 
+    color: #ef4444 !important; 
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.mainWrapper {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 16px;
+    align-items: stretch;
+}
+
+.leftCol { display: flex; flex-direction: column; gap: 8px; }
+
+.miniCard {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px;
     text-align: center;
-    outline: none; 
-    
-    appearance: none !important;
-    -webkit-appearance: none !important;
 }
 
+.cardLabel { font-size: 10px; color: #94a3b8; font-weight: 700; margin-bottom: 4px; display: block; }
+.customerInfo { display: flex; justify-content: center; align-items: baseline; gap: 6px; }
+.name { font-size: 1.05rem; font-weight: 800; color: #2d3748; }
+.subText { font-size: 0.8rem; color: #718096; }
 
-.section input:focus, .section select:focus {
-    border-color: #adb5bd;
-}
 
-.displayBox {
-    background-color: #f8f9fa;
+.dataGrid {
     display: flex;
-    justify-content: center;
+    justify-content: space-around;
     align-items: center;
 }
 
-
-.textarea {
-    height: 300px;
-    text-align: left;
-    padding: 25px;
-    line-height: 1.8;
-}
-
-
-.dDayText {
-    margin-top: 12px;
-    font-weight: 800;
-    color: #e74c3c;
-    font-size: 0.95rem;
-}
-
-
-.buttonRow {
-    margin-top: 30px;
+.dataItem {
     display: flex;
+    flex-direction: column;
+    align-items: center; 
+    flex: 1;
+}
+
+.itemLabel { font-size: 10px; color: #718096; margin-bottom: 2px; }
+.danger { font-size: 0.95rem; color: #e53e3e; font-weight: 800; }
+.countText { font-size: 0.95rem; color: #1a202c; font-weight: 800; }
+
+.vLine {
+    width: 1px;
+    height: 24px;
+    background: #e2e8f0;
+}
+
+
+.inputCard {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
     justify-content: center;
-    gap: 15px;
-    width: 100%;
 }
 
-.btnCancel, .btnSubmit {
-    width: 140px;
-    height: 50px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 1rem;
-    cursor: pointer;
+.formRow { display: flex; align-items: center; margin-bottom: 12px; gap: 10px; }
+.formRow:last-child { margin-bottom: 0; }
+.formRow label { width: 65px; font-size: 12px; font-weight: 700; color: #4a5568; }
+
+
+.select, .amountInput {
+    flex: 1; height: 36px; padding: 0 10px;
+    border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px;
+    outline: none;
 }
 
-.btnCancel { background-color: #f1f3f5; color: #495057; border: 1px solid #dee2e6; }
-.btnSubmit { background-color: #2eb086; color: white; border: none; }
-.dangerText { color: #e74c3c; font-weight: 800; }
+.inputGroup { flex: 1; display: flex; gap: 6px; }
+.allBtn {
+    background: #334155; color: #fff; border: none;
+    padding: 0 12px; border-radius: 6px;
+    font-size: 11px; font-weight: 600; cursor: pointer;
+}
+
+.footer { display: flex; justify-content: center; gap: 12px; margin-top: 20px; }
+.btnCancel, .btnSubmit { width: 110px; height: 40px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; }
+.btnCancel { background: #f7fafc; border: 1px solid #e2e8f0; color: #718096; }
+.btnSubmit { background: #2eb086; color: #fff; border: none; }

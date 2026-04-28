@@ -1,85 +1,101 @@
 import React, { useState } from 'react';
-import styles from './CorporateArrears.module.css'; 
+import styles from './CorporateArrears.module.css';
 
-// 1. props 부분에 onCancel을 확실히 넣어줍니다.
-const CorporateArrears = ({ onCancel }) => {
-  const [arrearsDate, setArrearsDate] = useState('2026-03-21');
-  
-  const calculateDDay = (date) => {
-    const today = new Date();
-    const start = new Date(date);
-    const diff = Math.floor((today - start) / (1000 * 60 * 60 * 24));
-    return diff >= 0 ? `D+${diff}` : `D${diff}`;
-  };
+const CorporateArrears = ({ onCancel, onComplete }) => {
+    const arrearsInfo = {
+        businessName: "권정균",
+        businessNumber: "123-45-67890",
+        totalArrears: 15250000,
+        arrearsCount: 2
+    };
 
-  return (
-    <div className={styles.container}>
-      <div className={styles.formContainer}>
-        
-        <div className={styles.section}>
-          <label className={styles.labelRow}>법인명 / 사업자등록번호</label>
-          <div className={styles.displayBox}>권정균</div>
-          <div className={`${styles.displayBox} ${styles.marginTop10}`}>123-45-67890</div>
-        </div>
+    const accountList = [
+        { id: 1, name: '법인 주거래', number: '100-555-888999' },
+        { id: 2, name: '기업 예비비', number: '100-222-333444' },
+    ];
 
-        <div className={styles.section}>
-          <label className={styles.labelRow}>최초 연체 발생일</label>
-          <div className={styles.inputFieldBox}>
-            <input 
-              type="date" 
-              value={arrearsDate} 
-              onChange={(e) => setArrearsDate(e.target.value)} 
-            />
-          </div>
-          <p className={styles.dDayText}>현재 연체 {calculateDDay(arrearsDate)}일째</p>
-        </div>
+    const [selectedAccount, setSelectedAccount] = useState(accountList[0].number);
+    const [payAmount, setPayAmount] = useState(arrearsInfo.totalArrears);
 
-        <div className={styles.rowGrid}>
-          <div className={styles.section}>
-            <label className={styles.labelRow}>연체 총액 (원)</label>
-            <input type="text" placeholder="0" className={styles.textRight} />
-          </div>
-          <div className={styles.section}>
-            <label className={styles.labelRow}>연체 회차</label>
-            <div className={styles.customSelectMain}>
-              <select>
-                <option>1회차</option>
-                <option>2회차</option>
-                <option className={styles.dangerText}>3회차 이상 (위험)</option>
-              </select>
+    return (
+        <div className={styles.container}>
+            <div className={styles.header}>
+                <h2 className={styles.title}>기업 연체 관리 및 납부</h2>
+                <div className={styles.headerBadge}>D+38 관리대상</div>
             </div>
-          </div>
-        </div>
 
-        <div className={`${styles.section} ${styles.riskSection}`}>
-          <label className={styles.labelRow}>현재 관리 등급</label>
-          <div className={styles.displayBox}>
-            <span className={styles.dangerText}>주의 (Caution)</span>
-          </div>
-        </div>
+            <div className={styles.mainWrapper}>
+                <div className={styles.leftCol}>
+                    <div className={styles.miniCard}>
+                        <p className={styles.cardLabel}>고객 정보</p>
+                        <div className={styles.customerInfo}>
+                            <span className={styles.name}>{arrearsInfo.businessName}</span>
+                            <span className={styles.subText}>{arrearsInfo.businessNumber}</span>
+                        </div>
+                    </div>
 
-        <div className={styles.section}>
-          <label className={styles.labelRow}>연체 사유 및 대응 현황</label>
-          <textarea 
-            className={styles.textarea} 
-            placeholder="연체 발생 원인과 현재 상환 계획을 상세히 입력하세요."
-          ></textarea>
-        </div>
+                    <div className={styles.miniCard}>
+                        <p className={styles.cardLabel}>연체 현황</p>
+                        <div className={styles.dataGrid}>
+                            <div className={styles.dataItem}>
+                                <span className={styles.itemLabel}>총 연체액</span>
+                                <strong className={styles.danger}>
+                                    {arrearsInfo.totalArrears.toLocaleString()}원
+                                </strong>
+                            </div>
 
-        <div className={styles.buttonRow}>
-          {/* 2. onClick에 onCancel을 연결! 여기가 핵심입니다. */}
-          <button 
-            type="button" 
-            className={styles.btnCancel} 
-            onClick={onCancel}
-          >
-            업무 취소
-          </button>
-          <button className={styles.btnSubmit}>연체 등록</button>
+                        
+                            <div className={styles.vLine} />
+
+                            <div className={styles.dataItem}>
+                                <span className={styles.itemLabel}>연체 회차</span>
+                                <strong className={styles.countText}>{arrearsInfo.arrearsCount}회차</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+          
+                <div className={styles.rightCol}>
+                    <div className={styles.inputCard}>
+                        <div className={styles.formRow}>
+                            <label>출금 계좌</label>
+                            <select 
+                                className={styles.select}
+                                value={selectedAccount}
+                                onChange={(e) => setSelectedAccount(e.target.value)}
+                            >
+                                {accountList.map(acc => (
+                                    <option key={acc.number} value={acc.number}>
+                                        {acc.name} ({acc.number.slice(-4)})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className={styles.formRow}>
+                            <label>납부 금액</label>
+                            <div className={styles.inputGroup}>
+                                <input 
+                                    type="number" 
+                                    className={styles.amountInput}
+                                    value={payAmount}
+                                    onChange={(e) => setPayAmount(e.target.value)}
+                                />
+                                <button className={styles.allBtn} onClick={() => setPayAmount(arrearsInfo.totalArrears)}>전액</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+      
+            <div className={styles.footer}>
+                <button className={styles.btnCancel} onClick={onCancel}>취소</button>
+                <button className={styles.btnSubmit} onClick={() => alert('납부 승인 완료')}>납부 승인</button>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default CorporateArrears;
