@@ -13,7 +13,7 @@ export const ModalProvider = ({ children }) => {
         onConfirm: null,
         onCancel: null,
         confirmText: '확인',
-        cancelText: '취소',
+        cancelText: null, // 단순 알림창에서는 기본적으로 취소 버튼을 숨김
     });
 
     // openModal이 모든 props를 받을 수 있도록 ...rest 사용
@@ -34,7 +34,7 @@ export const ModalProvider = ({ children }) => {
             onConfirm: null,
             onCancel: null,
             confirmText: '확인',
-            cancelText: '취소',
+            cancelText: null,
         });
     };
 
@@ -59,7 +59,8 @@ export const ModalProvider = ({ children }) => {
                 isOpen={modalConfig.isOpen}
                 onClose={closeModal}
                 title={modalConfig.title}
-                onConfirm={modalConfig.onConfirm ? handleConfirm : null}
+                // 특별한 onConfirm 함수가 없어도 확인 버튼으로 창을 닫을 수 있도록 항상 handleConfirm 전달
+                onConfirm={handleConfirm}
                 onCancel={modalConfig.onCancel || modalConfig.cancelText ? handleCancel : null}
                 confirmText={modalConfig.confirmText || '확인'}
                 cancelText={modalConfig.cancelText}

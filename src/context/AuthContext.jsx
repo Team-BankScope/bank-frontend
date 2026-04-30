@@ -32,7 +32,8 @@ export const AuthProvider = ({ children }) => {
                             name: data.name, 
                             level: data.level,
                             auth: data.auth,
-                            team: data.team
+                            team: data.team,
+                            status: data.status
                         });
                     } else if (data.type === 'user') {
                         setUser({ 
@@ -68,6 +69,12 @@ export const AuthProvider = ({ children }) => {
     const logout = async () => {
         try {
             await fetch('/api/user/logout', { method: 'POST' });
+            
+            // 로그아웃 시 로컬스토리지에 저장된 유저의 bankerStatus 캐시 제거
+            if (user && user.email) {
+                localStorage.removeItem(`bankerStatus_${user.email}`);
+            }
+
             showAlert('로그아웃 되었습니다.', () => {
                 setUser(null);
             });

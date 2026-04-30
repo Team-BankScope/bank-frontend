@@ -89,15 +89,16 @@ const Transfer = ({ onCancel, taskId, selectedTask, onSuccess }) => {
             });
 
             if (response.ok) {
-                if (onSuccess) {
-                    await onSuccess();
-                }
                 openModal({ 
                     title: '이체 완료', 
-                    message: `이체 및 업무 로그 작성이 완료되었습니다!`,
-                    onConfirm: () => onCancel() 
+                    message: `이체가 완료되었습니다!`,
+                    onConfirm: async () => {
+                        if (onSuccess) {
+                            await onSuccess();
+                        }
+                        onCancel();
+                    }
                 });
-                onCancel();
             } else {
                 const errorData = await response.json().catch(() => ({}));
                 openModal({ 

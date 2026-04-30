@@ -16,10 +16,10 @@ const CardManage = () => {
             onConfirm: callback
         });
     };
-    
+
     const [cards, setCards] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    
+
     const [expandedCardId, setExpandedCardId] = useState(null);
     const [cardDetails, setCardDetails] = useState({});
 
@@ -40,7 +40,7 @@ const CardManage = () => {
                 headers: { 'Content-Type': 'application/json' },
             });
             const data = await response.json();
-            
+
             switch (data.result) {
                 case 'SUCCESS':
                     setCards(data.cards);
@@ -104,7 +104,7 @@ const CardManage = () => {
     // 3. 카드 해지 요청
     const handleDeleteConfirm = async () => {
         if (!cardToDelete) return;
-        setDeleteModalOpen(false); 
+        setDeleteModalOpen(false);
         setIsLoading(true);
 
         try {
@@ -118,7 +118,7 @@ const CardManage = () => {
                 case 'SUCCESS':
                     showAlert('카드가 성공적으로 해지되었습니다.', () => {
                         setCardToDelete(null);
-                        fetchCardList(); 
+                        fetchCardList();
                     });
                     break;
                 case 'FAILURE_SESSION':
@@ -146,7 +146,7 @@ const CardManage = () => {
         <div className={styles.cardManageContainer}>
             {isLoading && <Loading />}
             <h2 className={styles.sectionTitle}>내 카드 관리</h2>
-            
+
             {cards.length === 0 ? (
                 <div className={styles.emptyBox}>
                     <p>보유하신 카드가 없습니다.</p>
@@ -155,13 +155,13 @@ const CardManage = () => {
                 <div className={styles.cardList}>
                     {cards.map((card) => (
                         <div key={card.cardId} className={styles.cardItem}>
-                            
+
                             <div className={styles.cardMain}>
                                 <div className={styles.cardLeft}>
-                                    <img 
-                                        src={card.cardColor === 'blue' ? blueCardImg : greenCardImg} 
-                                        alt={card.cardName} 
-                                        className={styles.cardImage} 
+                                    <img
+                                        src={card.cardColor === 'blue' ? blueCardImg : greenCardImg}
+                                        alt={card.cardName}
+                                        className={styles.cardImage}
                                     />
                                     <div className={styles.cardInfo}>
                                         <span className={styles.cardBadge}>
@@ -172,14 +172,14 @@ const CardManage = () => {
                                     </div>
                                 </div>
                                 <div className={styles.cardRight}>
-                                    <button 
-                                        className={styles.deleteBtn} 
+                                    <button
+                                        className={styles.deleteBtn}
                                         onClick={() => openDeleteModal(card.cardId)}
                                     >
                                         해지하기
                                     </button>
-                                    <button 
-                                        className={styles.moreBtn} 
+                                    <button
+                                        className={styles.moreBtn}
                                         onClick={() => handleExpandClick(card.cardId)}
                                     >
                                         상세보기 {expandedCardId === card.cardId ? '∧' : '∨'}
@@ -205,10 +205,13 @@ const CardManage = () => {
                                     </div>
                                     <div className={styles.detailRow}>
                                         <span className={styles.detailLabel}>상태</span>
-                                        <span className={`${styles.detailValue} ${cardDetails[card.cardId].status === 'ACTIVE' ? styles.statusActive : ''}`}>
-                                            {cardDetails[card.cardId].status === 'ACTIVE' ? '정상 사용중' : '정지/해지'}
+                                        <span className={` ${styles.detailValue} ${cardDetails[card.cardId].status === 'ACTIVE' ? styles.statusActive : ''}${cardDetails[card.cardId].status === 'ISSUING' ? styles.statusISSUING : ''}${(cardDetails[card.cardId].status !== 'ACTIVE' && cardDetails[card.cardId].status !== 'ISSUING') ? styles.statusINActive : ''}`}>{cardDetails[card.cardId].status === 'ACTIVE'
+                                             ? '정상 사용중'
+                                             : cardDetails[card.cardId].status === 'ISSUING'
+                                                 ? '발급중'
+                                                 : '정지/해지'}
                                         </span>
-                                    </div>
+                                        </div>
                                 </div>
                             )}
                         </div>

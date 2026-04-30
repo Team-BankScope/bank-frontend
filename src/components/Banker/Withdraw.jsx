@@ -13,7 +13,6 @@ const Withdraw = ({ onCancel, taskId, selectedTask, onSuccess }) => {
         amount: ''
     });
 
-
     useEffect(() => {
         const fetchUserAccounts = async () => {
             const userId = selectedTask?.userId;
@@ -88,11 +87,15 @@ const Withdraw = ({ onCancel, taskId, selectedTask, onSuccess }) => {
             });
 
             if (response.ok) {
-                if (onSuccess) {
-                    await onSuccess();
-                }
-                openModal({ title: '출금 완료', message: '출금 처리가 완료되었습니다.' });
-                onCancel(); 
+                openModal({ 
+                    title: '출금 완료', 
+                    message: '출금 처리가 완료되었습니다.',
+                    onConfirm: async () => {
+                        if (onSuccess) {
+                            await onSuccess();
+                        }
+                    }
+                });
             } else {
                 const errorData = await response.json().catch(() => ({}));
                 openModal({ title: '출금 실패', message: errorData.message || '정보를 다시 확인해주세요.' });

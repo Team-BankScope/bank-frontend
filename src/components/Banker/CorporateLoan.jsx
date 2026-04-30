@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import styles from './CorporateLoan.module.css';
+import { useModal } from '../../context/ModalContext'; // useModal 훅 추가
 
 const CorporateLoan = ({ onCancel, onComplete, selectedTask }) => {
+    const { openModal } = useModal(); // 모달 훅 사용
     const [formData, setFormData] = useState({
         companyName: selectedTask?.userName || '미등록 기업',
         businessNumber: '123-45-67890',
@@ -15,6 +17,17 @@ const CorporateLoan = ({ onCancel, onComplete, selectedTask }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSubmit = () => {
+        openModal({
+            title: "알림",
+            message: "기업대출 심사가 완료/승인되었습니다.",
+            confirmText: "확인",
+            onConfirm: () => {
+                if (onComplete) onComplete(formData);
+            }
+        });
     };
 
     return (
@@ -70,7 +83,7 @@ const CorporateLoan = ({ onCancel, onComplete, selectedTask }) => {
             
                 <div className={styles.buttonRow}>
                     <button className={styles.btnCancel} onClick={onCancel}>업무 취소</button>
-                    <button className={styles.btnSubmit} onClick={() => onComplete(formData)}>심사 완료/승인</button>
+                    <button className={styles.btnSubmit} onClick={handleSubmit}>심사 완료/승인</button>
                 </div>
             </div>
         </div>

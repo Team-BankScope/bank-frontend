@@ -85,19 +85,19 @@ const Deposit = ({ onCancel, taskId, selectedTask, onSuccess }) => {
             });
 
             if (response.ok) {
-                if (onSuccess) {
-                    await onSuccess();
-                }
-                
                 openModal({ 
                     title: '입금 완료', 
-                    message: `입금 및 업무 로그 작성이 완료되었습니다!`,
-                    onConfirm: () => onCancel() 
+                    message: `입금이 완료되었습니다!`,
+                    onConfirm: async () => {
+                        if (onSuccess) {
+                            await onSuccess();
+                        }
+                        onCancel(); 
+                    }
                 });
-                onCancel(); 
             } else {
-                const errorText = await response.text(); 
-                console.error("서버 에러 응답:", errorText);
+                const errorData = await response.json().catch(() => ({}));
+                console.error("서버 에러 응답:", errorData);
                 openModal({ 
                     title: '입금 실패', 
                     message: errorData.message || '정보를 다시 확인해주세요.' 

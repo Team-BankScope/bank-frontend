@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import styles from './CorporateCard.module.css';
+import { useModal } from '../../context/ModalContext'; // useModal 훅 추가
 
 const CorporateCard = ({ onCancel, onComplete, selectedTask }) => {
     const [activeTab, setActiveTab] = useState('register');
+    const { openModal } = useModal(); // 모달 훅 사용
     const [formData, setFormData] = useState({
         companyName: selectedTask?.userName ,
         businessNumber: '123-45-67890',
@@ -26,9 +28,15 @@ const CorporateCard = ({ onCancel, onComplete, selectedTask }) => {
     };
 
     const handleSubmit = () => {
-        if (onComplete) onComplete(formData);
-        alert('법인카드 발급 승인이 완료되었습니다.');
-        setActiveTab('list');
+        openModal({
+            title: "알림",
+            message: "법인카드 발급 승인이 완료되었습니다.",
+            confirmText: "확인",
+            onConfirm: () => {
+                setActiveTab('list');
+                if (onComplete) onComplete(formData);
+            }
+        });
     };
 
     return (

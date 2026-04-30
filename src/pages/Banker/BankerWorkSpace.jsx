@@ -62,6 +62,11 @@ const BankerWorkSpace = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
     
+    // 비밀번호 변경 모달 상태
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmNewPassword, setConfirmNewPassword] = useState('');
+
 
     const handleProductClick = (product) => {
     setSelectedProduct(product);
@@ -115,9 +120,40 @@ const BankerWorkSpace = () => {
         }
     };
 
+    const handleChangePassword = async () => {
+        if (newPassword !== confirmNewPassword) {
+            showAlert("새 비밀번호가 일치하지 않습니다.");
+            return;
+        }
+        if (newPassword.length < 4) { // 예시: 최소 4자
+            showAlert("비밀번호는 최소 4자 이상이어야 합니다.");
+            return;
+        }
 
+        try {
+            const response = await fetch(`/api/member/password?password=${newPassword}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+            });
 
-
+            if (response.ok) {
+                const data = await response.json();
+                if (data.result === 'SUCCESS') {
+                    showAlert("비밀번호가 성공적으로 변경되었습니다.");
+                    setIsPasswordModalOpen(false);
+                    setNewPassword('');
+                    setConfirmNewPassword('');
+                } else {
+                    showAlert("비밀번호 변경에 실패했습니다.");
+                }
+            } else {
+                showAlert("서버 오류로 비밀번호 변경에 실패했습니다.");
+            }
+        } catch (error) {
+            console.error("Error changing password:", error);
+            showAlert("네트워크 오류로 비밀번호 변경에 실패했습니다.");
+        }
+    };
 
     const handleTaskMenuSelect = (taskTitle) => {
         // TaskSelect에서 넘어온 제목에 따라 mapping
@@ -187,6 +223,21 @@ const BankerWorkSpace = () => {
             showAlert("로그인이 필요한 서비스입니다.", () => {
                 navigate("/AdminLogin");
             });
+        } else if (user) {
+            // 유저 세션의 상태에 따라 초기 isWorking 값 설정 (1: 업무중, 0: 자리비움)
+            // 만약 백엔드에서 status를 정확히 보내준다면 그 값을,
+            // 그렇지 않다면 localStorage에 저장된 값을 우선적으로 반영합니다.
+            const savedStatus = localStorage.getItem(`bankerStatus_${user.email}`);
+            
+            if (user.status !== undefined && user.status !== null) {
+                setIsWorking(user.status === 1);
+                localStorage.setItem(`bankerStatus_${user.email}`, user.status === 1 ? '1' : '0');
+            } else if (savedStatus !== null) {
+                setIsWorking(savedStatus === '1');
+            } else {
+                // 초기 기본값
+                setIsWorking(true);
+            }
         }
     }, [user, loading, navigate]);
 
@@ -444,23 +495,23 @@ const BankerWorkSpace = () => {
             // 업무 상태 업데이트 결과 확인 (TaskResult 분기)
             switch (completeData.result) {
                 case 'SUCCESS':
-                    showAlert(`계좌가 생성되었습니다.\n계좌번호: ${data.account?.accountNumber}`);
+                    showAlert(`계좌가 생성되었습니다.\n계좌번호: ${data.account?.accountNumber}`, async () => {
+                        // 로컬 목록 즉시 갱신 (UI 반영)
+                        setTasks(prevTasks =>
+                            prevTasks.map(t => t.taskId === selectedTask.taskId ? { ...t, status: 'COMPLETED' } : t)
+                        );
 
-                    // 로컬 목록 즉시 갱신 (UI 반영)
-                    setTasks(prevTasks =>
-                        prevTasks.map(t => t.taskId === selectedTask.taskId ? { ...t, status: 'COMPLETED' } : t)
-                    );
+                        // 선택 상태 및 폼 초기화
+                        setSelectedWorkType(null);
+                        setSelectedTask(null);
+                        setAccountType("CHECKING"); // 초기값으로 리셋
+                        setAccountAlias("");
+                        setAccountPassword("");
+                        setConfirmPassword("");
 
-                    // 선택 상태 및 폼 초기화
-                    setSelectedWorkType(null);
-                    setSelectedTask(null);
-                    setAccountType("CHECKING"); // 초기값으로 리셋
-                    setAccountAlias("");
-                    setAccountPassword("");
-                    setConfirmPassword("");
-
-                    // 서버와 목록 동기화
-                    await fetchTasks();
+                        // 서버와 목록 동기화
+                        await fetchTasks();
+                    });
                     break;
 
                 case 'FAILURE_TASK_IN_PROGRESS':
@@ -520,6 +571,100 @@ const BankerWorkSpace = () => {
             showAlert('오류가 발생했습니다.');
         }
     };
+
+    // 업무 기록 저장 함수 
+    const handlePostLog = async (idValue) => {
+        if (!note.trim()) {
+            return;
+        }
+
+        if (!idValue) {
+            console.error("❌ 에러: ID 값이 비어있습니다.");
+            return;
+        }
+        const logParams = new URLSearchParams({
+            note: note,
+            taskId: idValue 
+        }).toString();
+
+        try {
+            const response = await fetch(`/api/task-processing-log/?${logParams}`, {
+                method: 'POST'
+            });
+            
+            if (response.ok) {
+                console.log("✅ DB 저장 성공! 테이블을 확인해보세요.");
+                setNote(""); 
+            } else {
+                console.error("❌ 서버 응답 에러:", response.status);
+            }
+        } catch (error) {
+            console.error("❌ 네트워크 에러:", error);
+        }
+    };
+
+    // 멤버 상태 변경 API 연결 함수
+    const handleStatusChange = async (e) => {
+        const selectedValue = e.target.value;
+        const nextStatus = selectedValue === 'working'; // true or false
+        
+        // 현재 업무 중(IN_PROGRESS)인 태스크가 있는지 확인
+        const hasInProgressTask = tasks.some(task => task.status === 'IN_PROGRESS');
+
+        // 자리 비움(false)으로 변경하려고 하는데, 현재 처리 중인 업무가 있다면 차단
+        if (!nextStatus && hasInProgressTask) {
+            showAlert('현재 처리 중인 업무가 있습니다. 업무를 종료한 후 자리 비움 상태로 변경해주세요.');
+            // UI를 다시 업무 중(true)으로 원상복구하기 위해 select value를 강제로 변경하는 효과를 줌
+            // 상태값은 변경되지 않았으므로 React의 select는 이전 값을 유지함
+            return;
+        }
+
+        let apiStatus = nextStatus;
+
+        // UI 우선 변경 (Optimistic Update)
+        setIsWorking(nextStatus);
+
+        try {
+            const response = await fetch(`/api/member/status?status=${apiStatus}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const data = await response.json(); // 서버에서 보낸 result: "SUCCESS" 확인용
+
+            if (response.ok && data.result === "SUCCESS") {
+                // 상태 저장 
+                if (user) {
+                    user.status = nextStatus ? 1 : 0;
+                    localStorage.setItem(`bankerStatus_${user.email}`, nextStatus ? '1' : '0');
+                }
+
+                openModal({
+                    title: '상태 변경 완료',
+                    message: `현재 업무 상태가 [${nextStatus ? '업무 중' : '자리 비움'}]으로 변경되었습니다.`,
+                    confirmText: '확인',
+                    onConfirm: () => console.log("변경 확인 완료")
+                });
+            } else {
+                // 서버 응답이 SUCCESS가 아닌 경우 롤백
+                setIsWorking(!nextStatus);
+                openModal({
+                    title: '변경 실패',
+                    message: '상태 변경에 실패했습니다. 다시 시도해 주세요.',
+                    confirmText: '확인'
+                });
+            }
+        } catch (error) {
+            console.error("Error changing status:", error);
+            setIsWorking(!nextStatus);
+            openModal({
+                title: '오류',
+                message: '서버와 통신할 수 없습니다.',
+                confirmText: '확인'
+            });
+        }
+    };
+
     // 업무 수락 (WAITING -> IN_PROGRESS)
     const handleAcceptTask = async (task) => {
         try {
@@ -537,11 +682,19 @@ const BankerWorkSpace = () => {
 
             switch (data.result) {
                 case 'SUCCESS':
-                { const updatedTask = { ...task, status: 'IN_PROGRESS' };
+                { 
+                    const updatedTask = { ...task, status: 'IN_PROGRESS' };
                     setSelectedTask(updatedTask);
                     setTasks(prevTasks => prevTasks.map(t => t.taskId === task.taskId ? updatedTask : t));
                     await fetchTasks();
-                    break; }
+                    
+                    // 업무 수락 시, 현재 자리 비움 상태(false)라면 자동으로 업무 중(true)으로 변경
+                    if (!isWorking) {
+                        await handleStatusChange({ target: { value: 'working' } });
+                    }
+                    
+                    break; 
+                }
 
                 case 'FAILURE_TASK_IN_PROGRESS':
                     showAlert('이미 다른 담당자가 처리 중인 업무입니다.');
@@ -583,15 +736,16 @@ const BankerWorkSpace = () => {
 
             switch (data.result) {
                 case 'SUCCESS':
-                    showAlert('업무가 종료되었습니다.');
-                    setTasks(prevTasks => prevTasks.map(t =>
-                        t.taskId === targetTask.taskId ? { ...t, status: 'COMPLETED' } : t
-                    ));
-                    if (selectedTask?.taskId === targetTask.taskId) {
-                        setSelectedTask(null);
-                        setSelectedWorkType(null);
-                    }
-                    await fetchTasks();
+                    showAlert('업무가 종료되었습니다.', async () => {
+                        setTasks(prevTasks => prevTasks.map(t =>
+                            t.taskId === targetTask.taskId ? { ...t, status: 'COMPLETED' } : t
+                        ));
+                        if (selectedTask?.taskId === targetTask.taskId) {
+                            setSelectedTask(null);
+                            setSelectedWorkType(null);
+                        }
+                        await fetchTasks();
+                    });
                     break;
 
                 case 'FAILURE_SESSION':
@@ -613,7 +767,7 @@ const BankerWorkSpace = () => {
 
     // 연령대 계산 로직 추가
     const determineAgeGroup = (age) => {
-        console.log("Customer Age:", age); // 💡 연령대 확인용 콘솔 로그 추가
+
         if (!age) return null;
         const numAge = Number(age);
         if (isNaN(numAge)) return null;
@@ -624,87 +778,6 @@ const BankerWorkSpace = () => {
         if (numAge < 50) return "40대";
         if (numAge < 60) return "50대";
         return "60대";
-    };
-
-    // 업무 기록 저장 함수 
-    const handlePostLog = async (idValue) => {
-        if (!note.trim()) {
-            return;
-        }
-
-        if (!idValue) {
-            console.error("❌ 에러: ID 값이 비어있습니다.");
-            return;
-        }
-        const logParams = new URLSearchParams({
-            note: note,
-            taskId: idValue 
-        }).toString();
-
-        try {
-            const response = await fetch(`/api/task-processing-log/?${logParams}`, {
-                method: 'POST'
-            });
-            
-            if (response.ok) {
-                console.log("✅ DB 저장 성공! 테이블을 확인해보세요.");
-                setNote(""); 
-            } else {
-                console.error("❌ 서버 응답 에러:", response.status);
-            }
-        } catch (error) {
-            console.error("❌ 네트워크 에러:", error);
-        }
-    };
-
-    // 멤버 상태 변경 API 연결 함수
-    const handleStatusChange = async (e) => {
-        const selectedValue = e.target.value; 
-        const nextStatus = selectedValue === 'working';
-        setIsWorking(nextStatus);
-
-        try {
-            const response = await fetch(`/api/member/status?status=${nextStatus}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' }
-            });
-
-            if (response.ok) {
-                openModal({
-                    title: '상태 변경 완료',
-                    message: `현재 업무 상태가 [${nextStatus ? '업무 중' : '자리 비움'}]으로 변경되었습니다.`,
-                    confirmText: '확인',
-                    cancelText: null,      
-                    onConfirm: () => {
-                        console.log("변경 확인 완료");
-                    }
-                });
-            } else {
-                setIsWorking(!nextStatus); 
-                openModal({
-                    title: '변경 실패',
-                    message: '서버 오류로 인해 상태 변경에 실패했습니다.',
-                    confirmText: '확인',
-                    cancelText: null,
-                    onConfirm: () => {}
-                });
-            }
-        } catch (error) {
-            setIsWorking(!nextStatus); 
-            openModal({
-                title: '오류',
-                message: '서버와 통신할 수 없습니다.',
-                confirmText: '확인',
-                cancelText: null,
-                onConfirm: () => {}
-            });
-        }
-    };
-
-
-    const handleChangePassword = (pwData) => {
-        console.log("비밀번호 변경 요청 데이터:", pwData);
-        setSelectedWorkType(null); 
     };
 
  return (
@@ -741,9 +814,9 @@ const BankerWorkSpace = () => {
                                     <span className={styles.userName}>{user?.name || '김행원'} {user?.level ? `Lv.${user.level}` : ''}</span>
                                 </div>
                                 <button className={styles.headerBtn} onClick={handleLogout}>로그아웃</button>
-                                <button className={styles.headerBtn}>비밀번호 변경</button>
+                                <button className={styles.headerBtn} onClick={() => setIsPasswordModalOpen(true)}>비밀번호 변경</button>
                             </div>
-                                <div
+                              {/*  <div
                                     className={styles.notificationBanner}
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -752,7 +825,7 @@ const BankerWorkSpace = () => {
                                     }}
                                 >
                                     🔔 고객님의 채팅 상담업무가 도착했습니다
-                                </div>
+                                </div>*/}
 
                         </div>
                     </header>
@@ -928,6 +1001,7 @@ const BankerWorkSpace = () => {
                                                             onSuccess={() => {
                                                                 const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask?.task_id;
                                                                 handlePostLog(finalId);
+                                                                handleCompleteTask(selectedTask);
                                                             }}
                                                             />
                                                         )}
@@ -944,6 +1018,7 @@ const BankerWorkSpace = () => {
                                                                 onSuccess={() => {
                                                                     const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
                                                                     handlePostLog(finalId);
+                                                                    handleCompleteTask(selectedTask);
                                                                 }}
                                                             />
                                                         )}
@@ -960,6 +1035,7 @@ const BankerWorkSpace = () => {
                                                                 onSuccess={() => {
                                                                     const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
                                                                     handlePostLog(finalId);
+                                                                    handleCompleteTask(selectedTask);
                                                                 }}
                                                             />
                                                         )}
@@ -968,9 +1044,17 @@ const BankerWorkSpace = () => {
                                                         {/*체크카드발급*/}
                                                         {selectedWorkType === "CARD" && (
                                                             <Card
+                                                                selectedTask={selectedTask}
                                                                 onCancel={() => {
-                                                                    setSelectedWorkType(null);}}
-                                                                />
+                                                                    setSelectedWorkType(null);
+                                                                    handleCancelAcceptTask(selectedTask);
+                                                                }}
+                                                                onSuccess={() => {
+                                                                    const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
+                                                                    handlePostLog(finalId);
+                                                                    handleCompleteTask(selectedTask);
+                                                                }}
+                                                            />
                                                         )}
 
                                                         {/*통장비번변경*/}
@@ -982,18 +1066,9 @@ const BankerWorkSpace = () => {
                                                                 }} 
                                                                 onComplete={(pwData) => {
                                                                     console.log("비밀번호 변경 완료:", pwData);
-
-                                                                    setSelectedWorkType(null); 
-
-                                                                    if (typeof setSelectedTask === 'function') {
-                                                                        setSelectedTask(null);
-                                                                    }
-
-                                                                    if (typeof setSelectedCustomer === 'function') {
-                                                                        setSelectedCustomer(null);
-                                                                    }
-
-                                                            
+                                                                    const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
+                                                                    handlePostLog(finalId);
+                                                                    handleCompleteTask(selectedTask);
                                                                 }}
                                                                 selectedTask={selectedTask}
                                                             />
@@ -1217,6 +1292,55 @@ const BankerWorkSpace = () => {
             >
                 <div style={{ padding: '20px', textAlign: 'center', fontSize: '1.2rem', color: '#333', whiteSpace: 'pre-line', lineHeight: '1.5' }}>
                     {modalConfig.message}
+                </div>
+            </CustomModal>
+            
+            {/* 비밀번호 변경 모달 */}
+            <CustomModal
+                isOpen={isPasswordModalOpen}
+                onClose={() => setIsPasswordModalOpen(false)}
+                onConfirm={handleChangePassword}
+                title="비밀번호 변경"
+                confirmText="변경"
+                cancelText="취소"
+            >
+                <div className={styles.passwordModalContainer}>
+                    <div className={styles.passwordModalHeader}>
+                        <h3>직원 비밀번호 재설정</h3>
+                        <p>새로운 비밀번호를 입력해주세요.</p>
+                    </div>
+                    <div className={styles.passwordInputGroup}>
+                        <label>새 비밀번호</label>
+                        <div className={styles.passwordInputWrapper}>
+                            <span className={styles.passwordIcon}>🔒</span>
+                            <input
+                                type="password"
+                                placeholder="4자리 이상 입력"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                className={`${styles.passwordInput} ${newPassword.length > 0 && newPassword.length < 4 ? styles.error : ''}`}
+                            />
+                        </div>
+                        {newPassword.length > 0 && newPassword.length < 4 && (
+                            <span className={styles.errorMessage}>비밀번호는 최소 4자 이상이어야 합니다.</span>
+                        )}
+                    </div>
+                    <div className={styles.passwordInputGroup}>
+                        <label>비밀번호 확인</label>
+                        <div className={styles.passwordInputWrapper}>
+                            <span className={styles.passwordIcon}>🔒</span>
+                            <input
+                                type="password"
+                                placeholder="비밀번호 재입력"
+                                value={confirmNewPassword}
+                                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                className={`${styles.passwordInput} ${confirmNewPassword.length > 0 && newPassword !== confirmNewPassword ? styles.error : ''}`}
+                            />
+                        </div>
+                        {confirmNewPassword.length > 0 && newPassword !== confirmNewPassword && (
+                            <span className={styles.errorMessage}>비밀번호가 일치하지 않습니다.</span>
+                        )}
+                    </div>
                 </div>
             </CustomModal>
         </div>

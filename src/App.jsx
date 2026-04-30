@@ -37,7 +37,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         
         {/* Customer 전용 페이지 */}
-        <Route path="/my" element={<PrivateRoute allowedRoles={['customer']}><MyPage /></PrivateRoute>} />
+        <Route path="/my" element={<PrivateRoute allowedRoles={['customer','corporate']}><MyPage /></PrivateRoute>} />
         <Route path="/pinsetup" element={<PrivateRoute allowedRoles={['customer']}><PinSetup /></PrivateRoute>} />
         <Route path="/pinreset" element={<PrivateRoute allowedRoles={['customer']}><PinReset /></PrivateRoute>} />
         <Route path="/board/:boardType" element={<BoardList />} />

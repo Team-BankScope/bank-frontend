@@ -154,6 +154,12 @@
 .statusActive {
   color: #4A9C82;
 }
+.statusINActive {
+  color: #9c4a4d;
+}
+.statusISSUING {
+  color: #686868;
+}
 
 .modalBackdrop {
   position: fixed;

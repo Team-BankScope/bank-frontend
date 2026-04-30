@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import styles from './CorporateAccount.module.css';
+import { useModal } from '../../context/ModalContext'; // useModal 훅 추가
 
 const CorporateAccount = ({ onCancel, onComplete, selectedTask }) => {
+    const { openModal } = useModal(); // 모달 훅 사용
     const [formData, setFormData] = useState({
         companyName: selectedTask?.userName || '미등록 법인',
         businessNumber: '123-45-67890',
@@ -14,6 +16,17 @@ const CorporateAccount = ({ onCancel, onComplete, selectedTask }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSubmit = () => {
+        openModal({
+            title: "알림",
+            message: "법인계좌 개설이 승인되었습니다.",
+            confirmText: "확인",
+            onConfirm: () => {
+                if (onComplete) onComplete(formData);
+            }
+        });
     };
 
     return (
@@ -54,7 +67,6 @@ const CorporateAccount = ({ onCancel, onComplete, selectedTask }) => {
                                 <option value="법인 당좌예금">법인 당좌예금</option>
                                 <option value="법인 보통예금">법인 보통예금</option>
                             </select>
-                            <span className={styles.arrowUp}>▲</span>
                         </div>
                     </div>
                 </div>
@@ -70,7 +82,7 @@ const CorporateAccount = ({ onCancel, onComplete, selectedTask }) => {
                
                 <div className={styles.buttonRow}>
                     <button className={styles.btnCancel} onClick={onCancel}>업무 취소</button>
-                    <button className={styles.btnSubmit} onClick={() => onComplete(formData)}>계좌 개설 승인</button>
+                    <button className={styles.btnSubmit} onClick={handleSubmit}>계좌 개설 승인</button>
                 </div>
             </div>
         </div>
