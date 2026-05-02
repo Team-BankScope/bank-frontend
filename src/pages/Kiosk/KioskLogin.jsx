@@ -50,7 +50,12 @@ const KioskLogin = ({ formData, setFormData, onNext, onPrev }) => {
                             if (sessionResponse.ok) {
                                 const sessionData = await sessionResponse.json();
                                 if (sessionData.result === 'SUCCESS') {
-                                    setFormData(prev => ({ ...prev, userName: sessionData.name }));
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        userName: sessionData.name,
+                                        // Spring Boot /api/user/session 응답에 id 필드가 포함되어야 함
+                                        userId: sessionData.id ?? null,
+                                    }));
                                 }
                             }
                             setModalMessage('고객정보가 확인되었습니다.\n접수 화면으로 넘어갑니다.');

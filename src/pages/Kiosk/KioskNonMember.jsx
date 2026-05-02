@@ -77,12 +77,21 @@ const KioskNonMember = ({ formData, setFormData, onNext, onPrev }) => {
                     if (loginResponse.ok) {
                         const loginData = await loginResponse.json();
                         switch (loginData.result) {
-                            case 'SUCCESS':
-                                // 로그인 성공 시 비회원 정보 저장
+                            case 'SUCCESS': {
+                                // 로그인 성공 시 세션에서 userId 함께 저장
+                                let userId = null;
+                                const sessionResponse = await fetch('/api/user/session');
+                                if (sessionResponse.ok) {
+                                    const sessionData = await sessionResponse.json();
+                                    if (sessionData.result === 'SUCCESS') {
+                                        userId = sessionData.id ?? null;
+                                    }
+                                }
                                 setFormData(prev => ({
                                     ...prev,
                                     ssn: fullSsn,
                                     userName: localData.name,
+                                    userId,
                                 }));
 
                                 // 성공 모달 띄우기
@@ -93,6 +102,7 @@ const KioskNonMember = ({ formData, setFormData, onNext, onPrev }) => {
                                 }
                                 setIsModalOpen(true);
                                 break;
+                            }
                             case 'FAILURE_NOT_ALLOWED':
                                 setModalMessage('로그인 처리에 실패했습니다.\n창구에 문의해주세요.');
                                 setIsModalOpen(true);

@@ -849,7 +849,21 @@ const BankerWorkSpace = () => {
                                             onClick={() => setSelectedTask(task)}
                                         >
                                             <div className={styles.cardHeader}>
-                                                <span className={styles.customerName}>{task.userName} <small>{task.ticketNumber}</small></span>
+                                                <span className={styles.customerName}>
+                                                    {task.userName} <small>{task.ticketNumber}</small>
+                                                    {task.isAi && (
+                                                        <span style={{
+                                                            marginLeft: '6px',
+                                                            padding: '1px 6px',
+                                                            backgroundColor: '#6c63ff',
+                                                            color: '#fff',
+                                                            borderRadius: '4px',
+                                                            fontSize: '0.65rem',
+                                                            fontWeight: 'bold',
+                                                            verticalAlign: 'middle'
+                                                        }}>AI</span>
+                                                    )}
+                                                </span>
                                                 <span className={`${styles.tierBadge} ${styles.일반}`}>{task.grade || '일반'}</span>
                                             </div>
                                             <div className={styles.cardInfo}>
@@ -908,6 +922,17 @@ const BankerWorkSpace = () => {
                                         <div className={styles.detailHeader}>
                                             <div className={styles.detailCustomerInfo}>
                                                 <span className={`${styles.tierBadge} ${styles.일반}`}>{selectedTask.grade || '일반'}</span>
+                                                {selectedTask.isAi && (
+                                                    <span style={{
+                                                        padding: '2px 8px',
+                                                        backgroundColor: '#6c63ff',
+                                                        color: '#fff',
+                                                        borderRadius: '6px',
+                                                        fontSize: '0.7rem',
+                                                        fontWeight: 'bold',
+                                                        marginLeft: '6px'
+                                                    }}>AI 자동접수</span>
+                                                )}
                                                 <h2>{selectedTask.userName} <small>{selectedTask.ticketNumber}</small></h2>
                                                 <span className={styles.customerId}>접수번호: {selectedTask.taskId}</span>
                                             </div>

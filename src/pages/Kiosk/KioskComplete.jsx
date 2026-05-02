@@ -13,28 +13,35 @@ const KioskComplete = ({ formData, onGoHome, onAddMore, userName }) => {
     const categoryName = formData.taskType;
 
     useEffect(() => {
-        // 이미 제출되었으면 실행하지 않음
         if (isSubmitted.current) return;
         isSubmitted.current = true;
 
+        // AI 자동 접수: 이미 Python 서버에서 접수 완료 → 결과 바로 표시
+        if (formData.isAi && formData.aiTaskResult) {
+            setTicketInfo({
+                ticketNumber: formData.aiTaskResult.ticketNumber || '-',
+                level: formData.aiTaskResult.assignedLevel || '-',
+                counter: '창구 배정 중',
+            });
+            setIsLoading(false);
+            return;
+        }
+
+        // 직접 접수: Spring Boot API 호출
         const submitFormData = async () => {
             try {
                 const response = await fetch('/api/kiosk/task', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         taskType: formData.taskType,
-                        taskDetailType: formData.task
+                        taskDetailType: formData.task,
                     }),
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    
                     switch (data.result) {
-                        case 'SUCCESS':
-                            // 대기표 발급 성공 후 확인 API 호출
+                        case 'SUCCESS': {
                             const checkResponse = await fetch('/api/kiosk/task');
                             if (checkResponse.ok) {
                                 const checkData = await checkResponse.json();
@@ -43,20 +50,21 @@ const KioskComplete = ({ formData, onGoHome, onAddMore, userName }) => {
                                     setTicketInfo({
                                         ticketNumber: task.ticketNumber || '-',
                                         level: task.assignedLevel || '-',
-                                        counter: task.name ? `${task.name} (${task.level})` : '배정 중'
+                                        counter: task.name ? `${task.name} (${task.level})` : '배정 중',
                                     });
                                 } else {
                                     console.error("Failed to get task info:", checkData);
                                 }
                             }
                             break;
+                        }
                         case 'FAILURE_TASK_IN_PROGRESS':
                             alert('이미 처리중인 업무가 있습니다.');
                             onGoHome();
                             break;
                         case 'FAILURE_SESSION':
                             alert('세션이 만료되었습니다. 다시 로그인해주세요.');
-                            onGoHome(); // 또는 로그인 페이지로 이동
+                            onGoHome();
                             break;
                         case 'FAILURE':
                         default:
@@ -111,7 +119,12 @@ const KioskComplete = ({ formData, onGoHome, onAddMore, userName }) => {
             <div className={styles.completeHeader}>
                 <h2 className={styles.completeTitle}>{categoryName} 선택 완료</h2>
                 <p className={styles.completeSubtitle}>
-                    {isLoading ? '고객님의 정보를 서버로 전송하고 있습니다...' : 'AI 가 최적의 담당 창구를 배치 중 입니다.'}
+                    {isLoading
+                        ? '고객님의 정보를 서버로 전송하고 있습니다...'
+                        : formData.isAi
+                            ? 'AI가 분석을 완료했습니다. 아래 번호표를 확인해주세요.'
+                            : '접수가 완료되었습니다. 창구에서 호출 시 이동해주세요.'
+                    }
                 </p>
             </div>
 
