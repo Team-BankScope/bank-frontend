@@ -10,6 +10,7 @@ import CustomModal from '../../components/common/CustomModal';
 const Kiosk = () => {
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
+        userId: '',
         ssn: '',
         userName: '',
         task: '',
@@ -21,6 +22,7 @@ const Kiosk = () => {
         availableCounter: 0
     });
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isAiMode, setIsAiMode] = useState(false);
 
     const fetchDashboardData = async () => {
         try {
@@ -55,13 +57,20 @@ const Kiosk = () => {
     }, [step]);
 
     const handleGoHome = () => {
-        setFormData({ ssn: '', task: '', userName: '', taskType: '' });
+        setFormData({ userId: '', ssn: '', task: '', userName: '', taskType: '' });
+        setIsAiMode(false);
         setStep(1);
     };
 
     const handleAddMoreTask = () => {
         setFormData(prev => ({ ...prev, task: '', taskType: '' }));
-        setStep(4); // 업무 선택 단계로 이동
+        setIsAiMode(false); // 추가 업무 접수는 직접 접수로 간주
+        setStep(4); 
+    };
+
+    const handleAiAutoSelect = () => {
+        setIsAiMode(true);
+        setStep(5);
     };
 
     const getCurrentDateTime = () => {
@@ -118,7 +127,6 @@ const Kiosk = () => {
             case 3:
                 return (
                     <div className={styles.loginArea}>
-                        {/* 💡 상단 로그인 유저 정보 표시 추가 (step === 3 일때는 userInfoWrapper를 직접 렌더링하지 않고 CSS에서 제어해야함) */}
                         <div className={styles.userInfoWrapper}>
                             <span className={styles.userBadge}>
                                 <span className={styles.badgeText}>본인확인완료</span>
@@ -147,7 +155,7 @@ const Kiosk = () => {
                                     <strong>가장 빠르고 적합한 창구</strong>로<br/>
                                     알아서 안내해 드립니다.
                                 </p>
-                                <button className={styles.modeButtonPrimary} onClick={() => setIsModalOpen(true)}>
+                                <button className={styles.modeButtonPrimary} onClick={handleAiAutoSelect}>
                                     자동 접수하기
                                 </button>
                             </div>
@@ -159,13 +167,15 @@ const Kiosk = () => {
                                     해당 창구로 번호표를<br/>
                                     발급받습니다.
                                 </p>
-                                <button className={styles.modeButtonSecondary} onClick={() => setStep(4)}>
+                                <button className={styles.modeButtonSecondary} onClick={() => {
+                                    setIsAiMode(false);
+                                    setStep(4);
+                                }}>
                                     직접 접수하기
                                 </button>
                             </div>
                         </div>
                         
-                        {/* 이전으로 버튼 (처음 화면으로 돌아가기) */}
                         <button className={styles.prevButton} onClick={() => setStep(1)}>
                             ← 처음으로
                         </button>
@@ -174,7 +184,13 @@ const Kiosk = () => {
             case 4:
                 return <KioskTaskSelect formData={formData} setFormData={setFormData} onNext={() => setStep(5)} onPrev={() => setStep(3)} userName={formData.userName} />;
             case 5:
-                return <KioskComplete formData={formData} onGoHome={handleGoHome} onAddMore={handleAddMoreTask} userName={formData.userName} />;
+                return <KioskComplete 
+                            formData={formData} 
+                            onGoHome={handleGoHome} 
+                            onAddMore={handleAddMoreTask} 
+                            userName={formData.userName} 
+                            isAiMode={isAiMode}
+                        />;
             default:
                 return null;
         }
@@ -191,19 +207,16 @@ const Kiosk = () => {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 title="알림"
-                // 💡 아래 코드들을 추가합니다
                 onConfirm={() => {
-                    // 확인 버튼을 눌렀을 때 실행할 로직
                     console.log("확인 버튼 클릭됨");
                     setIsModalOpen(false);
                 }}
                 onCancel={() => {
-                    // 취소 버튼을 눌렀을 때 실행할 로직
                     console.log("취소 버튼 클릭됨");
                     setIsModalOpen(false);
                 }}
-                confirmText="확인"  // 기본값 "확인", 생략 가능
-                cancelText="취소"  // 기본값 "취소", 생략 가능
+                confirmText="확인"
+                cancelText="취소"
             >
                 <div style={{ textAlign: 'center', fontSize: '1.2rem', color: '#333' }}>
                     <p>현재 개발중인 기능입니다.</p>

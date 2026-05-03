@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import styles from './Kiosk.module.css';
 
-const KioskTaskSelect = ({ formData, setFormData, onNext, onPrev, userName }) => {
+
+const KioskTaskSelect = ({ setFormData, onNext, onPrev, userName }) => {
     // 현재 활성화된 카테고리 (기본값 0: 빠른 업무)
     const [activeCategory, setActiveCategory] = useState(0);
 
@@ -86,7 +87,7 @@ const KioskTaskSelect = ({ formData, setFormData, onNext, onPrev, userName }) =>
                                             key={index}
                                             className={styles.taskItemBtn}
                                             onClick={(e) => {
-                                                e.stopPropagation(); // 카드 클릭 이벤트와 겹치지 않게 방지
+                                                e.stopPropagation();
                                                 handleTaskClick(item, cat.title);
                                             }}
                                         >
