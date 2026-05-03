@@ -45,6 +45,7 @@ const Kiosk = () => {
     };
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchDashboardData();
         const interval = setInterval(fetchDashboardData, 5000);
         return () => clearInterval(interval);
@@ -52,6 +53,7 @@ const Kiosk = () => {
 
     useEffect(() => {
         if (step === 1) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             fetchDashboardData();
         }
     }, [step]);
