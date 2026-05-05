@@ -67,7 +67,7 @@ export default function Admin_dashboard() {
       if (res.ok) {
         const data = await res.json();
         if (data.result === 'SUCCESS' && Array.isArray(data.data)) {
-          setQueue(data.data.map(q => ({
+            setQueue(data.data.map(q => ({
             id:               q.ticketNumber,
             taskId:           q.taskId,
             name:             q.userName,

@@ -30,7 +30,7 @@ const AdminMain = () => {
     const menuItems = [
         { id: 'dashboard', label: '대시보드' },     
         { id: 'bank', label: '금융 상품 관리' },
-        { id: 'interest', label: '금리 관리' },
+        /*{ id: 'interest', label: '금리 관리' },*/
         { id: 'users', label: '사용자 관리' },
         { id: 'news', label: '새소식 관리' },    
         { id: 'events', label: '이벤트 관리' }, 
@@ -67,8 +67,8 @@ const AdminMain = () => {
                 return <div className={styles.card}><Admin_dashboard /></div>;
             case 'bank':
                 return <div className={styles.card}><ProductManagement /></div>;
-            case 'interest':
-                return <div className={styles.card}><InterestManagement /></div>;
+            /*case 'interest':
+                return <div className={styles.card}><InterestManagement /></div>;*/
             case 'users':
                 return <div className={styles.card}><UserManagement /></div>;
             case 'news':

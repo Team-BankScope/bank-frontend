@@ -37,7 +37,7 @@ const CheckCard = () => {
               
               if (data.result === 'SUCCESS') {
                   // 입출금 계좌(CHECKING)만 필터링
-                  const checkingAccounts = data.accounts.filter(acc => acc.accountType === 'CHECKING' || acc.accountType === 'DEMAND'); // 기존 DEMAND 고려
+                  const checkingAccounts = data.accounts.filter(acc => acc.accountType === 'CHECKING'); // 기존 DEMAND 고려
                   setAccounts(checkingAccounts);
               } else {
                   console.error("계좌 불러오기 실패:", data.message);

@@ -1,17 +1,96 @@
-import React, { useState } from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import styles from './TossModal.module.css';
+import { useModal } from '../../context/ModalContext';
+import { useAuth } from '../../context/AuthContext'; // useAuth 추가
 
 const TossModal = ({ onClose, task }) => {
     const [isListOpen, setIsListOpen] = useState(false);
-    // 1. 선택된 직원을 저장할 State 추가
+    const { openModal } = useModal();
+    const { user } = useAuth(); // 로그인된 사용자 정보 가져오기
     const [selectedStaff, setSelectedStaff] = useState(null);
+    const [staffList, setStaffList] = useState([]);
 
-    const staffList = [
-        { id: 1, name: '김민준', counter: '1번 창구', dept: '개인금융', waiting: 2, initial: '김' },
-        { id: 2, name: '박지호', counter: '3번 창구', dept: '개인금융', waiting: 3, initial: '박' },
-        { id: 3, name: '이수연', counter: '2번 창구', dept: '기업금융', waiting: 1, initial: '이' },
-        { id: 4, name: '최다은', counter: '4번 창구', dept: '대출팀', waiting: 0, initial: '최' },
-    ];
+
+    const showAlert = useCallback((message, onConfirm = null) => {
+        openModal({
+            message: message,
+            onConfirm: onConfirm
+        });
+    }, [openModal]);
+
+    useEffect(() => {
+        const fetchMembers = async () => {
+            try {
+                const response = await fetch('/api/user/members');
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // 더미데이터 형식으로 변환하되, 로그인한 본인(user.id)은 제외
+                    const formattedData = data
+                        .filter(member => member.id !== user?.id) // 자기 자신 제외 필터링
+                        .map(member => ({
+                            id: member.id,
+                            name: member.name,
+                            counter: member.counterNumber ? `${member.counterNumber}번 창구` : '미배정 창구',
+                            dept: member.team || '소속 없음',
+                            waiting: 0, // 대기 인원은 현재 API 응답에 없으므로 기본값 0 처리 (필요시 수정)
+                            initial: member.name ? member.name.charAt(0) : '직' 
+                        }));
+                    
+                    setStaffList(formattedData);
+                } else {
+                    showAlert("멤버 목록 조회 실패")
+                }
+            } catch (error) {
+                console.error("멤버 목록 조회 에러:", error);
+                showAlert("서버 통신 중 오류가 발생했습니다.");
+            }
+        };
+
+        // user 정보가 있을 때만 멤버 목록을 가져오도록 (선택 사항)
+        if (user) {
+            fetchMembers();
+        }
+    }, [user, showAlert]); // user 의존성 추가
+
+    const handleToss = async () => {
+        if (!selectedStaff || !task) return;
+
+        const targetMemberId = selectedStaff.id;
+        const taskId = task.id || task.taskId; // task 객체 구조에 따라 적절한 id 사용
+
+        if (!taskId) {
+            showAlert("업무 정보(taskId)를 찾을 수 없습니다.");
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/kiosk/toss?taskId=${taskId}&targetMemberId=${targetMemberId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.result === 'SUCCESS') {
+                showAlert(`${selectedStaff.name}님에게 이관이 완료되었습니다.`, () => {
+                    onClose(); // 이관 성공 시 모달 닫기
+                    window.location.reload();
+                });
+            } else if (data.result === 'FAILURE_SESSION') {
+                showAlert('세션이 만료되었습니다. 다시 로그인해주세요.');
+            } else {
+                showAlert(`이관 실패: ${data.result}`);
+            }
+
+        } catch (error) {
+            console.error("이관 처리 에러:", error);
+            showAlert("서버 통신 중 오류가 발생했습니다.");
+        }
+    };
+
 
     return (
         <div className={styles.modalOverlay} onClick={onClose}>
@@ -23,7 +102,7 @@ const TossModal = ({ onClose, task }) => {
                 <div className={styles.content}>
                     <div className={styles.customerCard}>
                         <div className={styles.customerName}>
-                            <strong>{task?.userName || '고객명'}</strong> <small>접수번호: {task?.taskId || 'C-000'}</small>
+                            <strong>{task?.userName || '고객명'}</strong> <small>접수번호: {task?.taskId || task?.id || '알수없음'}</small>
                         </div>
                     </div>
 
@@ -55,10 +134,13 @@ const TossModal = ({ onClose, task }) => {
                                         <div className={styles.avatar}>{staff.initial}</div>
                                         <div className={styles.staffInfo}>
                                             <strong>{staff.name}</strong> {staff.counter} {staff.dept}
-                                            <span className={styles.waiting}>대기 {staff.waiting}건</span>
+                                            {/*<span className={styles.waiting}>대기 {staff.waiting}건</span>*/}
                                         </div>
                                     </div>
                                 ))}
+                                {staffList.length === 0 && (
+                                    <div style={{ padding: '10px', textAlign: 'center', color: '#888' }}>조회된 직원이 없습니다.</div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -69,10 +151,7 @@ const TossModal = ({ onClose, task }) => {
                     <button
                         className={styles.btnSubmit}
                         disabled={!selectedStaff}
-                        onClick={() => {
-                            console.log("이관 대상:", selectedStaff);
-                            alert(`${selectedStaff.name}님에게 이관합니다.`);
-                        }}
+                        onClick={handleToss}
                     >
                         이관 실행
                     </button>

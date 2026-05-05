@@ -3,6 +3,8 @@
     background-color: #f4faf9;
     border-radius: 12px;
     animation: fadeIn 0.3s ease-in-out;
+    box-sizing: border-box;
+    width: 100%;
 }
 
 @keyframes fadeIn {
@@ -20,6 +22,8 @@
 
 .inputGroup {
     margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .inputGroup label {
@@ -36,6 +40,7 @@
     border: 1px solid #ced4da;
     border-radius: 8px;
     font-size: 1rem;
+    box-sizing: border-box;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -56,6 +61,8 @@
     display: flex;
     gap: 10px;
     margin-top: 10px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .amountButtons button {
@@ -83,6 +90,12 @@
     border-top: 1px solid #e9ecef;
 }
 
-.buttonRow { display: flex; gap: 15px; margin-top: 10px; }
+.buttonRow {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
 .btnCancel { flex: 1; padding: 10px; background-color: #E2E2E2; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; }
 .btnSubmit { flex: 1; padding: 10px; background-color: #559E89; color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; }
