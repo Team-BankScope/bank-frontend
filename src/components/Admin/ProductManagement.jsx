@@ -5,7 +5,7 @@ import Loading from '../common/Loading';
 
 const ProductManagement = () => {
     const { openModal } = useModal(); 
-    const [activeTab, setActiveTab] = useState('DEPOSIT'); 
+    const [activeTab, setActiveTab] = useState('CHECKING');
     const [productList, setProductList] = useState([]);
     const [isLoading, setIsLoading] = useState(false); 
     const [checkedItems, setCheckedItems] = useState([]);
@@ -14,16 +14,16 @@ const ProductManagement = () => {
     const [selectedItem, setSelectedItem] = useState(null);
 
     const categories = [
-        { id: 'DEPOSIT', label: '예금' },
-        { id: 'SAVINGS', label: '적금' },
+        { id: 'CHECKING', label: '일반예금' },
+        { id: 'DEPOSIT', label: '정기예금' },
+        { id: 'SAVINGS', label: '정기적금' },
         { id: 'LOAN', label: '대출' },
-        { id: 'FUND', label: '펀드' }
     ];
 
     const initialFormState = {
         productCategory: 'DEPOSIT',
         productName: '',
-        targetAudience: '개인',
+        targetType: 'ALL',
         minDurationMonths: 0,
         maxDurationMonths: 0,
         minAmount: 0, 
@@ -41,7 +41,7 @@ const ProductManagement = () => {
     const fetchProducts = async () => {
         setIsLoading(true);
         try {
-            const response = await fetch(`/api/product/?category=${activeTab}&page=1`);
+            const response = await fetch(`/api/product/list?category=${activeTab}`);
             const data = await response.json();
             
             switch (data.result) {
@@ -70,9 +70,21 @@ const ProductManagement = () => {
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
+        
+        let processedValue = value;
+        if (type === 'checkbox') {
+            processedValue = checked;
+        } else if (type === 'number') {
+            processedValue = Number(value);
+        } else if (value === 'true') {
+            processedValue = true;
+        } else if (value === 'false') {
+            processedValue = false;
+        }
+
         setFormData(prev => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked : (type === 'number' ? Number(value) : value)
+            [name]: processedValue
         }));
     };
 
@@ -198,7 +210,14 @@ const ProductManagement = () => {
             setIsLoading(false);
         }
     };
-
+    const getTargetTypeName = (type) => {
+        switch(type) {
+            case 'INDIVIDUAL': return '개인';
+            case 'CORPORATE': return '법인';
+            case 'ALL': return '공통';
+            default: return '계좌';
+        }
+    };
     return (
         <>
             {isLoading && <Loading message="데이터를 처리 중입니다..." />}
@@ -253,7 +272,7 @@ const ProductManagement = () => {
                                             <input type="checkbox" checked={checkedItems.includes(item.productId)} onChange={() => handleCheck(item.productId)} />
                                         </td>
                                         <td className={`${styles.leftAlign} ${styles.productName}`}>{item.productName}</td>
-                                        <td className={styles.subText}>{item.targetAudience || '개인'}</td>
+                                        <td className={styles.subText}>{getTargetTypeName(item.targetType) || '개인'}</td>
                                         <td className={styles.subText}>{item.minDurationMonths} ~ {item.maxDurationMonths}개월</td>
                                         <td className={styles.subText}>
                                             {item.minAmount ? (item.minAmount / 10000).toLocaleString() : 0}만 ~ {item.maxAmount ? (item.maxAmount / 10000).toLocaleString() : 0}만
@@ -312,10 +331,10 @@ const ProductManagement = () => {
 
                                     <div className={styles.adminFormRow}>
                                         <label>가입 대상</label>
-                                        <select name="targetAudience" value={formData.targetAudience || '개인'} onChange={handleInputChange}>
-                                            <option value="개인">개인</option>
-                                            <option value="법인">법인</option>
-                                            <option value="개인/법인">개인/법인</option>
+                                        <select name="targetType" value={formData.targetType} onChange={handleInputChange}>
+                                            <option value="INDIVIDUAL">개인</option>
+                                            <option value="CORPORATE">법인</option>
+                                            <option value="ALL">공통</option>
                                         </select>
                                     </div>
                                     <div className={styles.adminFormRow}>

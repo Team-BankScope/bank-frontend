@@ -17,20 +17,20 @@ const TaskSelect = ({ onSelectTask }) => {
     const [selectedId, setSelectedId] = useState(1);
 
     const allTasks = [
-        { id: 1, title: "계좌 개설", subTitle: "Open an Account", icon: accountIcon },
-        { id: 2, title: "출금", subTitle: "Withdraw", icon: withdrawIcon },
+        { id: 1, title: "입출금 계좌 개설", subTitle: "Open an Account", icon: accountIcon },
         { id: 3, title: "입금", subTitle: "Deposit", icon: depositIcon },
+        { id: 2, title: "출금", subTitle: "Withdraw", icon: withdrawIcon },
         { id: 4, title: "이체", subTitle: "Transfer", icon: Transfer},
         { id: 5, title: "카드수령", subTitle: "Manage Card Status", icon: cardIcon },
         { id: 6, title: "체크카드 발급", subTitle: "Check Card Issued", icon: cardIcon },
-        { id: 7, title: "통장비밀번호 변경", subTitle: "Account Password", icon: accountIcon},
+        { id: 10, title: "신용카드 발급", subTitle: "Credit Card Issued", icon: cardIcon },
+        { id: 14, title: "법인계좌 개설", subTitle: "Corporate Account", icon: corporationIcon },
         { id: 8, title: "예금", subTitle: "Deposit Account", icon: PiggyBank },
         { id: 9, title: "적금", subTitle: "Savings Account", icon: PiggyBank },
-        { id: 10, title: "신용카드 발급", subTitle: "Credit Card Issued", icon: cardIcon },
-        { id: 11, title: "대출 상환", subTitle: "Pay Loan", icon: loansIcon },
+        { id: 7, title: "통장비밀번호 변경", subTitle: "Account Password", icon: accountIcon},
         { id: 12, title: "금융상품가입", subTitle: "Financial Product", icon: MoneyFly },
+        { id: 11, title: "대출 상환", subTitle: "Pay Loan", icon: loansIcon },
         { id: 13, title: "기업대출", subTitle: "Corporate Loan", icon: loansIcon },
-        { id: 14, title: "법인계좌 개설", subTitle: "Corporate Account", icon: corporationIcon },
         { id: 15, title: "법인카드 발급", subTitle: "Corporate Card Issued", icon: corporationIcon },
         { id: 16, title: "부도관리", subTitle: "bankruptcy management", icon: WarningIcon },
         { id: 17, title: "연체관리", subTitle: "Delinquency Management", icon: WarningIcon }
@@ -137,8 +137,8 @@ const TaskSelect = ({ onSelectTask }) => {
                     ))}
                     <button
                         className={`${styles.pageBtn} ${currentPage === totalPages ? styles.disabledBtn : ""}`}
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
                     >
                         &gt;
                     </button>

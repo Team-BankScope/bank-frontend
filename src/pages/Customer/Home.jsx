@@ -34,14 +34,14 @@ const Home = () => {
     // 각 섹션별 고정 데이터
     const fastTasks = [
         { id: 2, title: '입/출금 및 이체', icon: Transfer, isVisitRequired: false },
-        { id: 3, title: '체크카드 발급', icon: Card, isVisitRequired: true },
+        { id: 3, title: '체크카드 발급', icon: Card,  isCard: true },
         { id: 4, title: '통장 비밀번호 재설정', icon: Lock, isVisitRequired: true },
     ];
 
     const consultTasks = [
         { id: 1, title: '대출(전세/주택담보)', icon: Loans, isVisitRequired: false },
         { id: 2, title: '청약저축 가입', icon: House, isVisitRequired: false },
-        { id: 3, title: '신용카드 신청', icon: Card, isVisitRequired: true },
+        { id: 3, title: '신용카드 신청', icon: Card,  isCard: true },
         { id: 4, title: '펀드/보험 상담', icon: Counseling, isVisitRequired: true },
         { id: 5, title: '퇴직연금 관리', icon: RetirementPension, isVisitRequired: true },
     ];
@@ -215,6 +215,7 @@ const Home = () => {
                                     <div className={styles.cardText}>
                                         <h3>{task.title}</h3>
                                         {task.isVisitRequired && <span className={styles.redText}>영업점 방문 필수</span>}
+                                        {task.isCard && <span className={styles.redText}>발급 후 영업점 방문 필수</span>}
                                     </div>
                                 </div>
                             ))}
@@ -234,7 +235,7 @@ const Home = () => {
                                     </div>
                                     <div className={styles.cardText}>
                                         <h3>{task.title}</h3>
-                                        {task.isVisitRequired && <span className={styles.redText}>영업점 방문 필수</span>}
+                                        {task.isCard&& <span className={styles.redText}>발급 후 영업점 방문 필수</span>}
                                     </div>
                                 </div>
                             ))}

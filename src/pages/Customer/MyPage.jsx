@@ -321,7 +321,7 @@ const MyPage = () => {
     // 계좌 유형 한글로 변환
     const getAccountTypeName = (type) => {
         switch(type) {
-            case 'DEMAND': return '입출금';
+            case 'CHECKING': return '입출금';
             case 'DEPOSIT': return '예금';
             case 'SAVINGS': return '적금';
             default: return '계좌';

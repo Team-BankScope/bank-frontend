@@ -16,65 +16,44 @@ import Card from "../../components/Banker/Card.jsx";
 import Transfer from "../../components/Banker/Transfer.jsx";
 import LoanPayment from "../../components/Banker/LoanPayment.jsx";
 import FinancialProduct from "../../components/Banker/FinancialProduct.jsx";
-import CorporateLoan from "../../components/Banker/CorporateLoan.jsx"; 
+import CorporateLoan from "../../components/Banker/CorporateLoan.jsx";
 import CorporateAccount from "../../components/Banker/CorporateAccount.jsx";
 import CorporateCard from "../../components/Banker/CorporateCard.jsx";
 import CorporateBankrupt from "../../components/Banker/CorporateBankrupt.jsx";
 import CorporateArrears from "../../components/Banker/CorporateArrears.jsx";
 import ChangePassword from "../../components/Banker/ChangePassword.jsx";
 import ProductModal from '../../components/Banker/ProductModal.jsx';
-
-
-const RECOMM_PRODUCTS = [
-  { 
-    id: 1, 
-    name: "든든 직장인 우대적금", 
-    description: "최고 연 5.5% 금리 혜택!", 
-    detail: "직장인을 위한 맞춤형 적금 상품으로, 급여 이체 및 주거래 요건 충족 시 우대 금리를 제공합니다." 
-  },
-  { 
-    id: 2, 
-    name: "MZ 청년 희망 적금", 
-    description: "청년들의 목돈 마련을 위한 필수템", 
-    detail: "만 19세~34세 청년을 대상으로 하며, 높은 기본 금리에 정부 지원 혜택이 더해진 상품입니다." 
-  },
-  { 
-    id: 3, 
-    name: "시니어 상생 통장", 
-    description: "60대 이상 고객 전용 특화 상품", 
-    detail: "연금 수령 시 수수료 면제 및 병원비 할인 등 실질적인 생활 혜택을 담은 입출금 통장입니다." 
-  }
-];
-
-
-const logData = [
-    { id: 1, date: '2026-04-28', content: '법인카드 발급 심사 승인 완료 (담당자: 김갑수)' },
-    { id: 2, date: '2026-04-28', content: '부도 관리 대상 법인 고위험군 자동 분류' },
-    { id: 3, date: '2026-04-27', content: '고객 유선 상담: 한도 증액 문의' },
-    { id: 4, date: '2026-04-27', content: '재무제표 업데이트 및 안정성 지표 분석' },
-    { id: 5, date: '2026-04-26', content: '시스템 자동 점검 로그: 정상' },
-    { id: 6, date: '2026-04-26', content: '신규 사업자 정보 유효성 검사 통과' },
-];
+import { fetchAssignedTask, fetchTaskProcessingLogs } from '../../services/taskApi';
 
 const BankerWorkSpace = () => {
     const { openModal } = useModal();
     const [isWorking, setIsWorking] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
-    
+
     // 비밀번호 변경 모달 상태
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [newPassword, setNewPassword] = useState('');
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
 
-
     const handleProductClick = (product) => {
-    setSelectedProduct(product);
-    setIsModalOpen(true);
-};
+        setSelectedProduct(product);
+        setIsModalOpen(true);
+    };
+
     const [tasks, setTasks] = useState([]);
     const [selectedTask, setSelectedTask] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+
+    // 💡 업무 처리 로그 상태 추가
+    const [logList, setLogList] = useState([]);
+    const [isLogLoading, setIsLogLoading] = useState(false);
+    const [logError, setLogError] = useState(null);
+
+    // 💡 AI 상품 추천 상태 추가
+    const [recommendProducts, setRecommendProducts] = useState([]);
+    const [isRecommendLoading, setIsRecommendLoading] = useState(false);
+
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [messages, setMessages] = useState([
         { sender: "customer", text: "안녕하세요 상담 요청드립니다." },
@@ -87,10 +66,12 @@ const BankerWorkSpace = () => {
     const [note, setNote] = useState("");
 
     // 계좌 유형의 초기값을 "CHECKING"으로 설정
-    const [accountType, setAccountType] = useState("CHECKING");
+    const [, setAccountType] = useState("CHECKING");
     const [accountAlias, setAccountAlias] = useState("");
     const [accountPassword, setAccountPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [productId, setProductId] = useState(""); // 추가: 선택된 상품 ID
+    const [amount, setAmount] = useState(""); // 초기입금액 상태 추가
 
     const [input, setInput] = useState("");
     const chatEndRef = useRef(null);
@@ -158,7 +139,7 @@ const BankerWorkSpace = () => {
     const handleTaskMenuSelect = (taskTitle) => {
         // TaskSelect에서 넘어온 제목에 따라 mapping
         switch (taskTitle) {
-            case "계좌 개설":
+            case "입출금 계좌 개설":
                 setSelectedWorkType("ACCOUNT_CREATE");
                 break;
             case "입금":
@@ -194,10 +175,10 @@ const BankerWorkSpace = () => {
             case "금융상품가입":
                 setSelectedWorkType("FINANCIAL-PRODUCT");
                 break;
-            case "기업대출": 
+            case "기업대출":
                 setSelectedWorkType("CORPORATE-LOAN");
                 break;
-            case "법인계좌 개설": 
+            case "법인계좌 개설":
                 setSelectedWorkType("CORPORATE-ACCOUNT");
                 break;
             case "법인카드 발급":
@@ -215,8 +196,8 @@ const BankerWorkSpace = () => {
             default:
                 setSelectedWorkType(null);
                 break;
-     }
-     }
+        }
+    };
 
     useEffect(() => {
         if (!loading && !user) {
@@ -224,40 +205,24 @@ const BankerWorkSpace = () => {
                 navigate("/AdminLogin");
             });
         } else if (user) {
-            // 유저 세션의 상태에 따라 초기 isWorking 값 설정 (1: 업무중, 0: 자리비움)
-            // 만약 백엔드에서 status를 정확히 보내준다면 그 값을,
-            // 그렇지 않다면 localStorage에 저장된 값을 우선적으로 반영합니다.
             const savedStatus = localStorage.getItem(`bankerStatus_${user.email}`);
-            
+
             if (user.status !== undefined && user.status !== null) {
                 setIsWorking(user.status === 1);
                 localStorage.setItem(`bankerStatus_${user.email}`, user.status === 1 ? '1' : '0');
             } else if (savedStatus !== null) {
                 setIsWorking(savedStatus === '1');
             } else {
-                // 초기 기본값
                 setIsWorking(true);
             }
         }
     }, [user, loading, navigate]);
 
-    // 업무 목록 조회 API 호출
+    // 💡 업무 목록 조회 API 호출 (services 모듈 사용)
     const fetchTasks = async () => {
         try {
-            const response = await fetch('/api/member/task', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setTasks(Array.isArray(data) ? data : []);
-            } else {
-                console.error('Failed to fetch tasks');
-                setTasks([]);
-            }
+            const data = await fetchAssignedTask();
+            setTasks(data);
         } catch (error) {
             console.error('Error fetching tasks:', error);
             setTasks([]);
@@ -274,12 +239,69 @@ const BankerWorkSpace = () => {
         }
     }, [user]);
 
+    const loadUserLogs = async (userId) => {
+        if (!userId) {
+            setLogList([]);
+            return;
+        }
+        setIsLogLoading(true);
+        setLogError(null);
+        try {
+            const logs = await fetchTaskProcessingLogs(userId);
+            setLogList(logs);
+            // eslint-disable-next-line no-unused-vars
+        } catch (error) {
+            setLogError("업무 이력을 불러오는데 실패했습니다.");
+        } finally {
+            setIsLogLoading(false);
+        }
+    };
+
+    const loadRecommendProducts = async (userId) => {
+        if (!userId) {
+            setRecommendProducts([]);
+            return;
+        }
+        setIsRecommendLoading(true);
+        try {
+            const response = await fetch(`/py/recommend/${userId}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.result === 'SUCCESS' && data.products) {
+                    setRecommendProducts(data.products.slice(0, 3));
+                } else {
+                    setRecommendProducts([]);
+                }
+            } else {
+                setRecommendProducts([]);
+            }
+        } catch (error) {
+            console.error("Error fetching recommend products:", error);
+            showAlert("AI 추천상품을 불러오지 못했습니다.", () => {
+                setRecommendProducts([]);
+            })
+        } finally {
+            setIsRecommendLoading(false);
+        }
+    };
+
+    useEffect(() => {
+
+        if (selectedTask?.userId) {
+            loadUserLogs(selectedTask.userId);
+            loadRecommendProducts(selectedTask.userId);
+        } else {
+            setLogList([]);
+            setLogError(null);
+            setRecommendProducts([]);
+        }
+    }, [selectedTask?.userId]);
+
     // 자동 스크롤
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    // 고객 바뀌면 채팅 초기화
     useEffect(() => {
         setSelectedWorkType(null);
 
@@ -289,7 +311,6 @@ const BankerWorkSpace = () => {
                 { sender: "banker", text: "네 고객님 무엇을 도와드릴까요?" }
             ]);
 
-            // selectedTask가 IN_PROGRESS이고 계좌 개설 업무이면 폼을 바로 염
             if (selectedTask.status === 'IN_PROGRESS' &&
                 (selectedTask.taskDetailType === "입출금 계좌개설" || selectedTask.taskDetailType === "계좌개설" || selectedTask.taskDetailType === "입출금 계좌 개설")) {
                 setSelectedWorkType("ACCOUNT_CREATE");
@@ -314,18 +335,6 @@ const BankerWorkSpace = () => {
                 ( selectedTask.taskDetailType.includes('카드'))) {
                 setSelectedWorkType("CARD");
             }
-            /*if (selectedTask.status === 'IN_PROGRESS' &&
-                ( selectedTask.taskDetailType ==="카드")) {
-                setSelectedWorkType("CREDIT");
-            }
-            if (selectedTask.status === 'IN_PROGRESS' &&
-                ( selectedTask.taskDetailType ==="신용카드")) {
-                setSelectedWorkType("CHECK");
-            }*/
-            /*if (selectedTask.status === 'IN_PROGRESS' &&
-                ( selectedTask.taskDetailType ==="법인카드")) {
-                setSelectedWorkType("CORPORATE-CARD");
-            }*/
             if (selectedTask.status === 'IN_PROGRESS' &&
                 ( selectedTask.taskDetailType ==="대출 상환")) {
                 setSelectedWorkType("LOAN-PAYMENT");
@@ -357,39 +366,35 @@ const BankerWorkSpace = () => {
                 setSelectedWorkType("DELINQUENT-MANAGEMENT");
             }
 
-            if (selectedTask.status === 'IN_PROGRESS' && 
+            if (selectedTask.status === 'IN_PROGRESS' &&
                 selectedTask.taskDetailType === "기업대출") {
                 setSelectedWorkType("CORPORATE-LOAN");
             }
 
-            if (selectedTask.status === 'IN_PROGRESS' && 
+            if (selectedTask.status === 'IN_PROGRESS' &&
                 selectedTask.taskDetailType === "법인계좌 개설") {
                 setSelectedWorkType("CORPORATE-ACCOUNT");
             }
 
-            if (selectedTask.status === 'IN_PROGRESS' && 
+            if (selectedTask.status === 'IN_PROGRESS' &&
                 selectedTask.taskDetailType === "법인카드 발급") {
                 setSelectedWorkType("CORPORATE-CARD");
             }
 
-            if (selectedTask.status === 'IN_PROGRESS' && 
+            if (selectedTask.status === 'IN_PROGRESS' &&
                 selectedTask.taskDetailType === "부도관리") {
                 setSelectedWorkType("BANKRUPT-MANAGEMENT");
             }
 
-            if (selectedTask.status === 'IN_PROGRESS' && 
+            if (selectedTask.status === 'IN_PROGRESS' &&
                 selectedTask.taskDetailType === "연체관리") {
                 setSelectedWorkType("CORPORATE-ARREARS");
             }
 
-            if (selectedTask.status === 'IN_PROGRESS' && 
+            if (selectedTask.status === 'IN_PROGRESS' &&
             (selectedTask.taskDetailType === "통장 비밀번호 변경")) {
             setSelectedWorkType("CHANGE-PASSWORD");
             }
-
-
-
-            
         }
     }, [selectedTask]);
 
@@ -397,12 +402,10 @@ const BankerWorkSpace = () => {
         if (selectedTask) {
             const currentTaskInList = tasks.find(t => t.taskId === selectedTask.taskId);
 
-            // 만약 목록에 아예 없거나(필터링됨), 상태가 COMPLETED라면 선택 해제
             if (!currentTaskInList || currentTaskInList.status === 'COMPLETED') {
                 setSelectedTask(null);
                 setSelectedWorkType(null);
             } else {
-                // 목록의 상태와 selectedTask의 상태가 다르다면 동기화
                 if(currentTaskInList.status !== selectedTask.status) {
                     setSelectedTask(currentTaskInList);
                 }
@@ -410,7 +413,6 @@ const BankerWorkSpace = () => {
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tasks]);
-
 
     if (loading) return <div>Loading...</div>;
     if (!user) return null;
@@ -431,10 +433,15 @@ const BankerWorkSpace = () => {
 
         setInput("");
     };
+
     /* 계좌 생성 함수 */
     const handleCreateAccount = async () => {
-        // 1. 사전 검증
         if (!selectedTask) return;
+
+        if (!productId) {
+            showAlert("상품을 선택해주세요.");
+            return;
+        }
 
         if (accountPassword !== confirmPassword) {
             showAlert("비밀번호가 일치하지 않습니다.");
@@ -442,16 +449,22 @@ const BankerWorkSpace = () => {
         }
 
         try {
-            const params = new URLSearchParams({
-                userId: selectedTask.userId,
-                accountType: accountType,
+            const payload = {
+                taskId: selectedTask.taskId,
+                productId: parseInt(productId, 10),
+                amount: amount ? Number(amount) : 0, // amount 상태값 전달
+                durationMonths: null,
+                accountPassword: accountPassword,
                 accountAlias: accountAlias,
-                accountPassword: accountPassword
-            });
+                userId: selectedTask.userId
+            };
 
-            // [STEP 1] 계좌 생성 API 호출
-            const response = await fetch(`/api/account/register?${params}`, {
-                method: "POST"
+            const response = await fetch(`/api/account/register`, {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
             });
 
             if (!response.ok) {
@@ -459,12 +472,10 @@ const BankerWorkSpace = () => {
                 return;
             }
 
-            const data = await response.json(); // 리턴값: AccountResult (SUCCESS, FAILURE, FAILURE_USER_NOT_EXIST)
+            const data = await response.json();
 
-            // 계좌 생성 결과 확인 (AccountResult 분기)
             switch (data.result) {
                 case 'SUCCESS':
-                    // 생성 성공 시에만 다음 단계(업무 종료)로 진행
                     break;
                 case 'FAILURE_USER_NOT_EXIST':
                     showAlert("존재하지 않는 사용자입니다.");
@@ -477,7 +488,6 @@ const BankerWorkSpace = () => {
                     return;
             }
 
-            // [STEP 2] 업무 상태를 COMPLETED로 변경
             const completeResponse = await fetch(`/api/member/task/${selectedTask.taskId}/status?status=COMPLETED`, {
                 method: 'PATCH',
                 headers: {
@@ -490,49 +500,42 @@ const BankerWorkSpace = () => {
                 return;
             }
 
-            const completeData = await completeResponse.json(); // 리턴값: TaskResult (SUCCESS, FAILURE, FAILURE_TASK_IN_PROGRESS, FAILURE_SESSION)
+            const completeData = await completeResponse.json();
 
-            // 업무 상태 업데이트 결과 확인 (TaskResult 분기)
             switch (completeData.result) {
                 case 'SUCCESS':
                     showAlert(`계좌가 생성되었습니다.\n계좌번호: ${data.account?.accountNumber}`, async () => {
-                        // 로컬 목록 즉시 갱신 (UI 반영)
                         setTasks(prevTasks =>
                             prevTasks.map(t => t.taskId === selectedTask.taskId ? { ...t, status: 'COMPLETED' } : t)
                         );
-
-                        // 선택 상태 및 폼 초기화
                         setSelectedWorkType(null);
                         setSelectedTask(null);
-                        setAccountType("CHECKING"); // 초기값으로 리셋
+                        setAccountType("CHECKING");
                         setAccountAlias("");
                         setAccountPassword("");
                         setConfirmPassword("");
-
-                        // 서버와 목록 동기화
+                        setProductId("");
+                        setAmount("");
                         await fetchTasks();
                     });
                     break;
-
                 case 'FAILURE_TASK_IN_PROGRESS':
                     showAlert("해당 업무가 현재 처리 가능한 상태가 아닙니다.");
                     break;
-
                 case 'FAILURE_SESSION':
                     showAlert("세션이 만료되었습니다. 다시 로그인해주세요.");
                     break;
-
                 case 'FAILURE':
                 default:
                     showAlert(`업무 종료 처리 실패: ${completeData.result}`);
                     break;
             }
-
         } catch (error) {
             console.error("계좌 생성 프로세스 오류:", error);
             showAlert("처리 중 예기치 못한 오류가 발생했습니다.");
         }
     };
+
     // 업무 수락 취소 (IN_PROGRESS -> WAITING)
     const handleCancelAcceptTask = async (task) => {
         try {
@@ -579,22 +582,24 @@ const BankerWorkSpace = () => {
         }
 
         if (!idValue) {
-            console.error("❌ 에러: ID 값이 비어있습니다.");
             return;
         }
         const logParams = new URLSearchParams({
             note: note,
-            taskId: idValue 
+            taskId: idValue
         }).toString();
 
         try {
             const response = await fetch(`/api/task-processing-log/?${logParams}`, {
                 method: 'POST'
+
             });
-            
+
             if (response.ok) {
                 console.log("✅ DB 저장 성공! 테이블을 확인해보세요.");
-                setNote(""); 
+                setNote("");
+                // 작성 후 로그 리스트 즉시 리프레시
+                if (selectedTask?.userId) loadUserLogs(selectedTask.userId);
             } else {
                 console.error("❌ 서버 응답 에러:", response.status);
             }
@@ -606,22 +611,16 @@ const BankerWorkSpace = () => {
     // 멤버 상태 변경 API 연결 함수
     const handleStatusChange = async (e) => {
         const selectedValue = e.target.value;
-        const nextStatus = selectedValue === 'working'; // true or false
-        
-        // 현재 업무 중(IN_PROGRESS)인 태스크가 있는지 확인
+        const nextStatus = selectedValue === 'working';
+
         const hasInProgressTask = tasks.some(task => task.status === 'IN_PROGRESS');
 
-        // 자리 비움(false)으로 변경하려고 하는데, 현재 처리 중인 업무가 있다면 차단
         if (!nextStatus && hasInProgressTask) {
             showAlert('현재 처리 중인 업무가 있습니다. 업무를 종료한 후 자리 비움 상태로 변경해주세요.');
-            // UI를 다시 업무 중(true)으로 원상복구하기 위해 select value를 강제로 변경하는 효과를 줌
-            // 상태값은 변경되지 않았으므로 React의 select는 이전 값을 유지함
             return;
         }
 
         let apiStatus = nextStatus;
-
-        // UI 우선 변경 (Optimistic Update)
         setIsWorking(nextStatus);
 
         try {
@@ -630,10 +629,9 @@ const BankerWorkSpace = () => {
                 headers: { 'Content-Type': 'application/json' }
             });
 
-            const data = await response.json(); // 서버에서 보낸 result: "SUCCESS" 확인용
+            const data = await response.json();
 
             if (response.ok && data.result === "SUCCESS") {
-                // 상태 저장 
                 if (user) {
                     user.status = nextStatus ? 1 : 0;
                     localStorage.setItem(`bankerStatus_${user.email}`, nextStatus ? '1' : '0');
@@ -646,7 +644,6 @@ const BankerWorkSpace = () => {
                     onConfirm: () => console.log("변경 확인 완료")
                 });
             } else {
-                // 서버 응답이 SUCCESS가 아닌 경우 롤백
                 setIsWorking(!nextStatus);
                 openModal({
                     title: '변경 실패',
@@ -682,23 +679,22 @@ const BankerWorkSpace = () => {
 
             switch (data.result) {
                 case 'SUCCESS':
-                { 
+                {
                     const updatedTask = { ...task, status: 'IN_PROGRESS' };
                     setSelectedTask(updatedTask);
                     setTasks(prevTasks => prevTasks.map(t => t.taskId === task.taskId ? updatedTask : t));
                     await fetchTasks();
-                    
-                    // 업무 수락 시, 현재 자리 비움 상태(false)라면 자동으로 업무 중(true)으로 변경
+
                     if (!isWorking) {
                         await handleStatusChange({ target: { value: 'working' } });
                     }
-                    
-                    break; 
+
+                    break;
                 }
 
                 case 'FAILURE_TASK_IN_PROGRESS':
                     showAlert('이미 다른 담당자가 처리 중인 업무입니다.');
-                    await fetchTasks(); // 목록 동기화해서 화면 갱신
+                    await fetchTasks();
                     break;
 
                 case 'FAILURE_SESSION':
@@ -767,7 +763,6 @@ const BankerWorkSpace = () => {
 
     // 연령대 계산 로직 추가
     const determineAgeGroup = (age) => {
-
         if (!age) return null;
         const numAge = Number(age);
         if (isNaN(numAge)) return null;
@@ -780,7 +775,7 @@ const BankerWorkSpace = () => {
         return "60대";
     };
 
- return (
+    return (
         <div className={styles.container}>
             <img src={WorkSpaceBackground} alt="WorkSpace Background" className={styles.backgroundImage} />
 
@@ -804,7 +799,7 @@ const BankerWorkSpace = () => {
                         <div className={styles.headerRightContainer}>
                             <div className={styles.headerRight}>
                                 <select className={styles.statusSelect}
-                                value={isWorking ? 'working' : 'away'} 
+                                value={isWorking ? 'working' : 'away'}
                                 onChange={handleStatusChange}>
                                     <option value="working">업무 중</option>
                                     <option value="away">자리 비움</option>
@@ -816,17 +811,6 @@ const BankerWorkSpace = () => {
                                 <button className={styles.headerBtn} onClick={handleLogout}>로그아웃</button>
                                 <button className={styles.headerBtn} onClick={() => setIsPasswordModalOpen(true)}>비밀번호 변경</button>
                             </div>
-                              {/*  <div
-                                    className={styles.notificationBanner}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        console.log("chat open");
-                                        setIsChatOpen(true);
-                                    }}
-                                >
-                                    🔔 고객님의 채팅 상담업무가 도착했습니다
-                                </div>*/}
-
                         </div>
                     </header>
 
@@ -994,40 +978,38 @@ const BankerWorkSpace = () => {
                                                         {/*입출금 (일반 예금) 계좌개설*/}
                                                         {selectedWorkType === "ACCOUNT_CREATE" && (
                                                             <AccountCreateForm
-                                                                accountType={accountType}
-                                                                setAccountType={setAccountType}
                                                                 accountAlias={accountAlias}
                                                                 setAccountAlias={setAccountAlias}
                                                                 accountPassword={accountPassword}
                                                                 setAccountPassword={setAccountPassword}
                                                                 confirmPassword={confirmPassword}
                                                                 setConfirmPassword={setConfirmPassword}
+                                                                productId={productId}
+                                                                setProductId={setProductId}
+                                                                amount={amount}
+                                                                setAmount={setAmount}
                                                                 onCancel={() => {
                                                                     setSelectedWorkType(null);
                                                                     handleCancelAcceptTask(selectedTask);
                                                                 }}
                                                                 onCreate={handleCreateAccount}
-                                                                taskId={selectedTask?.id}
-                                                                selectedTask={selectedTask}
-                                                                
                                                             />
                                                         )}
 
                                                         {/*입금*/}
-                                                        
                                                         {selectedWorkType === "DEPOSIT" && (
                                                             <Deposit
                                                                 onCancel={() => {
                                                                     setSelectedWorkType(null);
                                                                     handleCancelAcceptTask(selectedTask);
                                                                 }}
-                                                            taskId={selectedTask?.id || selectedTask?.taskId || 0}
-                                                            selectedTask={selectedTask}
-                                                            onSuccess={() => {
-                                                                const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask?.task_id;
-                                                                handlePostLog(finalId);
-                                                                handleCompleteTask(selectedTask);
-                                                            }}
+                                                                taskId={selectedTask?.id || selectedTask?.taskId || 0}
+                                                                selectedTask={selectedTask}
+                                                                onSuccess={() => {
+                                                                    const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask?.task_id;
+                                                                    handlePostLog(finalId);
+                                                                    handleCompleteTask(selectedTask);
+                                                                }}
                                                             />
                                                         )}
 
@@ -1066,7 +1048,6 @@ const BankerWorkSpace = () => {
                                                         )}
 
                                                         {/*카드수령*/}
-                                                        {/*체크카드발급*/}
                                                         {selectedWorkType === "CARD" && (
                                                             <Card
                                                                 selectedTask={selectedTask}
@@ -1084,13 +1065,12 @@ const BankerWorkSpace = () => {
 
                                                         {/*통장비번변경*/}
                                                         {selectedWorkType === "CHANGE-PASSWORD" && (
-                                                            <ChangePassword 
+                                                            <ChangePassword
                                                                 onCancel={() => {
                                                                     setSelectedWorkType(null);
                                                                     if (selectedTask) handleCancelAcceptTask(selectedTask);
-                                                                }} 
-                                                                onComplete={(pwData) => {
-                                                                    console.log("비밀번호 변경 완료:", pwData);
+                                                                }}
+                                                                onComplete={() => {
                                                                     const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
                                                                     handlePostLog(finalId);
                                                                     handleCompleteTask(selectedTask);
@@ -1099,20 +1079,21 @@ const BankerWorkSpace = () => {
                                                             />
                                                         )}
 
-
-
-                                                        {/*상담업무*/}
-                                                        {/*예적금계좌개설*/}
+                                                        {/*상담업무 / 예적금계좌개설*/}
                                                         {selectedWorkType === "ACCOUNTS" && (
                                                             <Accounts
+                                                                selectedTask={selectedTask}
                                                                 onCancel={() => {
                                                                     setSelectedWorkType(null);
                                                                     handleCancelAcceptTask(selectedTask);
                                                                 }}
+                                                                onCreate={() => {
+                                                                    const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
+                                                                    handlePostLog(finalId);
+                                                                    handleCompleteTask(selectedTask);
+                                                                }}
                                                             />
                                                         )}
-
-                                                        {/*신용 카드 발급*/}
 
                                                         {/*대출상환*/}
                                                         {selectedWorkType === "LOAN-PAYMENT" && (
@@ -1121,10 +1102,10 @@ const BankerWorkSpace = () => {
                                                                     setSelectedWorkType(null);
                                                                     handleCancelAcceptTask(selectedTask);
                                                                 }}
-                                                                />
+                                                            />
                                                         )}
-                                                        {/*금융상품가입: 보험, 펀드 ,대출등*/}
 
+                                                        {/*금융상품가입*/}
                                                         {selectedWorkType === "FINANCIAL-PRODUCT" && (
                                                             <FinancialProduct
                                                                 onCancel={() => {
@@ -1133,17 +1114,20 @@ const BankerWorkSpace = () => {
                                                                 }}
                                                             />
                                                         )}
-                                                        {/*기업 • 특수업무*/}
-                                                        
+
                                                         {/*기업대출*/}
                                                         {selectedWorkType === "CORPORATE-LOAN" && (
                                                             <CorporateLoan
                                                                 selectedTask={selectedTask}
                                                                 onCancel={() => {
                                                                     setSelectedWorkType(null);
-                                                                    handleCancelAcceptTask(selectedTask); 
+                                                                    handleCancelAcceptTask(selectedTask);
                                                                 }}
-                                                                onComplete={() => handleCompleteTask(selectedTask)}
+                                                                onComplete={() => {
+                                                                    const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
+                                                                    handlePostLog(finalId);
+                                                                    handleCompleteTask(selectedTask);
+                                                                }}
                                                             />
                                                         )}
 
@@ -1155,7 +1139,11 @@ const BankerWorkSpace = () => {
                                                                     setSelectedWorkType(null);
                                                                     handleCancelAcceptTask(selectedTask);
                                                                 }}
-                                                                onComplete={() => handleCompleteTask(selectedTask)}
+                                                                onComplete={() => {
+                                                                    const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
+                                                                    handlePostLog(finalId);
+                                                                    handleCompleteTask(selectedTask);
+                                                                }}
                                                             />
                                                         )}
                                                         {/*법인카드*/}
@@ -1166,7 +1154,11 @@ const BankerWorkSpace = () => {
                                                                     setSelectedWorkType(null);
                                                                     handleCancelAcceptTask(selectedTask);
                                                                 }}
-                                                                onComplete={() => handleCompleteTask(selectedTask)}
+                                                                onComplete={() => {
+                                                                    const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
+                                                                    handlePostLog(finalId);
+                                                                    handleCompleteTask(selectedTask);
+                                                                }}
                                                             />
                                                         )}
                                                         {/*부도관리*/}
@@ -1177,7 +1169,11 @@ const BankerWorkSpace = () => {
                                                                     setSelectedWorkType(null);
                                                                     handleCancelAcceptTask(selectedTask);
                                                                 }}
-                                                                onComplete={() => handleCompleteTask(selectedTask)}
+                                                                onComplete={() => {
+                                                                    const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
+                                                                    handlePostLog(finalId);
+                                                                    handleCompleteTask(selectedTask);
+                                                                }}
                                                             />
                                                         )}
                                                         {/*연체관리*/}
@@ -1186,9 +1182,13 @@ const BankerWorkSpace = () => {
                                                                 selectedTask={selectedTask}
                                                                 onCancel={() => {
                                                                     setSelectedWorkType(null);
-                                                                    handleCancelAcceptTask(selectedTask); 
+                                                                    handleCancelAcceptTask(selectedTask);
                                                                 }}
-                                                                onComplete={() => handleCompleteTask(selectedTask)} 
+                                                                onComplete={() => {
+                                                                    const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
+                                                                    handlePostLog(finalId);
+                                                                    handleCompleteTask(selectedTask);
+                                                                }}
                                                             />
                                                         )}
 
@@ -1203,8 +1203,8 @@ const BankerWorkSpace = () => {
                                                                     </button>
                                                                 </div>
                                                                 <div className={styles.taskLog}>
-                                                                    <textarea placeholder="업무기록을 작성해주세요" className={styles.textArea} 
-                                                                    value={note} 
+                                                                    <textarea placeholder="업무기록을 작성해주세요" className={styles.textArea}
+                                                                    value={note}
                                                                     onChange={(e) => setNote(e.target.value)} />
                                                                 </div>
                                                             </>
@@ -1218,14 +1218,47 @@ const BankerWorkSpace = () => {
                                     <aside className={styles.rightSidebar}>
                                       <div className={styles.infoBox}>
                                         <h4 className={styles.infoTitle}>고객 특이사항</h4>
-                                        {/* 스크롤을 담당할 컨테이너 추가 */}
+                                        {/* 💡 실 데이터 연동 */}
                                         <div className={styles.logList}>
-                                            {logData.map((log) => (
-                                                <div key={log.id} className={styles.logItem}>
-                                                    <span className={styles.logDate}>{log.date}</span>
-                                                    <p className={styles.logContent}>{log.content}</p>
+                                            {(() => {
+                                                return null;
+                                            })()}
+                                            {!selectedTask?.userId ? (
+                                                <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>
+                                                    배정된 업무가 없습니다
                                                 </div>
-                                            ))}
+                                            ) : isLogLoading ? (
+                                                <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>
+                                                    불러오는 중...
+                                                </div>
+                                            ) : logError ? (
+                                                <div style={{ padding: '20px', textAlign: 'center', color: '#e74c3c' }}>
+                                                    {logError}
+                                                    <br/>
+                                                    <button
+                                                        onClick={() => loadUserLogs(selectedTask.userId)}
+                                                        style={{ marginTop: '10px', padding: '5px 10px', cursor: 'pointer' }}
+                                                    >
+                                                        재시도
+                                                    </button>
+                                                </div>
+                                            ) : logList.length === 0 ? (
+                                                <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>
+                                                    업무 이력이 없습니다.
+                                                </div>
+                                            ) : (
+                                                logList.map((log, index) => {
+                                                    return (
+                                                        <div key={log.logId || index} className={styles.logItem}>
+                                                                 <span className={styles.logDate}>
+                                                                         {/* 자바의 createdAt과 매칭 */}
+                                                                      {log.createdAt ? new Date(log.createdAt).toLocaleDateString() : '날짜 없음'}
+                                                                 </span>
+                                                            <p className={styles.logContent}>{log.processingNote || '내용 없음'}</p>
+                                                        </div>
+                                                    );
+                                                })
+                                            )}
                                         </div>
                                     </div>
 
@@ -1233,17 +1266,47 @@ const BankerWorkSpace = () => {
                                         <div className={styles.rightSidebar_infoBox_recommend}>
                                             <h4 className={styles.rightSidebar_infoBox_recommend_title}>AI 추천 상품/서비스</h4>
                                             <div className={styles.recommendList}>
-                                                {RECOMM_PRODUCTS.map((product, index) => (
-                                                    <div 
-                                                        key={product.id} 
-                                                        className={styles.recommendItem}
-                                                        onClick={() => handleProductClick(product)}
-                                                    >
-                                                        
-                                                        <span className={styles.recommendIcon}>{index + 1}</span>
-                                                        {product.name}
+                                                {isRecommendLoading ? (
+                                                    <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>
+                                                        추천 상품을 불러오는 중...
                                                     </div>
-                                                ))}
+                                                ) : recommendProducts.length === 0 ? (
+                                                    <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>
+                                                        추천 금융상품이 없습니다
+                                                    </div>
+                                                ) : (
+                                                    [0, 1, 2].map((index) => {
+                                                        const product = recommendProducts[index];
+                                                        if (product) {
+                                                            return (
+                                                                <div
+                                                                    key={product.productId}
+                                                                    className={styles.recommendItem}
+                                                                    onClick={() => handleProductClick({
+                                                                        id: product.productId,
+                                                                        name: product.productName,
+                                                                        description: product.description,
+                                                                        detail: product.description
+                                                                    })}
+                                                                >
+                                                                    <span className={styles.recommendIcon}>{index + 1}</span>
+                                                                    {product.productName}
+                                                                </div>
+                                                            );
+                                                        } else {
+                                                            return (
+                                                                <div
+                                                                    key={`empty-${index}`}
+                                                                    className={styles.recommendItem}
+                                                                    style={{ cursor: 'default' }}
+                                                                >
+                                                                    <span className={styles.recommendIcon}>{index + 1}</span>
+                                                                    준비중입니다
+                                                                </div>
+                                                            );
+                                                        }
+                                                    })
+                                                )}
                                             </div>
                                         </div>
 
@@ -1290,7 +1353,7 @@ const BankerWorkSpace = () => {
                     chatEndRef={chatEndRef}
                 />
             )}
-            
+
             {isTossModalOpen && (
                 <TossModal
                     task={taskToToss}
@@ -1302,10 +1365,10 @@ const BankerWorkSpace = () => {
             )}
 
             {/* 금융상품 가입 모달 추가 */}
-            <ProductModal 
-                isOpen={isModalOpen} 
-                product={selectedProduct} 
-                onClose={() => setIsModalOpen(false)} 
+            <ProductModal
+                isOpen={isModalOpen}
+                product={selectedProduct}
+                onClose={() => setIsModalOpen(false)}
             />
 
             <CustomModal
@@ -1319,7 +1382,7 @@ const BankerWorkSpace = () => {
                     {modalConfig.message}
                 </div>
             </CustomModal>
-            
+
             {/* 비밀번호 변경 모달 */}
             <CustomModal
                 isOpen={isPasswordModalOpen}

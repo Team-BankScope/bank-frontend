@@ -10,13 +10,11 @@ import CustomModal from '../../components/common/CustomModal';
 const Kiosk = () => {
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
+        userId: '',
         ssn: '',
         userName: '',
-        userId: null,        // 로그인 후 세션에서 저장하는 DB user.id
         task: '',
         taskType: '',
-        isAi: false,         // AI 자동 접수 여부
-        aiTaskResult: null,  // AI 접수 완료 후 결과 저장
     });
     const [dashboardData, setDashboardData] = useState({
         waitingCount: 0,
@@ -24,8 +22,7 @@ const Kiosk = () => {
         availableCounter: 0
     });
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isAiLoading, setIsAiLoading] = useState(false);
-    const [aiError, setAiError] = useState('');
+    const [isAiMode, setIsAiMode] = useState(false);
 
     const fetchDashboardData = async () => {
         try {
@@ -48,6 +45,7 @@ const Kiosk = () => {
     };
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchDashboardData();
         const interval = setInterval(fetchDashboardData, 5000);
         return () => clearInterval(interval);
@@ -55,56 +53,26 @@ const Kiosk = () => {
 
     useEffect(() => {
         if (step === 1) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             fetchDashboardData();
         }
     }, [step]);
 
     const handleGoHome = () => {
-        setFormData({ ssn: '', userName: '', userId: null, task: '', taskType: '', isAi: false, aiTaskResult: null });
+        setFormData({ userId: '', ssn: '', task: '', userName: '', taskType: '' });
+        setIsAiMode(false);
         setStep(1);
     };
 
     const handleAddMoreTask = () => {
-        setFormData(prev => ({ ...prev, task: '', taskType: '', isAi: false, aiTaskResult: null }));
-        setStep(4);
+        setFormData(prev => ({ ...prev, task: '', taskType: '' }));
+        setIsAiMode(false); // 추가 업무 접수는 직접 접수로 간주
+        setStep(4); 
     };
 
-    const handleAiConfirm = async () => {
-        if (!formData.userId) {
-            setAiError('사용자 정보를 불러오지 못했습니다. 다시 로그인해 주세요.');
-            return;
-        }
-        setIsAiLoading(true);
-        setAiError('');
-        try {
-            const response = await fetch('/py/auto-insert-task', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: formData.userId }),
-            });
-            const data = await response.json();
-            if (!response.ok || data.result !== 'SUCCESS') {
-                throw new Error(data.detail || '자동 접수 처리 중 오류가 발생했습니다.');
-            }
-            const task = data.taskResult;
-            setFormData(prev => ({
-                ...prev,
-                isAi: true,
-                taskType: task.task_type,
-                task: task.task_detail_type,
-                aiTaskResult: {
-                    ticketNumber: task.ticket_number,
-                    assignedLevel: task.assigned_level,
-                    expectedWaitingTime: task.expected_waiting_time,
-                },
-            }));
-            setIsModalOpen(false);
-            setStep(5);
-        } catch (err) {
-            setAiError(err.message || '서버와 통신 중 오류가 발생했습니다.');
-        } finally {
-            setIsAiLoading(false);
-        }
+    const handleAiAutoSelect = () => {
+        setIsAiMode(true);
+        setStep(5);
     };
 
     const getCurrentDateTime = () => {
@@ -123,11 +91,11 @@ const Kiosk = () => {
         switch (step) {
             case 0:
                 return (
-                    <KioskNonMember
-                        formData={formData}
-                        setFormData={setFormData}
-                        onNext={() => setStep(3)}
-                        onPrev={() => setStep(1)}
+                    <KioskNonMember 
+                        formData={formData} 
+                        setFormData={setFormData} 
+                        onNext={() => setStep(3)} 
+                        onPrev={() => setStep(1)} 
                     />
                 );
             case 1:
@@ -161,7 +129,6 @@ const Kiosk = () => {
             case 3:
                 return (
                     <div className={styles.loginArea}>
-                        {/* 💡 상단 로그인 유저 정보 표시 추가 (step === 3 일때는 userInfoWrapper를 직접 렌더링하지 않고 CSS에서 제어해야함) */}
                         <div className={styles.userInfoWrapper}>
                             <span className={styles.userBadge}>
                                 <span className={styles.badgeText}>본인확인완료</span>
@@ -181,7 +148,7 @@ const Kiosk = () => {
                             <h2 className={styles.loginTitle}>접수 방식을 선택해주세요</h2>
                             <p className={styles.loginSubtitle}>원하시는 접수 방식을 선택해주세요.</p>
                         </div>
-
+                        
                         <div className={styles.modeSelectContainer}>
                             <div className={styles.modeCard}>
                                 <h3 className={styles.modeTitle}>자동 접수</h3>
@@ -190,7 +157,7 @@ const Kiosk = () => {
                                     <strong>가장 빠르고 적합한 창구</strong>로<br/>
                                     알아서 안내해 드립니다.
                                 </p>
-                                <button className={styles.modeButtonPrimary} onClick={() => setIsModalOpen(true)}>
+                                <button className={styles.modeButtonPrimary} onClick={handleAiAutoSelect}>
                                     자동 접수하기
                                 </button>
                             </div>
@@ -202,13 +169,15 @@ const Kiosk = () => {
                                     해당 창구로 번호표를<br/>
                                     발급받습니다.
                                 </p>
-                                <button className={styles.modeButtonSecondary} onClick={() => setStep(4)}>
+                                <button className={styles.modeButtonSecondary} onClick={() => {
+                                    setIsAiMode(false);
+                                    setStep(4);
+                                }}>
                                     직접 접수하기
                                 </button>
                             </div>
                         </div>
-
-                        {/* 이전으로 버튼 (처음 화면으로 돌아가기) */}
+                        
                         <button className={styles.prevButton} onClick={() => setStep(1)}>
                             ← 처음으로
                         </button>
@@ -217,7 +186,13 @@ const Kiosk = () => {
             case 4:
                 return <KioskTaskSelect formData={formData} setFormData={setFormData} onNext={() => setStep(5)} onPrev={() => setStep(3)} userName={formData.userName} />;
             case 5:
-                return <KioskComplete formData={formData} onGoHome={handleGoHome} onAddMore={handleAddMoreTask} userName={formData.userName} />;
+                return <KioskComplete 
+                            formData={formData} 
+                            onGoHome={handleGoHome} 
+                            onAddMore={handleAddMoreTask} 
+                            userName={formData.userName} 
+                            isAiMode={isAiMode}
+                        />;
             default:
                 return null;
         }
@@ -232,28 +207,21 @@ const Kiosk = () => {
             {renderStep()}
             <CustomModal
                 isOpen={isModalOpen}
-                onClose={() => { if (!isAiLoading) { setIsModalOpen(false); setAiError(''); } }}
-                title="AI 자동 접수"
-                onConfirm={handleAiConfirm}
-                onCancel={() => { setIsModalOpen(false); setAiError(''); }}
-                confirmText={isAiLoading ? '분석 중...' : '접수하기'}
+                onClose={() => setIsModalOpen(false)}
+                title="알림"
+                onConfirm={() => {
+                    console.log("확인 버튼 클릭됨");
+                    setIsModalOpen(false);
+                }}
+                onCancel={() => {
+                    console.log("취소 버튼 클릭됨");
+                    setIsModalOpen(false);
+                }}
+                confirmText="확인"
                 cancelText="취소"
-                noAutoClose
             >
-                <div style={{ textAlign: 'center', padding: '10px 4px', lineHeight: '1.7' }}>
-                    {isAiLoading ? (
-                        <p style={{ fontSize: '1.1rem', color: '#555' }}>
-                            AI가 고객님의 데이터를 분석하고 있습니다...
-                        </p>
-                    ) : aiError ? (
-                        <p style={{ fontSize: '1.05rem', color: '#e53e3e' }}>{aiError}</p>
-                    ) : (
-                        <p style={{ fontSize: '1.1rem', color: '#333' }}>
-                            고객님의 거래 이력과 금융 데이터를 AI가 분석하여<br />
-                            <strong>최적의 창구로 자동 배정</strong>합니다.<br />
-                            계속 진행하시겠습니까?
-                        </p>
-                    )}
+                <div style={{ textAlign: 'center', fontSize: '1.2rem', color: '#333' }}>
+                    <p>현재 개발중인 기능입니다.</p>
                 </div>
             </CustomModal>
         </div>

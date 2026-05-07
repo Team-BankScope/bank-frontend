@@ -1,34 +1,126 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './CorporateAccount.module.css';
-import { useModal } from '../../context/ModalContext'; // useModal 훅 추가
+import { useModal } from '../../context/ModalContext';
 
-const CorporateAccount = ({ onCancel, onComplete, selectedTask }) => {
-    const { openModal } = useModal(); // 모달 훅 사용
+const CorporateAccount = ({ onCancel, onComplete, selectedTask, taskId }) => {
+    const { openModal } = useModal();
+    const [corporateProducts, setCorporateProducts] = useState([]);
+    const [userInfo, setUserInfo] = useState(null);
+    
     const [formData, setFormData] = useState({
         companyName: selectedTask?.userName || '미등록 법인',
-        businessNumber: '123-45-67890',
-        representative: '김대표',
-        accountType: '법인 당좌예금',
-        purpose: '사업 운영자금 관리',
+        productId: '',
+        accountPassword: '',
+        confirmPassword: '',
+        accountAlias: '',
         initialDeposit: '0'
     });
+
+    // 1. 법인용 금융상품 목록 조회 (카테고리: CORPORATE)
+    useEffect(() => {
+        const fetchCorporateProducts = async () => {
+            try {
+                const response = await fetch('/api/product/list?category=CHECKING&targetType=ALL&targetType=CORPORATE');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.result === 'SUCCESS') {
+                        setCorporateProducts(data.products || []);
+                        if (data.products && data.products.length > 0) {
+                            setFormData(prev => ({ ...prev, productId: data.products[0].productId }));
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("법인 상품 목록 조회 에러:", error);
+            }
+        };
+        fetchCorporateProducts();
+    }, []);
+
+    // 2. 고객 정보(사업자등록번호 포함) 조회
+    useEffect(() => {
+        const fetchUserInfo = async () => {
+            if (!selectedTask?.userId) return;
+            try {
+                const response = await fetch(`/api/user/info?userId=${selectedTask.userId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log(data)
+                    if (data.result === 'SUCCESS') {
+                        setUserInfo(data.user);
+                    }
+                }
+            } catch (error) {
+                console.error("고객 정보 조회 에러:", error);
+            }
+        };
+        fetchUserInfo();
+    }, [selectedTask]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = () => {
-        openModal({
-            title: "알림",
-            message: "법인계좌 개설이 승인되었습니다.",
-            confirmText: "확인",
-            onConfirm: () => {
-                if (onComplete) onComplete(formData);
-            }
-        });
-    };
+    const handleSubmit = async () => {
+        if (formData.accountPassword !== formData.confirmPassword) {
+            openModal({ title: '알림', message: '비밀번호가 일치하지 않습니다.' });
+            return;
+        }
+        if (!userInfo?.identificationNumber) {
+            openModal({ title: '알림', message: '사업자등록번호를 조회할 수 없습니다.' });
+            return;
+        }
 
+        const requestDto = {
+            taskId: taskId || selectedTask?.taskId || null,
+            productId: Number(formData.productId),
+            amount: parseInt(String(formData.initialDeposit).replace(/,/g, ''), 10) || 0,
+            accountPassword: formData.accountPassword,
+            accountAlias: formData.accountAlias,
+            userId: selectedTask?.userId,
+            identificationNumber: userInfo.identificationNumber
+        };
+
+        try {
+            const response = await fetch('/api/account/corporate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestDto)
+            });
+
+            const data = await response.json();
+            switch (data.result) {
+                case 'SUCCESS':
+                    openModal({
+                        title: "알림",
+                        message: `법인계좌 개설이 승인되었습니다.\n계좌번호: ${data.account?.accountNumber}`,
+                        onConfirm: () => onComplete?.()
+                    });
+                    break;
+                case 'FAILURE_USER_NOT_EXIST':
+                    openModal({ title: "알림", message: "존재하지 않는 사용자입니다." });
+                    break;
+                case 'FAILURE_NOT_CORPORATE_USER':
+                    openModal({ title: "알림", message: "법인 회원이 아닙니다." });
+                    break;
+                case 'FAILURE':
+                default:
+                    openModal({ title: "알림", message: data.message || "계좌 개설에 실패했습니다." });
+                    break;
+            }
+        } catch (error) {
+            console.error("네트워크 에러:", error);
+            openModal({ title: "오류", message: "네트워크 오류가 발생했습니다." });
+        }
+    };
+    const formatBusinessNumber = (num) => {
+        if (!num) return '조회 중...';
+
+        const cleaned = num.toString().replace(/\D/g, '');
+
+        return cleaned.replace(/(\d{3})(\d{2})(\d{5})/, '$1-$2-$3');
+    };
     return (
         <div className={styles.container}>
             <header className={styles.header}>
@@ -40,46 +132,72 @@ const CorporateAccount = ({ onCancel, onComplete, selectedTask }) => {
             </header>
 
             <div className={styles.formContainer}>
-            
                 <div className={styles.section}>
                     <div className={styles.labelRow}>
                         <span className={styles.centerLabel}>법인명</span>
-                        <span className={styles.rightLabel}>대표자명</span>
+                        <span className={styles.rightLabel}>사업자등록번호</span>
                     </div>
                     <div className={styles.inputRow}>
                         <div className={styles.displayBox}>{formData.companyName}</div>
-                        <div className={styles.displayBox}>{formData.representative}</div>
+                        <div className={styles.displayBox}>
+                            {userInfo?.identificationNumber
+                                ? userInfo.identificationNumber.replace(/(\d{3})(\d{2})(\d{5})/, '$1-$2-$3')
+                                : '조회 중...'}
+                        </div>
                     </div>
                 </div>
-
-           
+                <div className={styles.sectionContainer}>
                 <div className={styles.section}>
                     <div className={styles.labelRow}>
-                        <span className={styles.centerLabel}>사업자등록번호</span>
-                        <span className={styles.rightLabel}>계좌 종류</span>
+                        <span className={styles.centerLabel}>계좌 종류 (상품)</span>
                     </div>
                     <div className={styles.inputRow}>
-                        <div className={styles.inputFieldBox}>
-                            <input name="businessNumber" value={formData.businessNumber} onChange={handleChange} />
-                        </div>
                         <div className={styles.customSelectMain}>
-                            <select name="accountType" value={formData.accountType} onChange={handleChange}>
-                                <option value="법인 당좌예금">법인 당좌예금</option>
-                                <option value="법인 보통예금">법인 보통예금</option>
+                            <select name="productId" value={formData.productId} onChange={handleChange}>
+                                {corporateProducts.map(p => (
+                                    <option key={p.productId} value={p.productId}>
+                                        {p.productName}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     </div>
                 </div>
 
-              
                 <div className={styles.section}>
-                    <div className={styles.labelRow}><span className={styles.centerLabel}>개설 목적</span></div>
+                    <div className={styles.labelRow}>
+                        <span className={styles.centerLabel}>계좌 별칭</span>
+                    </div>
                     <div className={styles.inputFieldBox}>
-                        <input name="purpose" value={formData.purpose} onChange={handleChange} />
+                        <input name="accountAlias" placeholder="예: 본사 운영자금" value={formData.accountAlias} onChange={handleChange} />
+                    </div>
+                </div>
+                </div>
+                <div className={styles.section}>
+                    <div className={styles.gridTwo}>
+                        <div className={styles.inputGroup}>
+                            <div className={styles.centerLabel}>비밀번호</div>
+                            <div className={styles.inputFieldBox}>
+                                <input name="accountPassword" type="password" placeholder="●●●●" maxLength="4" value={formData.accountPassword} onChange={handleChange} />
+                            </div>
+                        </div>
+                        <div className={styles.inputGroup}>
+                            <div className={styles.centerLabel}>비밀번호 확인</div>
+                            <div className={styles.inputFieldBox}>
+                                <input name="confirmPassword" type="password" placeholder="●●●●" maxLength="4" value={formData.confirmPassword} onChange={handleChange} />
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-               
+                <div className={styles.section}>
+                    <div className={styles.labelRow}><span className={styles.centerLabel}>최초 입금액</span></div>
+                    <div className={styles.amountFieldBox}>
+                        <input name="initialDeposit" type="text" value={formData.initialDeposit} onChange={handleChange} />
+                        <span className={styles.unit}>원</span>
+                    </div>
+                </div>
+
                 <div className={styles.buttonRow}>
                     <button className={styles.btnCancel} onClick={onCancel}>업무 취소</button>
                     <button className={styles.btnSubmit} onClick={handleSubmit}>계좌 개설 승인</button>
