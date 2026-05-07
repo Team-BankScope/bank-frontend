@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Loading from '../../components/common/Loading.jsx';
 import styles from './AiRecommend.module.css';
@@ -7,37 +7,93 @@ const AiRecommend = () => {
     const navigate = useNavigate();
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [aiResult, setAiResult] = useState(null);
+    const [user,setUser] = useState(null);
+
+    useEffect(() => {
+        const fetchUserSession = async () => {
+            try {
+                const response = await fetch('/api/user/session', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include' // 내 로그인 세션 쿠키를 백엔드에 보내겠다는 뜻
+                });
+                const data = await response.json();
+                if (data.result === 'SUCCESS' && data.type === 'user') {
+                    setUser(data);
+                }
+            } catch (error) {
+                console.error('세션 정보 로드 실패:', error);
+            }
+        };
+        fetchUserSession();
+    }, []);
 
     // 파이썬 딥러닝 서버 통신 시뮬레이션
-    const handleAiRecommend = () => {
+    const handleAiRecommend = async () => {
+        if (!user) {
+            alert('로그인이 필요한 서비스입니다.\n먼저 로그인 해주세요.');
+            return;
+        }
         setIsAiLoading(true);
-        
-        setTimeout(() => {
-            setAiResult([
-                {
-                    id: 1,
-                    type: '적금',
-                    name: '뱅크스코프 청년 도약 계좌',
-                    desc: '소비 패턴 분석 결과, 안정적인 목돈 마련에 가장 적합한 상품입니다.',
-                    rate: '최고 연 6.0%'
-                },
-                {
-                    id: 2,
-                    type: '예금',
-                    name: '뱅크스코프 파킹통장',
-                    desc: '언제든 넣고 뺄 수 있어 여유 자금을 보관하기 좋은 고금리 예금입니다.',
-                    rate: '최고 연 3.5%'
-                },
-                {
-                    id: 3,
-                    type: '체크카드',
-                    name: '뱅크스코프 일상 체크카드',
-                    desc: '주로 결제하시는 카페/대중교통 업종에서 최대 혜택을 받습니다.',
-                    rate: '최대 5% 적립'
+
+        try {
+            const userId = user.id || user.userId; 
+            const response = await fetch(`/py/recommend/${userId}`);
+            
+            if (response.ok) {
+                const data = await response.json();
+
+                if (data.result === 'SUCCESS' && data.products) {
+                
+                    const formattedProducts = data.products.slice(0, 3).map((product, index) => ({
+                        id: product.productId || index,
+                        type: product.productType || '추천상품', 
+                        name: product.productName,
+                        desc: product.description,
+                        rate: product.interestRate ? `최고 연 ${product.interestRate}%` : '' 
+                    }));
+                    
+                    setAiResult(formattedProducts);
+                } else {
+                    alert("추천해 드릴 맞춤 상품 정보가 없습니다.");
+                    setAiResult([]); 
                 }
-            ]);
+            } else {
+                throw new Error("서버 응답 오류");
+            }
+        } catch (error) {
+            console.error("AI 추천 상품 로드 실패:", error);
+            alert('AI 분석 중 서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        } finally {
             setIsAiLoading(false);
-        }, 3000); 
+        }
+        
+        // setTimeout(() => {
+        //     setAiResult([
+        //         {
+        //             id: 1,
+        //             type: '적금',
+        //             name: '뱅크스코프 청년 도약 계좌',
+        //             desc: '소비 패턴 분석 결과, 안정적인 목돈 마련에 가장 적합한 상품입니다.',
+        //             rate: '최고 연 6.0%'
+        //         },
+        //         {
+        //             id: 2,
+        //             type: '예금',
+        //             name: '뱅크스코프 파킹통장',
+        //             desc: '언제든 넣고 뺄 수 있어 여유 자금을 보관하기 좋은 고금리 예금입니다.',
+        //             rate: '최고 연 3.5%'
+        //         },
+        //         {
+        //             id: 3,
+        //             type: '체크카드',
+        //             name: '뱅크스코프 일상 체크카드',
+        //             desc: '주로 결제하시는 카페/대중교통 업종에서 최대 혜택을 받습니다.',
+        //             rate: '최대 5% 적립'
+        //         }
+        //     ]);
+        //     setIsAiLoading(false);
+        // }, 3000); 
     };
 
     return (
