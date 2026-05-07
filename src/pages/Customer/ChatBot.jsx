@@ -8,21 +8,51 @@ const ChatBot = () => {
   const [messages, setMessages] = useState([
     { sender: "banker", text: "안녕하세요! 무엇을 도와드릴까요?" }
   ]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [userId, setUserId] = useState(null);
   const chatEndRef = useRef(null);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isOpen]);
 
-  const onSend = () => {
-    if (!input.trim()) return;
-    
-    setMessages(prev => [...prev, { sender: "customer", text: input }]);
-    setInput("");
+  useEffect(() => {
+    fetch('/api/user/session')
+      .then(res => res.json())
+      .then(data => {
+        if (data.result === 'SUCCESS' && data.type === 'user') {
+          setUserId(data.id);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
-    setTimeout(() => {
-      setMessages(prev => [...prev, { sender: "banker", text: "잠시만 기다려주세요. 담당자가 확인 중입니다." }]);
-    }, 1000);
+  const onSend = async () => {
+    if (!input.trim() || isLoading) return;
+
+    const userMessage = input.trim();
+    setMessages(prev => [...prev, { sender: "customer", text: userMessage }]);
+    setInput("");
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/py/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId ?? 0, message: userMessage }),
+      });
+      const data = await response.json();
+
+      if (data.result === 'SUCCESS') {
+        setMessages(prev => [...prev, { sender: "banker", text: data.content }]);
+      } else {
+        setMessages(prev => [...prev, { sender: "banker", text: "죄송합니다. 일시적인 오류가 발생했습니다." }]);
+      }
+    } catch {
+      setMessages(prev => [...prev, { sender: "banker", text: "서버와 연결할 수 없습니다." }]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const toggleChat = () => setIsOpen(!isOpen);
@@ -50,6 +80,9 @@ const ChatBot = () => {
                 {msg.text}
               </div>
             ))}
+            {isLoading && (
+              <div className={styles.bankerMsg}>답변을 생성 중입니다...</div>
+            )}
             <div ref={chatEndRef}></div>
           </div>
 
