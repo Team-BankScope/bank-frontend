@@ -21,7 +21,7 @@ const KioskTaskSelect = ({ setFormData, onNext, onPrev, userName }) => {
             id: 1,
             title: '상담 업무',
             subtitle: 'CONSULTATION',
-            items: ['예금','적금','보험상담','펀드상담', '신용카드 신청','연금신청','신용대출','소상공인 대출', '주택담보대출', '전세자금대출'],
+            items: ['예금','적금','대출 상환','금융상품가입','신용카드 발급','연금신청','신용대출','소상공인 대출', '주택담보대출', '전세자금대출'],
             footer: '건당 10분·대기 11명',
             columns: 2 // 버튼 배열을 2열로
         },
