@@ -1,21 +1,29 @@
 .userContainer {
+    padding: 10px 20px;        
+    display: flex;             
+    flex-direction: column;   
+    box-sizing: border-box;
     width: 100%;
     background-color: #fff;
 }
 
 .title {
     font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 20px;
-    color: #333;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 15px 0;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #dee2e6;  
+    text-align: left;
 }
 
 .topBar {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 20px;
-    border-top: 1px solid #ddd;
-    padding-top: 20px;
+    margin-bottom: 10px;
+    border-top: none;
+    padding-top: 0px;
+    padding-bottom: 10px;
 }
 
 .searchWrapper {
@@ -94,12 +102,12 @@
 
 .activeRow {
     background-color: #f0f7ff !important; 
-    border: 2px solid #0056b3; 
+    outline: 2px solid #0056b3; 
+    outline-offset: -2px;
 }
 
 .activeRow td {
     color: #0056b3;
-    font-weight: 500;
 }
 
 .statusBadge {
