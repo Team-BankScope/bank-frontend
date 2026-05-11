@@ -36,11 +36,12 @@ export const AuthProvider = ({ children }) => {
                             status: data.status
                         });
                     } else if (data.type === 'user') {
-                        setUser({ 
+                        setUser({
                             type: 'user',
+                            id: data.id,
                             userType: data.userType,
-                            email: data.email, 
-                            name: data.name, 
+                            email: data.email,
+                            name: data.name,
                             residentNumber: data.residentNumber,
                             phone: data.phone,
                             age : data.age,

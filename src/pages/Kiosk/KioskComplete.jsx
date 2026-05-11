@@ -55,10 +55,9 @@ const KioskComplete = ({ formData, onGoHome, onAddMore, userName, isAiMode }) =>
                         // AI 모드일 경우 응답 구조(data.taskResult)에 맞춰 처리
                         if (isAiMode) {
                             const task = data.taskResult;
-                            let memberName = "";
-                            let memberLevel = "";
                             
-                            // 파이썬 응답에는 member_id만 오기 때문에, 멤버 리스트를 조회하여 이름을 매핑
+                            // 파이썬 응답에는 member_id만 오기 때문에, 멤버 리스트를 조회하여 창구번호를 매핑
+                            let counterNumber = null;
                             if (task.member_id) {
                                 try {
                                     const membersRes = await fetch('/api/user/members');
@@ -66,20 +65,18 @@ const KioskComplete = ({ formData, onGoHome, onAddMore, userName, isAiMode }) =>
                                         const members = await membersRes.json();
                                         const foundMember = members.find(m => m.id === task.member_id);
                                         if (foundMember) {
-                                            memberName = foundMember.name;
-                                            memberLevel = foundMember.level;
+                                            counterNumber = foundMember.counterNumber;
                                         }
                                     }
                                 } catch (e) {
                                     console.error("담당자 정보 조회 실패:", e);
                                 }
                             }
-                            const displayLevel = memberLevel ? `${memberLevel}` : task.assigned_level;
 
                             setTicketInfo({
                                 ticketNumber: task.ticket_number || '-',
                                 level: task.assigned_level || '-',
-                                counter: task.member_id ? `${memberName || '담당자'} (${displayLevel})` : '배정 중',
+                                counter: counterNumber ? `${counterNumber}번 창구` : '배정 중',
                                 taskType: task.task_type || '-',
                                 taskDetailType: task.task_detail_type || '-'
                             });
@@ -93,7 +90,7 @@ const KioskComplete = ({ formData, onGoHome, onAddMore, userName, isAiMode }) =>
                                     setTicketInfo({
                                         ticketNumber: task.ticketNumber || '-',
                                         level: task.assignedLevel || '-',
-                                        counter: task.name ? `${task.name} (${task.level})` : '배정 중',
+                                        counter: task.counterNumber ? `${task.counterNumber}번 창구` : '배정 중',
                                         taskType: task.taskType || '-',
                                         taskDetailType: task.taskDetailType || '-'
                                     });
