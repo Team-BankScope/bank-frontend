@@ -129,7 +129,15 @@
     border: 1px solid #66cccc;
     border-radius: 6px;
     padding: 15px 20px;
-    background-color: #f0fafa; /* 옅은 민트 배경 */
+    background-color: #ffffff; /* 옅은 민트 배경 */
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.accountBox.selected {
+    background-color: #f0fafa;
+    border: 1px solid #66cccc;
+
 }
 
 .accountLeft {

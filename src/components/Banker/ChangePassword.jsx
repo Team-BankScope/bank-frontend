@@ -32,7 +32,7 @@ const ChangePassword = ({ onCancel, onComplete, selectedTask }) => {
                     const data = await response.json();
                     if (data.result === 'SUCCESS') {
                         // DEPOSIT 타입 계좌만 필터링
-                        const depositAccounts = data.accounts.filter(acc => acc.accountType === 'DEPOSIT');
+                        const depositAccounts = data.accounts.filter(acc => acc.accountType === 'CHECKING' || acc.accountType === 'DEPOSIT');
                         setAccounts(depositAccounts);
                         if (depositAccounts.length > 0) {
                             setSelectedAccountId(depositAccounts[0].accountId.toString()); // 첫 번째 계좌 자동 선택
@@ -70,7 +70,7 @@ const ChangePassword = ({ onCancel, onComplete, selectedTask }) => {
     // 💡 2. [추가] 기존 비밀번호와 새 비밀번호가 다른지 체크
     const isDifferent = oldPassword !== newPassword;
 
-    // 💡 3. 최종 제출 조건: (새 비번 일치) AND (기존과 다름) AND (기존비번 4자리) AND (계좌 선택됨)
+    // 💡 3. 최종 제출 조건: (새 비번 일치) AND (기존과 다름) AND (기존비번 4자리) AND (새비번 4자리) AND (계좌 선택됨)
     const canSubmit = isMatch && isDifferent && oldPassword.length === 4 && newPassword.length === 4 && selectedAccountId !== '';
 
     const handleSubmit = () => {
@@ -137,99 +137,109 @@ const ChangePassword = ({ onCancel, onComplete, selectedTask }) => {
         });
     };
 
-    // 현재 선택된 계좌의 정보 찾기
-    const currentSelectedAccount = accounts.find(acc => acc.accountId.toString() === selectedAccountId);
-
     return (
         <div className={styles.container}>
-            <div className={styles.header}>
-                <h2 className={styles.title}>통장 비밀번호 변경</h2>
-                <div className={styles.headerBadge}>보안 설정</div>
-            </div>
+            <header className={styles.header}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="11" width="20" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <h1 className={styles.headerTitle}>통장 비밀번호 변경</h1>
+            </header>
 
-            <div className={styles.mainWrapper}>
-                <div className={styles.leftCol}>
-                    <div className={styles.miniCard}>
-                        <p className={styles.cardLabel}>대상 계좌</p>
-                        <select
-                            className={styles.accountSelect}
-                            value={selectedAccountId}
-                            onChange={(e) => setSelectedAccountId(e.target.value)}
-                        >
-                            {accounts.length > 0 ? (
-                                accounts.map(account => (
-                                    <option key={account.accountId} value={account.accountId.toString()}>
-                                        {account.productName} {account.accountNumber}
-                                    </option>
-                                ))
-                            ) : (
-                                <option value="">계좌 없음</option>
-                            )}
-                        </select>
-                        <p className={styles.accountNumDisplay}>
-                            {currentSelectedAccount ? currentSelectedAccount.accountNumber : '계좌를 선택해주세요.'}
-                        </p>
+            <div className={styles.formContainer}>
+                {/* 1. 대상 계좌 선택 섹션 */}
+                <div className={styles.section}>
+                    <div className={styles.labelRow}>
+                        <span className={styles.centerLabel}>대상 계좌 선택</span>
                     </div>
+                    <div className={styles.inputRow}>
+                        <div className={styles.customSelectFull}>
+                            <select
+                                className={styles.selectField}
+                                value={selectedAccountId}
+                                onChange={(e) => setSelectedAccountId(e.target.value)}
+                            >
+                                {accounts.length > 0 ? (
+                                    accounts.map(account => (
+                                        <option key={account.accountId} value={account.accountId.toString()}>
+                                            {account.productName} {account.accountNumber}
+                                        </option>
+                                    ))
+                                ) : (
+                                    <option value="">계좌 없음</option>
+                                )}
+                            </select>
+                        </div>
+                    </div>
+                </div>
 
+                {/* 2. 비밀번호 변경 폼 섹션 */}
+                <div className={styles.section}>
+                    <div className={styles.gridTwo}>
+                        <div className={styles.inputGroup}>
+                            <label className={styles.centerLabel}>기존 비밀번호</label>
+                            <div className={styles.customSelectFull}>
+                                <input
+                                    type="password"
+                                    className={styles.inputField}
+                                    value={oldPassword}
+                                    onChange={(e) => handlePwChange(e, setOldPassword)}
+                                    placeholder="••••"
+                                    inputMode="numeric"
+                                />
+                            </div>
+                        </div>
+
+                        <div className={styles.inputGroup}>
+                            <label className={styles.centerLabel}>새 비밀번호</label>
+                            <div className={styles.customSelectFull}>
+                                <input
+                                    type="password"
+                                    className={styles.inputField}
+                                    value={newPassword}
+                                    onChange={(e) => handlePwChange(e, setNewPassword)}
+                                    placeholder="••••"
+                                    inputMode="numeric"
+                                />
+                            </div>
+                        </div>
+
+                        <div className={styles.inputGroup} style={{ gridColumn: 'span 2' }}>
+                            <label className={styles.centerLabel}>비밀번호 확인</label>
+                            <div className={styles.customSelectFull}>
+                                <input
+                                    type="password"
+                                    className={styles.inputField}
+                                    value={confirmPassword}
+                                    onChange={(e) => handlePwChange(e, setConfirmPassword)}
+                                    placeholder="••••"
+                                    inputMode="numeric"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 3. 유효성 검사 메시지 섹션 */}
+                {confirmPassword.length > 0 && (
                     <div className={styles.statusBox}>
-                        {confirmPassword.length > 0 && (
-                            <p className={`${styles.message} ${isMatch ? (isDifferent ? styles.success : styles.error) : styles.error}`}>
-                                {!isMatch ? "❌ 새 비밀번호 불일치" : !isDifferent ? "❌ 기존 비번과 동일함" : (newPassword.length !== 4 ? "❌ 새 비밀번호 4자리 입력 필요" : "✅ 변경 가능")}
-                            </p>
-                        )}
-                    </div>
-                </div>
-
-                <div className={styles.rightCol}>
-                    <div className={styles.inputCard}>
-                        <div className={styles.formRow}>
-                            <label>기존 비밀번호</label>
-                            <input
-                                type="password"
-                                className={styles.pwInput}
-                                value={oldPassword}
-                                onChange={(e) => handlePwChange(e, setOldPassword)}
-                                placeholder="••••"
-                                inputMode="numeric"
-                            />
-                        </div>
-                        <div className={styles.formRow}>
-                            <label>새 비밀번호</label>
-                            <input
-                                type="password"
-                                className={styles.pwInput}
-                                value={newPassword}
-                                onChange={(e) => handlePwChange(e, setNewPassword)}
-                                placeholder="••••"
-                                inputMode="numeric"
-                            />
-                        </div>
-                        <div className={styles.formRow}>
-                            <label>비밀번호 확인</label>
-                            <input
-                                type="password"
-                                className={styles.pwInput}
-                                value={confirmPassword}
-                                onChange={(e) => handlePwChange(e, setConfirmPassword)}
-                                placeholder="••••"
-                                inputMode="numeric"
-                            />
+                        <div className={`${styles.messageBox} ${isMatch ? (isDifferent ? styles.successBox : styles.errorBox) : styles.errorBox}`}>
+                            <span className={styles.messageText}>
+                                {!isMatch ? "새 비밀번호 불일치" : !isDifferent ? "기존 비번과 동일함" : (newPassword.length !== 4 ? "새 비밀번호 4자리 입력 필요" : "변경 가능")}
+                            </span>
                         </div>
                     </div>
-                </div>
-            </div>
+                )}
 
-            <div className={styles.footer}>
-                <button type="button" className={styles.btnCancel} onClick={onCancel}>취소</button>
-                <button
-                    type="button"
-                    className={styles.btnSubmit}
-                    onClick={handleSubmit}
-                    // 💡 canSubmit이 false면 버튼은 회색 & 클릭 안 됨
-                    disabled={!canSubmit}
-                >
-                    변경 확정
-                </button>
+                {/* 4. 하단 버튼 영역 */}
+                <div className={styles.buttonRow}>
+                    <button className={styles.btnCancel} onClick={onCancel}>취소</button>
+                    <button
+                        className={styles.btnSubmit}
+                        onClick={handleSubmit}
+                        disabled={!canSubmit}
+                    >
+                        변경 확정
+                    </button>
+                </div>
             </div>
         </div>
     );

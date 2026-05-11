@@ -11,7 +11,8 @@ const CustomModal = ({
                          onCancel,
                          confirmText = '확인',
                          cancelText, // 기본값을 없애고, prop 존재 여부로 판단
-                         duration = 0
+                         duration = 0,
+                         noAutoClose = false, // true 이면 onConfirm 후 자동 닫힘 안 함
                      }) => {
     const [isRendered, setIsRendered] = useState(false);
     const [isAnimate, setIsAnimate] = useState(false);
@@ -58,7 +59,9 @@ const CustomModal = ({
         if (onConfirm) {
             onConfirm();
         }
-        onClose();
+        if (!noAutoClose) {
+            onClose();
+        }
     };
 
     if (!isRendered) return null;

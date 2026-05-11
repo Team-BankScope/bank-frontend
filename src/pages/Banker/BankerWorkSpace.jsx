@@ -63,6 +63,7 @@ const BankerWorkSpace = () => {
     const [taskToToss, setTaskToToss] = useState(null); // 어떤 업무를 이관할지 저장
 
     const [selectedWorkType, setSelectedWorkType] = useState(null);
+    const [lastTaskPage, setLastTaskPage] = useState(1);
     const [note, setNote] = useState("");
 
     // 계좌 유형의 초기값을 "CHECKING"으로 설정
@@ -136,8 +137,10 @@ const BankerWorkSpace = () => {
         }
     };
 
-    const handleTaskMenuSelect = (taskTitle) => {
+    const handleTaskMenuSelect = (taskTitle, pageNumber) => {
         // TaskSelect에서 넘어온 제목에 따라 mapping
+
+        setLastTaskPage(pageNumber);
         switch (taskTitle) {
             case "입출금 계좌 개설":
                 setSelectedWorkType("ACCOUNT_CREATE");
@@ -336,12 +339,12 @@ const BankerWorkSpace = () => {
                 setSelectedWorkType("CARD");
             }
             if (selectedTask.status === 'IN_PROGRESS' &&
-                ( selectedTask.taskDetailType ==="대출 상환")) {
+                ( selectedTask.taskDetailType.endsWith("상환"))) {
                 setSelectedWorkType("LOAN-PAYMENT");
             }
 
             if (selectedTask.status === 'IN_PROGRESS' &&
-                ( selectedTask.taskDetailType.includes("금융상품"))) {
+                ( selectedTask.taskDetailType.includes("금융상품") || selectedTask.taskDetailType.endsWith("대출"))) {
                 setSelectedWorkType("FINANCIAL-PRODUCT");
             }
             if (selectedTask.status === 'IN_PROGRESS' &&
@@ -575,7 +578,7 @@ const BankerWorkSpace = () => {
         }
     };
 
-    // 업무 기록 저장 함수 
+    // 업무 기록 저장 함수
     const handlePostLog = async (idValue) => {
         if (!note.trim()) {
             return;
@@ -833,7 +836,21 @@ const BankerWorkSpace = () => {
                                             onClick={() => setSelectedTask(task)}
                                         >
                                             <div className={styles.cardHeader}>
-                                                <span className={styles.customerName}>{task.userName} <small>{task.ticketNumber}</small></span>
+                                                <span className={styles.customerName}>
+                                                    {task.userName} <small>{task.ticketNumber}</small>
+                                                    {task.isAi && (
+                                                        <span style={{
+                                                            marginLeft: '6px',
+                                                            padding: '1px 6px',
+                                                            backgroundColor: '#6c63ff',
+                                                            color: '#fff',
+                                                            borderRadius: '4px',
+                                                            fontSize: '0.65rem',
+                                                            fontWeight: 'bold',
+                                                            verticalAlign: 'middle'
+                                                        }}>AI</span>
+                                                    )}
+                                                </span>
                                                 <span className={`${styles.tierBadge} ${styles.일반}`}>{task.grade || '일반'}</span>
                                             </div>
                                             <div className={styles.cardInfo}>
@@ -892,6 +909,17 @@ const BankerWorkSpace = () => {
                                         <div className={styles.detailHeader}>
                                             <div className={styles.detailCustomerInfo}>
                                                 <span className={`${styles.tierBadge} ${styles.일반}`}>{selectedTask.grade || '일반'}</span>
+                                                {selectedTask.isAi && (
+                                                    <span style={{
+                                                        padding: '2px 8px',
+                                                        backgroundColor: '#6c63ff',
+                                                        color: '#fff',
+                                                        borderRadius: '6px',
+                                                        fontSize: '0.7rem',
+                                                        fontWeight: 'bold',
+                                                        marginLeft: '6px'
+                                                    }}>AI 자동접수</span>
+                                                )}
                                                 <h2>{selectedTask.userName} <small>{selectedTask.ticketNumber}</small></h2>
                                                 <span className={styles.customerId}>접수번호: {selectedTask.taskId}</span>
                                             </div>
@@ -903,7 +931,9 @@ const BankerWorkSpace = () => {
                                             <div className={styles.accountCard}>
                                                 {selectedWorkType === "TASK_SELECT" ? (
                                                     <TaskSelect
-                                                        onSelectTask={(taskTitle) => handleTaskMenuSelect(taskTitle)}
+                                                        initialPage={lastTaskPage}
+                                                        // pageNumber도 받아서 handleTaskMenuSelect로 넘겨주도록 추가!
+                                                        onSelectTask={(taskTitle, pageNumber) => handleTaskMenuSelect(taskTitle, pageNumber)}
                                                     />
                                                 ) : (
                                                     <>
@@ -1073,19 +1103,31 @@ const BankerWorkSpace = () => {
                                                         {/*대출상환*/}
                                                         {selectedWorkType === "LOAN-PAYMENT" && (
                                                             <LoanPayment
+                                                                selectedTask={selectedTask}
                                                                 onCancel={() => {
                                                                     setSelectedWorkType(null);
                                                                     handleCancelAcceptTask(selectedTask);
                                                                 }}
+                                                                onCreate={() => {
+                                                                    const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
+                                                                    handlePostLog(finalId);
+                                                                    handleCompleteTask(selectedTask);
+                                                                 }}
                                                             />
                                                         )}
 
                                                         {/*금융상품가입*/}
                                                         {selectedWorkType === "FINANCIAL-PRODUCT" && (
                                                             <FinancialProduct
+                                                                selectedTask={selectedTask}
                                                                 onCancel={() => {
                                                                     setSelectedWorkType(null);
                                                                     handleCancelAcceptTask(selectedTask);
+                                                                }}
+                                                                onSubmit={() => {
+                                                                    const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
+                                                                    handlePostLog(finalId);
+                                                                    handleCompleteTask(selectedTask);
                                                                 }}
                                                             />
                                                         )}
@@ -1129,7 +1171,7 @@ const BankerWorkSpace = () => {
                                                                     setSelectedWorkType(null);
                                                                     handleCancelAcceptTask(selectedTask);
                                                                 }}
-                                                                onComplete={() => {
+                                                                onSuccess={() => {
                                                                     const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
                                                                     handlePostLog(finalId);
                                                                     handleCompleteTask(selectedTask);
@@ -1170,9 +1212,18 @@ const BankerWorkSpace = () => {
                                                         {selectedTask.status !== 'WAITING' && (
                                                             <>
                                                                 <div className={styles.backCard}>
-                                                                    <button
+                                                                    {/*<button
                                                                         className={styles.backButton}
                                                                         onClick={() => setSelectedWorkType("TASK_SELECT")}
+                                                                    >
+                                                                        ← 이전으로
+                                                                    </button>*/}
+                                                                    <button
+                                                                        className={styles.backButton}
+                                                                        onClick={() => {
+                                                                            // 💡 디버그 3: 이전으로 돌아갈 때 넘겨줄 값 확인
+                                                                            setSelectedWorkType("TASK_SELECT");
+                                                                        }}
                                                                     >
                                                                         ← 이전으로
                                                                     </button>

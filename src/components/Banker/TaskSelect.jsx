@@ -11,8 +11,9 @@ import WarningIcon from '../../images/Home/Warning.png';
 import Transfer from '../../images/Home/Transfer.png';
 import PiggyBank from '../../images/Home/PiggyBank.png';
 
-const TaskSelect = ({ onSelectTask }) => {
-    const [currentPage, setCurrentPage] = useState(1);
+const TaskSelect = ({ onSelectTask, initialPage = 1 }) => {
+
+    const [currentPage, setCurrentPage] = useState(initialPage);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedId, setSelectedId] = useState(1);
 
@@ -62,9 +63,10 @@ const TaskSelect = ({ onSelectTask }) => {
     };
 
     const handleCardClick = (task) => {
+
         setSelectedId(task.id);
         if (onSelectTask) {
-            onSelectTask(task.title);
+            onSelectTask(task.title, currentPage);
         }
     };
 

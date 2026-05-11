@@ -327,7 +327,7 @@
 .inputField {
     flex: 1;
     padding: 16px 14px;
-    background-color: #f8f9fa; /* 아주 연한 회색 배경으로 입력창 구분 */
+
     border: 1.5px solid #e9ecef;
     border-radius: 12px; /* 둥글기를 부드럽게 */
     font-size: 1.1rem;

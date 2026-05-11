@@ -39,7 +39,7 @@ const Card = ({ onCancel, selectedTask, onSuccess }) => {
                     const data = await response.json();
                     if (data.result === 'SUCCESS') {
                         // Filter for deposit accounts only
-                        const depositAccounts = data.accounts.filter(acc => acc.accountType === 'DEPOSIT');
+                        const depositAccounts = data.accounts.filter(acc => acc.accountType === 'CHECKING');
                         setAccounts(depositAccounts);
                         /*if (depositAccounts.length > 0) {
                             setFormData(prev => ({ ...prev, accountId: depositAccounts[0].accountId }));

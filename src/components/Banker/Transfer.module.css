@@ -25,7 +25,9 @@
     width: 100%;
     box-sizing: border-box;
 }
+.inputGroup:focus {
 
+}
 .inputGroup label {
     display: block;
     font-size: 0.9rem;
@@ -37,7 +39,7 @@
 .input {
     width: 100%;
     padding: 12px 15px;
-    border: 1px solid #ced4da;
+    border: 1.5px solid #6ED3B9;
     border-radius: 8px;
     font-size: 1rem;
     box-sizing: border-box;
@@ -46,8 +48,7 @@
 
 .input:focus {
     outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+
 }
 
 .balanceInfo {

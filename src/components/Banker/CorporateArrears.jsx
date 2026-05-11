@@ -15,53 +15,58 @@ const CorporateArrears = ({ onCancel, onComplete }) => {
     ];
 
     const [selectedAccount, setSelectedAccount] = useState(accountList[0].number);
-    const [payAmount, setPayAmount] = useState(arrearsInfo.totalArrears);
+    const [payAmount, setPayAmount] = useState(0);
 
     return (
         <div className={styles.container}>
-            <div className={styles.header}>
-                <h2 className={styles.title}>기업 연체 관리 및 납부</h2>
+            <header className={styles.header}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                <h1 className={styles.headerTitle}>기업 연체 관리 및 납부</h1>
                 <div className={styles.headerBadge}>D+38 관리대상</div>
-            </div>
+            </header>
 
-            <div className={styles.mainWrapper}>
-                <div className={styles.leftCol}>
-                    <div className={styles.miniCard}>
-                        <p className={styles.cardLabel}>고객 정보</p>
-                        <div className={styles.customerInfo}>
-                            <span className={styles.name}>{arrearsInfo.businessName}</span>
-                            <span className={styles.subText}>{arrearsInfo.businessNumber}</span>
+            <div className={styles.formContainer}>
+                {/* 1. 고객 정보 및 연체 현황 요약 */}
+                <div className={styles.section}>
+                    <div className={styles.labelRow}>
+                        <span className={styles.centerLabel}>고객 및 연체 정보</span>
+                    </div>
+                    <div className={styles.inputRow}>
+                        <div className={styles.customSelectFull}>
+                            <input 
+                                type="text" 
+                                className={styles.inputField} 
+                                value={`법인명: ${arrearsInfo.businessName} (${arrearsInfo.businessNumber})`} 
+                                readOnly 
+                            />
                         </div>
                     </div>
-
-                    <div className={styles.miniCard}>
-                        <p className={styles.cardLabel}>연체 현황</p>
-                        <div className={styles.dataGrid}>
-                            <div className={styles.dataItem}>
-                                <span className={styles.itemLabel}>총 연체액</span>
-                                <strong className={styles.danger}>
-                                    {arrearsInfo.totalArrears.toLocaleString()}원
-                                </strong>
-                            </div>
-
-                        
-                            <div className={styles.vLine} />
-
-                            <div className={styles.dataItem}>
-                                <span className={styles.itemLabel}>연체 회차</span>
-                                <strong className={styles.countText}>{arrearsInfo.arrearsCount}회차</strong>
+                    <div className={styles.inputRow}>
+                        <div className={styles.mintInfoBox}>
+                            <div className={styles.infoBoxInner}>
+                                <div className={styles.infoItem}>
+                                    <span className={styles.infoLabel}>총 연체액</span>
+                                    <span className={styles.infoValueDanger}>{arrearsInfo.totalArrears.toLocaleString()}원</span>
+                                </div>
+                                <div className={styles.vLine}></div>
+                                <div className={styles.infoItem}>
+                                    <span className={styles.infoLabel}>연체 회차</span>
+                                    <span className={styles.infoValue}>{arrearsInfo.arrearsCount}회차</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-          
-                <div className={styles.rightCol}>
-                    <div className={styles.inputCard}>
-                        <div className={styles.formRow}>
-                            <label>출금 계좌</label>
+                {/* 2. 출금 계좌 선택 */}
+                <div className={styles.section}>
+                    <div className={styles.labelRow}>
+                        <span className={styles.centerLabel}>출금 계좌 선택</span>
+                    </div>
+                    <div className={styles.inputRow}>
+                        <div className={styles.customSelectFull}>
                             <select 
-                                className={styles.select}
+                                className={styles.selectField}
                                 value={selectedAccount}
                                 onChange={(e) => setSelectedAccount(e.target.value)}
                             >
@@ -72,27 +77,31 @@ const CorporateArrears = ({ onCancel, onComplete }) => {
                                 ))}
                             </select>
                         </div>
-
-                        <div className={styles.formRow}>
-                            <label>납부 금액</label>
-                            <div className={styles.inputGroup}>
-                                <input 
-                                    type="number" 
-                                    className={styles.amountInput}
-                                    value={payAmount}
-                                    onChange={(e) => setPayAmount(e.target.value)}
-                                />
-                                <button className={styles.allBtn} onClick={() => setPayAmount(arrearsInfo.totalArrears)}>전액</button>
-                            </div>
-                        </div>
                     </div>
                 </div>
-            </div>
 
-      
-            <div className={styles.footer}>
-                <button className={styles.btnCancel} onClick={onCancel}>취소</button>
-                <button className={styles.btnSubmit} onClick={() => alert('납부 승인 완료')}>납부 승인</button>
+                {/* 3. 납부 금액 */}
+                <div className={styles.section}>
+                    <div className={styles.labelRow}>
+                        <span className={styles.centerLabel}>납부 금액</span>
+                    </div>
+                    <div className={styles.amountFieldBox}>
+                        <input 
+                            type="number" 
+                            className={styles.inputField}
+                            style={{ textAlign: 'right' }}
+                            value={payAmount}
+                            onChange={(e) => setPayAmount(e.target.value)}
+                        />
+                        <span className={styles.unit}>원</span>
+                        <button className={styles.allBtn} onClick={() => setPayAmount(arrearsInfo.totalArrears)}>전액</button>
+                    </div>
+                </div>
+
+                <div className={styles.buttonRow}>
+                    <button className={styles.btnCancel} onClick={onCancel}>취소</button>
+                    <button className={styles.btnSubmit} onClick={() => alert('납부 승인 완료')}>납부 승인</button>
+                </div>
             </div>
         </div>
     );

@@ -1,127 +1,114 @@
 import React, { useState, useRef, useEffect } from 'react';
-import axios from 'axios'; 
-import { useAuth } from "../../context/AuthContext";
 import styles from './ChatBot.module.css';
 import chatbotImg from '../../images/Home/chatbot.png';
-import ReactMarkdown from 'react-markdown';
 
 const ChatBot = () => {
-  const { user } = useAuth(); 
-  const [isOpen, setIsOpen] = useState(false);
-  const [input, setInput] = useState("");
-  const [messages, setMessages] = useState([]); 
-  const chatEndRef = useRef(null);
+    const [isOpen, setIsOpen] = useState(false);
+    const [input, setInput] = useState("");
+    const [messages, setMessages] = useState([
+        { sender: "banker", text: "안녕하세요! 무엇을 도와드릴까요?" }
+    ]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [userId, setUserId] = useState(null);
+    const chatEndRef = useRef(null);
 
-  
-  useEffect(() => {
-    const savedChats = sessionStorage.getItem('chatHistory');
-    if (savedChats) {
-      setMessages(JSON.parse(savedChats));
-    } else {
-     
-      setMessages([{ sender: "banker", text: "안녕하세요! 무엇을 도와드릴까요?", timestamp: new Date().toLocaleString() }]);
-    }
-  }, []);
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages, isOpen]);
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isOpen]);
+    useEffect(() => {
+        fetch('/api/user/session')
+            .then(res => res.json())
+            .then(data => {
+                if (data.result === 'SUCCESS' && data.type === 'user') {
+                    setUserId(data.id);
+                }
+            })
+            .catch(() => {});
+    }, []);
 
-  const onSend = async () => {
-    if (!input.trim()) return;
-    
+    const onSend = async () => {
+        if (!input.trim() || isLoading) return;
 
-    const userMsg = { 
-      sender: "customer", 
-      text: input, 
-      timestamp: new Date().toLocaleString() 
+        const userMessage = input.trim();
+        setMessages(prev => [...prev, { sender: "customer", text: userMessage }]);
+        setInput("");
+        setIsLoading(true);
+
+        try {
+            const response = await fetch('/py/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId ?? 0, message: userMessage }),
+            });
+            const data = await response.json();
+
+            if (data.result === 'SUCCESS') {
+                setMessages(prev => [...prev, { sender: "banker", text: data.content }]);
+            } else {
+                setMessages(prev => [...prev, { sender: "banker", text: "죄송합니다. 일시적인 오류가 발생했습니다." }]);
+            }
+        } catch {
+            setMessages(prev => [...prev, { sender: "banker", text: "서버와 연결할 수 없습니다." }]);
+        } finally {
+            setIsLoading(false);
+        }
     };
-    
-    const updatedWithUser = [...messages, userMsg];
-    setMessages(updatedWithUser);
-    sessionStorage.setItem('chatHistory', JSON.stringify(updatedWithUser)); // 세션 저장
-    setInput("");
 
-    try {
-      const response = await axios.post('http://localhost:8000/py/chat', {
-        user_id: user?.id || 0, 
-        message: input
-      });
+    const toggleChat = () => setIsOpen(!isOpen);
 
-      if (response.data.result === "SUCCESS") {
-     
-        const botMsg = { 
-          sender: "banker", 
-          text: response.data.content, 
-          timestamp: response.data.timestamp 
-        };
-        
-        const finalMessages = [...updatedWithUser, botMsg];
-        setMessages(finalMessages);
-        sessionStorage.setItem('chatHistory', JSON.stringify(finalMessages));
-      }
-    } catch (error) {
-      console.error("Chat Error:", error);
-      setMessages(prev => [...prev, { sender: "banker", text: "상담 연결이 원활하지 않습니다." }]);
-    }
-  };
+    return (
+        <div className={styles.chatbotContainer}>
+            {/* 챗봇 창 - 기존 ChatModal 구조 참고 */}
+            {isOpen && (
+                <div className={styles.chatWindow}>
+                    <div className={styles.chatHeader}>
+                        <span>💬 은행원 상담 채팅</span>
+                        <button className={styles.chatCloseBtn} onClick={toggleChat}><span>✕</span></button>
+                    </div>
 
-  const toggleChat = () => setIsOpen(!isOpen);
+                    <div className={styles.chatBody}>
+                        {messages.map((msg, index) => (
+                            <div
+                                key={index}
+                                className={
+                                    msg.sender === "customer"
+                                        ? styles.customerMsg
+                                        : styles.bankerMsg
+                                }
+                            >
+                                {msg.text}
+                            </div>
+                        ))}
+                        {isLoading && (
+                            <div className={styles.bankerMsg}>답변을 생성 중입니다...</div>
+                        )}
+                        <div ref={chatEndRef}></div>
+                    </div>
 
-  return (
-    <div className={styles.chatbotContainer}>
-      {isOpen && (
-        <div className={styles.chatWindow}>
-          <div className={styles.chatHeader}>
-            <span>💬 은행원 상담 채팅</span>
-            <button className={styles.chatCloseBtn} onClick={toggleChat}><span>✕</span></button>
-          </div>
-
-          <div className={styles.chatBody}>
-            {messages.map((msg, index) => (
-              <div
-                key={index}
-                className={
-                  msg.sender === "customer"
-                    ? styles.customerMsg
-                    : styles.bankerMsg
-                }
-              >
-                <div className={styles.msgContent}>
-                  {msg.sender === "banker" ? (
-                    <ReactMarkdown>{msg.text}</ReactMarkdown>
-                  ) : (
-                    msg.text
-                  )}
+                    <div className={styles.chatInput}>
+                        <input
+                            value={input}
+                            placeholder="메시지를 입력하세요..."
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+                                    e.preventDefault();
+                                    onSend();
+                                }
+                            }}
+                        />
+                        <button className={styles.sendBtn} onClick={onSend}><span>➤</span></button>
+                    </div>
                 </div>
-                <div className={styles.msgTime}>{msg.timestamp}</div>
-              </div>
-            ))}
-            <div ref={chatEndRef}></div>
-          </div>
+            )}
 
-          <div className={styles.chatInput}>
-            <input
-              value={input}
-              placeholder="메시지를 입력하세요..."
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.nativeEvent.isComposing) {
-                  e.preventDefault();
-                  onSend();
-                }
-              }}
-            />
-            <button className={styles.sendBtn} onClick={onSend}><span>➤</span></button>
-          </div>
+            {/* 플로팅 버튼 */}
+            <button className={styles.floatingButton} onClick={toggleChat}>
+                <img src={chatbotImg} alt="챗봇 버튼" />
+            </button>
         </div>
-      )}
-
-      <button className={styles.floatingButton} onClick={toggleChat}>
-        <img src={chatbotImg} alt="챗봇 버튼" />
-      </button>
-    </div>
-  );
+    );
 };
 
 export default ChatBot;

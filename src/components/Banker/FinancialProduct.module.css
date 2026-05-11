@@ -26,11 +26,16 @@
 /* 2. 금융 상품 목록 그리드 */
 .productGrid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 15px;
     margin-bottom: 30px;
 }
-
+.productGrid::-webkit-scrollbar { width: 6px; }
+.productGrid::-webkit-scrollbar-thumb { background: #b8dede; border-radius: 3px; }
+.productGrid::-webkit-scrollbar-track { background: transparent; }
+.accountList::-webkit-scrollbar { width: 6px; }
+.accountList::-webkit-scrollbar-thumb { background: #b8dede; border-radius: 3px; }
+.accountList::-webkit-scrollbar-track { background: transparent; }
 .productCard {
     border: 1px solid #66cccc;
     border-radius: 6px;
@@ -41,7 +46,6 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
     text-align: center;
     transition: all 0.2s;
     min-height: 100px;
@@ -68,13 +72,13 @@
 }
 
 .productInfo {
-    margin-top: 5px;
+
 }
 
 .productName {
     font-size: 1.05rem;
     font-weight: bold;
-    margin: 0 0 5px 0;
+    margin: 0.5rem 0 0.5rem 0;
     color: #333;
 }
 
@@ -82,15 +86,21 @@
     font-size: 0.8rem;
     color: #666;
     margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;         /* 보여줄 최대 줄 수 (여기를 2나 3으로 조절하세요) */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .rateHighlight {
+
     position: absolute;
-    bottom: 15px;
-    right: 15px;
+    bottom:  13px;
     font-size: 1.1rem;
     font-weight: bold;
     color: #4e9a8e;
+
 }
 
 /* 3. 연결 계좌 섹션 */
