@@ -21,6 +21,7 @@ const Register = () => {
     };
 
     const [step, setStep] = useState(1);
+    const [isAgreed, setIsAgreed] = useState(false);
     const [formData, setFormData] = useState({
         userType: 'customer',
         name: '',
@@ -149,6 +150,10 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!isAgreed) {
+            showAlert('개인정보 수집 및 이용에 동의해야 회원가입이 가능합니다.');
+            return;
+        }
         if (!isStep2Valid()) {
             showAlert('모든 필드를 채워야 합니다.');
             return;
@@ -304,7 +309,54 @@ const Register = () => {
             )}
             <div className={styles.stepButtons}>
                 <button type="button" onClick={prevStep} className={styles.prevButton}>이전</button>
-                <button type="submit" className={styles.registerButton}>회원가입</button>
+                <button type="button" onClick={() => {
+                    if (!isStep2Valid()) {
+                        showAlert('모든 필드를 정확히 입력해주세요.');
+                        return;
+                    }
+                    setStep(3); // 3단계
+                }} className={styles.submitButton}>다음</button>
+            </div>
+        </>
+    );
+
+    const renderStep3 = () => (
+        <>
+            <div className={styles.inputGroup}>
+                <label>개인정보 수집 및 이용 동의 (필수)</label>
+                
+                <div style={{ 
+                    height: '180px', overflowY: 'scroll', padding: '15px', 
+                    border: '1px solid #ddd', borderRadius: '8px', 
+                    fontSize: '14px', lineHeight: '1.6', marginBottom: '15px', backgroundColor: '#f9f9f9',
+                    color: '#222'
+                }}>
+                    <strong>1. 수집 및 이용 목적</strong><br />
+                    회원 식별, 서비스 제공 및 유지 관리, 고객 상담 등<br /><br />
+                    
+                    <strong>2. 수집하는 개인정보 항목</strong><br />
+                    성명, 이메일, 전화번호, 고유식별정보(주민등록번호) 등<br /><br />
+                    
+                    <strong>3. 보유 및 이용 기간</strong><br />
+                    회원 탈퇴 시까지 (단, 관계 법령에 따라 보존할 필요가 있는 경우 해당 법령에서 정한 기간 동안 보관)<br /><br />
+                    
+                    <span style={{ color: '#E63946' }}>※ 상세 약관 내용은 백엔드 서버 정책을 따릅니다.</span>
+                </div>
+
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '15px', fontWeight: 'bold' }}>
+                    <input
+                        type="checkbox"
+                        checked={isAgreed}
+                        onChange={(e) => setIsAgreed(e.target.checked)}
+                        style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                    />
+                    위 개인정보 수집 및 이용에 동의합니다.
+                </label>
+            </div>
+
+            <div className={styles.stepButtons}>
+                <button type="button" onClick={() => setStep(2)} className={styles.prevButton}>이전</button>
+                <button type="submit" className={styles.registerButton}>회원가입 완료</button>
             </div>
         </>
     );
@@ -321,7 +373,9 @@ const Register = () => {
                         <h1>BankScope</h1>
                     </div>
                     <form onSubmit={handleSubmit} className={styles.form}>
-                        {step === 1 ? renderStep1() : renderStep2()}
+                        {step === 1 && renderStep1()}
+                        {step === 2 && renderStep2()}
+                        {step === 3 && renderStep3()}
                     </form>
                     <div className={styles.loginLink}>
                         <span>이미 회원이신가요? </span>
