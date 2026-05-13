@@ -12,6 +12,9 @@ const KioskNonMember = ({ setFormData, onNext, onPrev }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
 
+    const [isConsentModalOpen, setIsConsentModalOpen] = useState(false);
+    const [isAgreed, setIsAgreed] = useState(false);
+
     const ssnFrontRef = useRef(null);
     const ssnBackRef = useRef(null);
 
@@ -35,7 +38,7 @@ const KioskNonMember = ({ setFormData, onNext, onPrev }) => {
     };
 
     // 확인 버튼 핸들러
-    const handleConfirm = async () => {
+    const handleFirstConfirm = () => {
         const fullSsn = localData.ssnFront + localData.ssnBack;
 
         if (!localData.name || fullSsn.length !== 13) {
@@ -43,6 +46,19 @@ const KioskNonMember = ({ setFormData, onNext, onPrev }) => {
             setIsModalOpen(true);
             return;
         }
+
+        setIsConsentModalOpen(true);
+    };
+
+    const handleSubmitToServer = async () => {
+        if (!isAgreed) {
+            setModalMessage('개인정보 수집 및 이용에 동의하셔야 진행이 가능합니다.');
+            setIsModalOpen(true);
+            return;
+        }
+
+        setIsConsentModalOpen(false);
+        const fullSsn = localData.ssnFront + localData.ssnBack;
 
         try {
             setIsSubmitting(true);
@@ -202,7 +218,7 @@ const KioskNonMember = ({ setFormData, onNext, onPrev }) => {
                 </div>
                 <button
                     className={styles.confirmButton}
-                    onClick={handleConfirm}
+                    onClick={handleFirstConfirm}
                     disabled={isSubmitting}
                     style={{ marginTop: '40px' }}
                 >
@@ -214,6 +230,39 @@ const KioskNonMember = ({ setFormData, onNext, onPrev }) => {
             <button className={styles.prevButton} onClick={onPrev} disabled={isSubmitting}>
                 ← 이전으로
             </button>
+
+            <CustomModal 
+                isOpen={isConsentModalOpen} 
+                onClose={() => setIsConsentModalOpen(false)} 
+                title="개인정보 수집 및 이용 동의 (필수)"
+                onConfirm={handleSubmitToServer}
+                confirmText="동의하고 진행"
+            >
+                <div style={{ padding: '10px 20px', textAlign: 'left', color: '#333' }}>
+                    <div style={{ 
+                        height: '140px', overflowY: 'auto', padding: '15px', 
+                        border: '1px solid #ddd', borderRadius: '8px', 
+                        fontSize: '0.9rem', lineHeight: '1.6', marginBottom: '15px', backgroundColor: '#f9f9f9', color: '#222' 
+                    }}>
+                        <strong>1. 수집 및 이용 목적</strong><br />
+                        키오스크 비회원 업무 처리 및 본인 확인<br /><br />
+                        <strong>2. 수집하는 개인정보 항목</strong><br />
+                        성명, 고유식별정보(주민등록번호)<br /><br />
+                        <strong>3. 보유 및 이용 기간</strong><br />
+                        금융거래 종료일로부터 5년까지 보관 후 파기
+                    </div>
+                    
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}>
+                        <input
+                            type="checkbox"
+                            checked={isAgreed}
+                            onChange={(e) => setIsAgreed(e.target.checked)}
+                            style={{ width: '22px', height: '22px', cursor: 'pointer' }}
+                        />
+                        위 개인정보 수집 및 이용에 동의합니다.
+                    </label>
+                </div>
+            </CustomModal>
 
             {/* CustomModal 추가 */}
             <CustomModal 
