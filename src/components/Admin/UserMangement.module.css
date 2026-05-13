@@ -80,6 +80,7 @@
     width: 100%;
     border-collapse: collapse;
     text-align: center;
+    table-layout: fixed;
 }
 
 .userTable thead th {
