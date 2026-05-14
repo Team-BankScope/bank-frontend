@@ -5,24 +5,19 @@ import CustomModal from '../common/CustomModal.jsx';
 
 const UserManagement = () => {
     const [users, setUsers] = useState([]);
+    const [searchTerm, setSearchTerm] = useState(""); // 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const [selectedRowId, setSelectedRowId] = useState(null);
-
-    // 공통 모달 상태
     const [alertModal, setAlertModal] = useState({
-        isOpen: false,
-        title: '',
-        message: ''
+        isOpen: false, title: '', message: ''
     });
 
-    // 공통 모달에서 사용할 알림 함수
     const showAlert = (title, message) => {
         setAlertModal({ isOpen: true, title, message });
     };
 
-    // 1. 멤버 목록 조회 함수
     const fetchMembers = async () => {
         try {
             const response = await fetch('/api/user/members');
@@ -39,7 +34,15 @@ const UserManagement = () => {
         fetchMembers();
     }, []);
 
-    // 2. 등록/수정 저장 로직
+    const filteredUsers = users.filter((user) =>
+        user.name?.includes(searchTerm) ||
+        user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value);
+    };
+
     const handleSaveUser = async (userData) => {
         const memberData = {
             name: userData.name,
@@ -55,14 +58,12 @@ const UserManagement = () => {
         try {
             let response;
             if (selectedUser) {
-                // 수정 모드: PATCH
                 response = await fetch('/api/user/member', {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(memberData),
                 });
             } else {
-                // 등록 모드: POST
                 response = await fetch('/api/user/member', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -72,7 +73,7 @@ const UserManagement = () => {
 
             if (response.ok) {
                 const result = await response.json();
-                if (result.result === 'SUCCESS') {               
+                if (result.result === 'SUCCESS') {
                     showAlert('성공', selectedUser ? '멤버가 성공적으로 수정되었습니다.' : '멤버가 성공적으로 등록되었습니다.');
                     fetchMembers();
                 } else {
@@ -89,10 +90,9 @@ const UserManagement = () => {
 
     const confirmDelete = async () => {
         try {
-            const response = await fetch(`/api/user/member?id=${selectedUser.id}`, { 
-                method: 'DELETE' 
+            const response = await fetch(`/api/user/member?id=${selectedUser.id}`, {
+                method: 'DELETE'
             });
-
             if (response.ok) {
                 showAlert('삭제 완료', '해당 임직원이 성공적으로 삭제되었습니다.');
                 fetchMembers();
@@ -108,7 +108,6 @@ const UserManagement = () => {
         setIsDeleteModalOpen(false);
     };
 
-    // 행 클릭 시 하이라이트 토글
     const handleRowClick = (user) => {
         if (selectedRowId === user.id) {
             setSelectedRowId(null);
@@ -128,7 +127,7 @@ const UserManagement = () => {
     };
 
     const handleEditClick = (e, user) => {
-        e.stopPropagation(); // 행 클릭 이벤트 방지
+        e.stopPropagation();
         setSelectedUser(user);
         setIsModalOpen(true);
     };
@@ -151,7 +150,13 @@ const UserManagement = () => {
             <div className={styles.topBar}>
                 <div className={styles.searchWrapper}>
                     <span className={styles.searchIcon}>🔍</span>
-                    <input type="text" placeholder="이름 혹은 이메일을 검색해주세요" className={styles.searchInput} />
+                    <input
+                        type="text"
+                        placeholder="이름 혹은 이메일을 검색해주세요"
+                        className={styles.searchInput}
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                    />
                 </div>
                 <div className={styles.actionBtns}>
                     <select className={styles.roleSelect}><option>전체</option></select>
@@ -163,25 +168,29 @@ const UserManagement = () => {
             <table className={styles.userTable}>
                 <thead>
                     <tr>
-                        <th>이름</th>
-                        <th>이메일</th>
-                        <th>직급</th>
-                        <th>권한</th>
-                        <th>소속</th>
-                        <th>창구번호</th>
-                        <th>입사일</th>
-                        <th>마지막접속</th>
-                        <th>상태</th>
-                        <th>관리</th>
+                        <th style={{ width: '8%' }}>이름</th>
+                        <th style={{ width: '12%' }}>이메일</th>
+                        <th style={{ width: '10%' }}>직급</th>
+                        <th style={{ width: '5%' }}>권한</th>
+                        <th style={{ width: '6%' }}>소속</th>
+                        <th style={{ width: '6%' }}>창구번호</th>
+                        <th style={{ width: '10%' }}>입사일</th>
+                        <th style={{ width: '15%' }}>마지막접속</th>
+                        <th style={{ width: '6%' }}>상태</th>
+                        <th style={{ width: '6%' }}>관리</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {users.length === 0 ? (
-                        <tr><td colSpan="10" className={styles.emptyMessage}>등록된 임직원이 없습니다.</td></tr>
+                    {filteredUsers.length === 0 ? (
+                        <tr>
+                            <td colSpan="10" className={styles.emptyMessage}>
+                                {searchTerm ? '검색 결과가 없습니다.' : '등록된 임직원이 없습니다.'}
+                            </td>
+                        </tr>
                     ) : (
-                        users.map((user) => (
-                            <tr 
-                                key={user.id} 
+                        filteredUsers.map((user) => (
+                            <tr
+                                key={user.id}
                                 onClick={() => handleRowClick(user)}
                                 className={selectedRowId === user.id ? styles.activeRow : ''}
                             >
@@ -207,31 +216,29 @@ const UserManagement = () => {
                 </tbody>
             </table>
 
-            {/* 임직원 등록/수정 모달 */}
-            <AdminModal 
-                isOpen={isModalOpen} 
-                onClose={() => { setIsModalOpen(false); setSelectedUser(null); }} 
-                user={selectedUser} 
-                onSave={handleSaveUser} 
+            <AdminModal
+                isOpen={isModalOpen}
+                onClose={() => { setIsModalOpen(false); setSelectedUser(null); }}
+                user={selectedUser}
+                onSave={handleSaveUser}
             />
-            
-            {/* 삭제 확인 모달 */}
-            <CustomModal 
-                isOpen={isDeleteModalOpen} 
-                onClose={() => setIsDeleteModalOpen(false)} 
-                title="구성원 영구 삭제" 
+
+            <CustomModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                title="구성원 영구 삭제"
                 onConfirm={confirmDelete}
-                onCancel={() => setIsDeleteModalOpen(false)} 
+                onCancel={() => setIsDeleteModalOpen(false)}
                 confirmText="삭제 실행"
                 cancelText="취소"
             >
                 <div className={styles.deleteInfoBox}>
                     <div className={styles.infoRow}>
-                        <span className={styles.infoLabel}>이름</span> 
+                        <span className={styles.infoLabel}>이름</span>
                         <span className={styles.infoValue}>{selectedUser?.name}</span>
                     </div>
                     <div className={styles.infoRow}>
-                        <span className={styles.infoLabel}>이메일</span> 
+                        <span className={styles.infoLabel}>이메일</span>
                         <span className={styles.infoValue}>{selectedUser?.email}</span>
                     </div>
                     <p className={styles.warningText}>
@@ -240,7 +247,6 @@ const UserManagement = () => {
                 </div>
             </CustomModal>
 
-            {/* 공통 모달 (등록 성공, 실패, 삭제 완료 등) */}
             <CustomModal
                 isOpen={alertModal.isOpen}
                 onClose={() => setAlertModal({ ...alertModal, isOpen: false })}
@@ -248,11 +254,8 @@ const UserManagement = () => {
                 onConfirm={() => setAlertModal({ ...alertModal, isOpen: false })}
                 confirmText="확인"
             >
-                <p className={styles.alertText}>
-                    {alertModal.message}
-                </p>
+                <p className={styles.alertText}>{alertModal.message}</p>
             </CustomModal>
-
         </div>
     );
 };
