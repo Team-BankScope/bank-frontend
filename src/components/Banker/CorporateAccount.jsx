@@ -6,7 +6,7 @@ const CorporateAccount = ({ onCancel, onComplete, selectedTask, taskId }) => {
     const { openModal } = useModal();
     const [corporateProducts, setCorporateProducts] = useState([]);
     const [userInfo, setUserInfo] = useState(null);
-    
+
     const [formData, setFormData] = useState({
         companyName: selectedTask?.userName || '미등록 법인',
         productId: '',
@@ -15,6 +15,36 @@ const CorporateAccount = ({ onCancel, onComplete, selectedTask, taskId }) => {
         accountAlias: '',
         initialDeposit: '0'
     });
+    const userId = selectedTask?.userId;
+
+    useEffect(() => {
+        if (!userId) return;
+
+        const fetchInitialData = async () => {
+            try {
+                const [userRes] = await Promise.all([
+                    fetch(`/api/user/info?userId=${userId}`),
+                ]);
+
+                const userData = await userRes.json();
+                if (userData.result === 'SUCCESS') {
+                    const { user } = userData;
+                    if (user.userType !== 'corporate') {
+                        openModal({ title: '알림', message: '개인회원은 이 탭에 접근할 수 없습니다.', onComplete });
+                        return;
+                    }
+
+                } else { throw new Error('사용자 정보 조회 실패'); }
+
+            } catch (error) {
+                console.error("초기 데이터 조회 실패:", error);
+                openModal({ title: '알림', message: '데이터를 불러오는중 오류가 발생하였습니다.' });
+                return;
+            }
+        };
+
+        fetchInitialData();
+    }, [userId, openModal, onCancel, onComplete]);
 
     // 1. 법인용 금융상품 목록 조회 (카테고리: CORPORATE)
     useEffect(() => {
@@ -25,9 +55,6 @@ const CorporateAccount = ({ onCancel, onComplete, selectedTask, taskId }) => {
                     const data = await response.json();
                     if (data.result === 'SUCCESS') {
                         setCorporateProducts(data.products || []);
-                        if (data.products && data.products.length > 0) {
-                            setFormData(prev => ({ ...prev, productId: data.products[0].productId }));
-                        }
                     }
                 }
             } catch (error) {
@@ -45,7 +72,6 @@ const CorporateAccount = ({ onCancel, onComplete, selectedTask, taskId }) => {
                 const response = await fetch(`/api/user/info?userId=${selectedTask.userId}`);
                 if (response.ok) {
                     const data = await response.json();
-                    console.log(data)
                     if (data.result === 'SUCCESS') {
                         setUserInfo(data.user);
                     }
@@ -63,6 +89,10 @@ const CorporateAccount = ({ onCancel, onComplete, selectedTask, taskId }) => {
     };
 
     const handleSubmit = async () => {
+        if (!formData.productId) {
+            openModal({ title: '알림', message: '상품을 선택해주세요.' });
+            return;
+        }
         if (formData.accountPassword !== formData.confirmPassword) {
             openModal({ title: '알림', message: '비밀번호가 일치하지 않습니다.' });
             return;
@@ -114,13 +144,9 @@ const CorporateAccount = ({ onCancel, onComplete, selectedTask, taskId }) => {
             openModal({ title: "오류", message: "네트워크 오류가 발생했습니다." });
         }
     };
-    const formatBusinessNumber = (num) => {
-        if (!num) return '조회 중...';
 
-        const cleaned = num.toString().replace(/\D/g, '');
+    const selectedProduct = corporateProducts.find(p => p.productId === Number(formData.productId));
 
-        return cleaned.replace(/(\d{3})(\d{2})(\d{5})/, '$1-$2-$3');
-    };
     return (
         <div className={styles.container}>
             <header className={styles.header}>
@@ -153,7 +179,8 @@ const CorporateAccount = ({ onCancel, onComplete, selectedTask, taskId }) => {
                     </div>
                     <div className={styles.inputRow}>
                         <div className={styles.customSelectMain}>
-                            <select name="productId" value={formData.productId} onChange={handleChange}>
+                            <select name="productId" value={formData.productId} onChange={handleChange} required>
+                                <option value="">상품을 선택하세요</option>
                                 {corporateProducts.map(p => (
                                     <option key={p.productId} value={p.productId}>
                                         {p.productName}
@@ -173,6 +200,15 @@ const CorporateAccount = ({ onCancel, onComplete, selectedTask, taskId }) => {
                     </div>
                 </div>
                 </div>
+
+                {selectedProduct && (
+                    <div className={styles.infoBox}>
+                      <strong>기본금리:</strong> 연 {selectedProduct.baseInterestRate}% | <strong>최고금리:</strong> 연 {selectedProduct.maxInterestRate}%<br/>
+                      <strong>가입금액:</strong> {selectedProduct.minAmount?.toLocaleString() ?? 0}원 ~ {selectedProduct.maxAmount?.toLocaleString() ?? 0}원<br/>
+                      <strong>설명:</strong> {selectedProduct.description}
+                    </div>
+                )}
+
                 <div className={styles.section}>
                     <div className={styles.gridTwo}>
                         <div className={styles.inputGroup}>
@@ -200,7 +236,7 @@ const CorporateAccount = ({ onCancel, onComplete, selectedTask, taskId }) => {
 
                 <div className={styles.buttonRow}>
                     <button className={styles.btnCancel} onClick={onCancel}>업무 취소</button>
-                    <button className={styles.btnSubmit} onClick={handleSubmit}>계좌 개설 승인</button>
+                    <button className={styles.btnSubmit} onClick={handleSubmit} disabled={!formData.productId}>계좌 개설 승인</button>
                 </div>
             </div>
         </div>

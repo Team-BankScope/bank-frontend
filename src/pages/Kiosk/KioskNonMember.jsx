@@ -71,7 +71,8 @@ const KioskNonMember = ({ setFormData, onNext, onPrev }) => {
                 },
                 body: JSON.stringify({
                     name: localData.name,
-                    residentNumber: fullSsn
+                    residentNumber: fullSsn,
+                    isTermsAgreed: 1,
                 }),
             });
 
@@ -112,7 +113,7 @@ const KioskNonMember = ({ setFormData, onNext, onPrev }) => {
 
                                 // 성공 모달 띄우기
                                 if (registerData.result === 'SUCCESS') {
-                                    setModalMessage('회원등록이 완료되었습니다.\n접수 화면으로 넘어갑니다.');
+                                    setModalMessage('비회원등록이 완료되었습니다.\n접수 화면으로 넘어갑니다.');
                                 } else {
                                     setModalMessage('이미 가입된 고객정보가 있습니다.\n접수 화면으로 넘어갑니다.');
                                 }
@@ -234,25 +235,44 @@ const KioskNonMember = ({ setFormData, onNext, onPrev }) => {
             <CustomModal 
                 isOpen={isConsentModalOpen} 
                 onClose={() => setIsConsentModalOpen(false)} 
-                title="개인정보 수집 및 이용 동의 (필수)"
+                title="[필수] 개인정보 및 고유식별정보 수집·이용 동의서"
                 onConfirm={handleSubmitToServer}
                 confirmText="동의하고 진행"
             >
                 <div style={{ padding: '10px 20px', textAlign: 'left', color: '#333' }}>
                     <div style={{ 
-                        height: '140px', overflowY: 'auto', padding: '15px', 
+                        height: '250px', overflowY: 'auto', padding: '15px', 
                         border: '1px solid #ddd', borderRadius: '8px', 
-                        fontSize: '0.9rem', lineHeight: '1.6', marginBottom: '15px', backgroundColor: '#f9f9f9', color: '#222' 
+                        fontSize: '13px', lineHeight: '1.6', marginBottom: '15px', backgroundColor: '#f9f9f9', color: '#222' 
                     }}>
                         <strong>1. 수집 및 이용 목적</strong><br />
-                        키오스크 비회원 업무 처리 및 본인 확인<br /><br />
+                        금융거래와 관련하여 본인의 개인정보를 수집·이용하는 목적은 다음과 같습니다.<br />
+                        - 금융거래 관계의 설정·유지·이행·관리: 계좌 개설, 금융상품(예·적금, 대출 등) 가입, 금융거래 승인 및 처리<br />
+                        - 법령상 의무 이행: 「금융실명거래 및 비밀보장에 관한 법률」에 따른 실명 확인 및 본인 인증, 「특정 금융거래정보의 보고 및 이용 등에 관한 법률」에 따른 자금세탁방지(AML) 의무 이행<br />
+                        - 신용질서 유지 및 보호: 금융사고 예방 및 조사, 분쟁 해결, 고객 민원 처리 및 상담<br />
+                        - 신용정보의 조회: 신용조회회사 또는 신용정보집중기관에 대한 신용정보 조회 (대출 등 여신거래 시)<br /><br />
+                        
                         <strong>2. 수집하는 개인정보 항목</strong><br />
-                        성명, 고유식별정보(주민등록번호)<br /><br />
+                        은행은 서비스 제공을 위해 아래의 필수적인 개인정보 및 고유식별정보를 수집합니다.<br />
+                        - [필수] 일반 개인정보: 성명, 연락처(휴대폰 번호, 자택/직장 전화번호), 이메일<br />
+                        - [필수] 고유식별정보: 주민등록번호, 사업자등록번호<br />
+                        (※ 고유식별정보는 금융실명법 제3조 등 관련 법령에 명확한 근거가 있는 경우에 한하여 수집 및 처리됩니다.)<br />
+                        - [필수] 금융거래 정보: 상품 종류, 거래 조건(이자율, 만기 등), 거래 일시 및 금액 등 거래 설정 및 내역 정보<br /><br />
+                        
                         <strong>3. 보유 및 이용 기간</strong><br />
-                        금융거래 종료일로부터 5년까지 보관 후 파기
+                        수집된 개인정보는 원칙적으로 금융거래 종료일로부터 법령에서 정한 기간 동안 안전하게 보관 및 이용되며, 목적이 달성된 후에는 지체 없이 파기됩니다.<br />
+                        - 원칙: 금융거래 종료일(계좌 해지, 회원 탈퇴 등)로부터 5년까지 보관 (「신용정보의 이용 및 보호에 관한 법률」 등)<br />
+                        - 예외 (관련 법령에 의한 별도 보존):<br />
+                        &nbsp;&nbsp;&nbsp;&nbsp;· 「전자금융거래법」에 따른 전자금융 거래기록: 5년<br />
+                        &nbsp;&nbsp;&nbsp;&nbsp;· 「상법」에 따른 상업장부 및 영업 관련 중요 서류: 10년<br />
+                        &nbsp;&nbsp;&nbsp;&nbsp;· 「특정 금융거래정보의 보고 및 이용 등에 관한 법률」에 따른 고객 확인 정보 및 거래기록: 5년<br />
+                        (※ 단, 금융사고 조사, 분쟁 해결, 민원 처리, 법령상 의무 이행을 위해 필요한 경우 해당 목적이 달성될 때까지 보관될 수 있습니다.)<br /><br />
+
+                        <strong>4. 동의를 거부할 권리 및 불이익</strong><br />
+                        고객님은 위 개인정보 및 고유식별정보의 수집·이용에 대한 동의를 거부할 권리가 있습니다. 단, 위 정보는 금융거래 설정 및 서비스 제공을 위한 필수적 요건이므로, 동의를 거부하실 경우 계좌 개설, 대출, 스마트뱅킹 등 은행의 금융 서비스 이용이 불가능합니다.
                     </div>
-                    
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}>
+
+{/*                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}>
                         <input
                             type="checkbox"
                             checked={isAgreed}
@@ -260,7 +280,28 @@ const KioskNonMember = ({ setFormData, onNext, onPrev }) => {
                             style={{ width: '22px', height: '22px', cursor: 'pointer' }}
                         />
                         위 개인정보 수집 및 이용에 동의합니다.
-                    </label>
+                    </label>*/}
+                    <div style={{ display: 'flex', alignItems: 'center', marginTop: '5px', marginBottom: '10px' }}>
+                        <input
+                            type="checkbox"
+                            id="generalAgreeCheckbox"
+                            checked={isAgreed}
+                            onChange={(e) => setIsAgreed(e.target.checked)}
+                            style={{
+                                width: '18px',
+                                height: '18px',
+                                marginRight: '10px',
+                                accentColor: '#009A83', /* 체크박스 초록색 적용 */
+                                cursor: 'pointer'
+                            }}
+                        />
+                        <label
+                            htmlFor="generalAgreeCheckbox"
+                            style={{ color: '#333', fontSize: '1rem', cursor: 'pointer', margin: 0, fontWeight: 'bold' }}
+                        >
+                            [필수] 일반 개인정보 수집 및 이용에 동의합니다.
+                        </label>
+                    </div>
                 </div>
             </CustomModal>
 

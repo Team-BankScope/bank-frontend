@@ -100,7 +100,7 @@ const AccountCreate = ({
         {selectedProduct && (
             <div className={styles.infoBox}>
               <strong>기본금리:</strong> 연 {selectedProduct.baseInterestRate}% | <strong>최고금리:</strong> 연 {selectedProduct.maxInterestRate}%<br/>
-              <strong>가입금액:</strong> {selectedProduct.minAmount.toLocaleString()}원 ~ {selectedProduct.maxAmount.toLocaleString()}원<br/>
+                <strong>가입금액:</strong> {selectedProduct.minAmount?.toLocaleString() ?? 0}원 ~ {selectedProduct.maxAmount?.toLocaleString() ?? 0}원<br/>
               <strong>설명:</strong> {selectedProduct.description}
             </div>
         )}

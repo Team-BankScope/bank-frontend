@@ -189,3 +189,12 @@
     color: #1f2937;
 }
 
+.email {
+    /* 1. 말줄임표를 위한 필수 3요소 */
+    white-space: nowrap;        /* 줄바꿈 방지 (한 줄로 표시) */
+    overflow: hidden;           /* 영역을 벗어난 텍스트 숨김 */
+    text-overflow: ellipsis;    /* 숨겨진 텍스트를 ... 으로 표시 */
+
+    /* 2. td 태그에서 작동하기 위한 기준 너비 (필수) */
+    max-width: 150px;           /* 원하는 픽셀이나 % 값으로 조절하세요 */
+}

@@ -138,7 +138,7 @@ const UserManagement = () => {
             case 2: return 'Lv.2 (일반 행원)';
             case 3: return 'Lv.3 (대리/과장)';
             case 4: return 'Lv.4 (차장/팀장)';
-            case 5: return 'Lv.5 (지점장급)';
+            case 5: return 'Lv.5 (지점장)';
             default: return level;
         }
     };
@@ -168,16 +168,16 @@ const UserManagement = () => {
             <table className={styles.userTable}>
                 <thead>
                     <tr>
-                        <th style={{ width: '8%' }}>이름</th>
-                        <th style={{ width: '12%' }}>이메일</th>
-                        <th style={{ width: '10%' }}>직급</th>
-                        <th style={{ width: '5%' }}>권한</th>
-                        <th style={{ width: '6%' }}>소속</th>
-                        <th style={{ width: '6%' }}>창구번호</th>
-                        <th style={{ width: '10%' }}>입사일</th>
-                        <th style={{ width: '15%' }}>마지막접속</th>
-                        <th style={{ width: '6%' }}>상태</th>
-                        <th style={{ width: '6%' }}>관리</th>
+                        <th>이름</th>
+                        <th >이메일</th>
+                        <th>직급</th>
+                        <th>권한</th>
+                        <th>소속</th>
+                        <th>창구번호</th>
+                        <th >입사일</th>
+                        {/*<th >마지막접속</th>*/}
+                        <th>상태</th>
+                        <th>관리</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -195,13 +195,13 @@ const UserManagement = () => {
                                 className={selectedRowId === user.id ? styles.activeRow : ''}
                             >
                                 <td>{user.name}</td>
-                                <td>{user.email}</td>
+                                <td className={styles.email}>{user.email}</td>
                                 <td>{getLevelLabel(user.level)}</td>
                                 <td>{user.auth}</td>
                                 <td>{user.team}</td>
                                 <td>{user.counterNumber || <span className={styles.nullText}>null</span>}</td>
                                 <td>{user.joinDate}</td>
-                                <td>{user.lastLogin ? new Date(user.lastLogin).toLocaleString() : '-'}</td>
+                                {/*<td>{user.lastLogin ? new Date(user.lastLogin).toLocaleString() : '-'}</td>*/}
                                 <td>
                                     <span className={`${styles.statusBadge} ${user.status === 1 ? styles.active : styles.inactive}`}>
                                         {user.status === 1 ? '활성' : '비활성'}

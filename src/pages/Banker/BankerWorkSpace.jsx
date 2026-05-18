@@ -22,8 +22,9 @@ import CorporateCard from "../../components/Banker/CorporateCard.jsx";
 import CorporateBankrupt from "../../components/Banker/CorporateBankrupt.jsx";
 import CorporateArrears from "../../components/Banker/CorporateArrears.jsx";
 import ChangePassword from "../../components/Banker/ChangePassword.jsx";
-import ProductModal from '../../components/Banker/ProductModal.jsx';
+import ProductModal from '../../components/Banker/ProductModal/ProductModal.jsx';
 import { fetchAssignedTask, fetchTaskProcessingLogs } from '../../services/taskApi';
+import UpdateCorporate from "../../components/Banker/UpdateCorporate.jsx";
 
 const BankerWorkSpace = () => {
     const { openModal } = useModal();
@@ -53,6 +54,9 @@ const BankerWorkSpace = () => {
     // 💡 AI 상품 추천 상태 추가
     const [recommendProducts, setRecommendProducts] = useState([]);
     const [isRecommendLoading, setIsRecommendLoading] = useState(false);
+
+    // 💡 고객 정보 상태 추가
+    const [customerInfo, setCustomerInfo] = useState(null);
 
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [messages, setMessages] = useState([
@@ -145,6 +149,9 @@ const BankerWorkSpace = () => {
             case "입출금 계좌 개설":
                 setSelectedWorkType("ACCOUNT_CREATE");
                 break;
+            case "법인등록":
+                setSelectedWorkType("CORPORATE_REGISTER");
+                break;
             case "입금":
                 setSelectedWorkType("DEPOSIT");
                 break;
@@ -205,7 +212,7 @@ const BankerWorkSpace = () => {
     useEffect(() => {
         if (!loading && !user) {
             showAlert("로그인이 필요한 서비스입니다.", () => {
-                navigate("/AdminLogin");
+                navigate("/Adminlogin");
             });
         } else if (user) {
             const savedStatus = localStorage.getItem(`bankerStatus_${user.email}`);
@@ -288,15 +295,40 @@ const BankerWorkSpace = () => {
         }
     };
 
+    const loadCustomerInfo = async (userId) => {
+        if (!userId) {
+            setCustomerInfo(null);
+            return;
+        }
+        try {
+            const response = await fetch(`/api/user/info?userId=${userId}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.result === 'SUCCESS' && data.user) {
+                    setCustomerInfo(data.user);
+                } else {
+                    setCustomerInfo(null);
+                }
+            } else {
+                setCustomerInfo(null);
+            }
+        } catch (error) {
+            console.error("Error fetching customer info:", error);
+            setCustomerInfo(null);
+        }
+    };
+
     useEffect(() => {
 
         if (selectedTask?.userId) {
             loadUserLogs(selectedTask.userId);
             loadRecommendProducts(selectedTask.userId);
+            loadCustomerInfo(selectedTask.userId);
         } else {
             setLogList([]);
             setLogError(null);
             setRecommendProducts([]);
+            setCustomerInfo(null);
         }
     }, [selectedTask?.userId]);
 
@@ -422,7 +454,7 @@ const BankerWorkSpace = () => {
 
     const handleLogout = async () => {
         await logout();
-        navigate('/AdminLogin');
+        navigate('/adminlogin');
     };
 
     /*채팅 전송 함수*/
@@ -479,58 +511,33 @@ const BankerWorkSpace = () => {
 
             switch (data.result) {
                 case 'SUCCESS':
-                    break;
-                case 'FAILURE_USER_NOT_EXIST':
-                    showAlert("존재하지 않는 사용자입니다.");
-                    return;
-                case 'FAILURE':
-                    showAlert("계좌 생성에 실패하였습니다.");
-                    return;
-                default:
-                    showAlert("알수없는 이유로 계좌 생성에 실패하였습니다.");
-                    return;
-            }
-
-            const completeResponse = await fetch(`/api/member/task/${selectedTask.taskId}/status?status=COMPLETED`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!completeResponse.ok) {
-                showAlert("계좌는 생성되었으나, 업무 상태 업데이트 중 오류가 발생했습니다.");
-                return;
-            }
-
-            const completeData = await completeResponse.json();
-
-            switch (completeData.result) {
-                case 'SUCCESS':
+                    // 여기서 업무 종료(COMPLETED) 처리 부분을 삭제하고 폼 리셋만 수행
                     showAlert(`계좌가 생성되었습니다.\n계좌번호: ${data.account?.accountNumber}`, async () => {
-                        setTasks(prevTasks =>
-                            prevTasks.map(t => t.taskId === selectedTask.taskId ? { ...t, status: 'COMPLETED' } : t)
-                        );
-                        setSelectedWorkType(null);
-                        setSelectedTask(null);
+                        setSelectedWorkType("TASK_SELECT"); // 화면을 처음 메뉴 선택화면으로
                         setAccountType("CHECKING");
                         setAccountAlias("");
                         setAccountPassword("");
                         setConfirmPassword("");
                         setProductId("");
                         setAmount("");
-                        await fetchTasks();
                     });
                     break;
                 case 'FAILURE_TASK_IN_PROGRESS':
                     showAlert("해당 업무가 현재 처리 가능한 상태가 아닙니다.");
                     break;
                 case 'FAILURE_SESSION':
-                    showAlert("세션이 만료되었습니다. 다시 로그인해주세요.");
+                    openModal({
+                        title: '알림',
+                        message: `세션이 만료되었습니다. 다시 로그인해주세요.`,
+                        confirmText: '확인',
+                        onConfirm: () =>  navigate("adminlogin")
+                    });
                     break;
                 case 'FAILURE':
+                    showAlert("계좌 생성에 실패하였습니다.");
+                    break;
                 default:
-                    showAlert(`업무 종료 처리 실패: ${completeData.result}`);
+                    showAlert("알수없는 이유로 계좌 생성에 실패하였습니다.");
                     break;
             }
         } catch (error) {
@@ -564,7 +571,12 @@ const BankerWorkSpace = () => {
                     break; }
 
                 case 'FAILURE_SESSION':
-                    showAlert('세션이 만료되었습니다. 다시 로그인해주세요.');
+                    openModal({
+                        title: '알림',
+                        message: `세션이 만료되었습니다. 다시 로그인해주세요.`,
+                        confirmText: '확인',
+                        onConfirm: () =>  navigate("adminlogin")
+                    });
                     break;
 
                 case 'FAILURE':
@@ -659,7 +671,7 @@ const BankerWorkSpace = () => {
             setIsWorking(!nextStatus);
             openModal({
                 title: '오류',
-                message: '서버와 통신할 수 없습니다.',
+                message: '서버와 통신할 수문을 수 없습니다.',
                 confirmText: '확인'
             });
         }
@@ -701,7 +713,13 @@ const BankerWorkSpace = () => {
                     break;
 
                 case 'FAILURE_SESSION':
-                    showAlert('세션이 만료되었습니다.');
+
+                    openModal({
+                        title: '알림',
+                        message: `세션이 만료되었습니다. 다시 로그인해주세요.`,
+                        confirmText: '확인',
+                        onConfirm: () =>  navigate("adminlogin")
+                    });
                     break;
 
                 case 'FAILURE':
@@ -866,6 +884,12 @@ const BankerWorkSpace = () => {
                                                 {task.status === 'IN_PROGRESS' ? (
                                                     <>
                                                         <button className={styles.btnProcessing}>처리중..</button>
+                                                        <button
+                                                            className={styles.btnAccept}
+                                                            onClick={() => handleCompleteTask(selectedTask)}
+                                                        >
+                                                            업무 종료
+                                                        </button>
                                                     </>
                                                 ) : (
                                                     <>
@@ -946,6 +970,7 @@ const BankerWorkSpace = () => {
                                                             <>
                                                                 <p>상세 내용: {selectedTask.taskDetailType}</p>
                                                                 <p>접수 시간: {selectedTask.createdAt}</p>
+                                                                <p>주민등록번호(신원확인용): {customerInfo?.residentNumber || '로딩 중...'}</p>
                                                             </>
                                                         )}
 
@@ -1000,6 +1025,20 @@ const BankerWorkSpace = () => {
                                                                 onCreate={handleCreateAccount}
                                                             />
                                                         )}
+                                                        {/*법인등록*/}
+                                                        {selectedWorkType === "CORPORATE_REGISTER" && (
+                                                            <UpdateCorporate
+                                                                selectedTask={selectedTask}
+                                                                onCancel={() => {
+                                                                    setSelectedWorkType(null);
+                                                                    handleCancelAcceptTask(selectedTask);
+                                                                }}
+                                                                onComplete={() => {
+                                                                    const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
+                                                                    handlePostLog(finalId);
+                                                                    setSelectedWorkType("TASK_SELECT");
+                                                                }}
+                                                            />                                                        )}
 
                                                         {/*입금*/}
                                                         {selectedWorkType === "DEPOSIT" && (
@@ -1013,7 +1052,7 @@ const BankerWorkSpace = () => {
                                                                 onSuccess={() => {
                                                                     const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask?.task_id;
                                                                     handlePostLog(finalId);
-                                                                    handleCompleteTask(selectedTask);
+                                                                    setSelectedWorkType("TASK_SELECT"); // 화면을 처음 메뉴 선택화면으로
                                                                 }}
                                                             />
                                                         )}
@@ -1030,7 +1069,7 @@ const BankerWorkSpace = () => {
                                                                 onSuccess={() => {
                                                                     const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
                                                                     handlePostLog(finalId);
-                                                                    handleCompleteTask(selectedTask);
+                                                                    setSelectedWorkType("TASK_SELECT"); // 화면을 처음 메뉴 선택화면으로
                                                                 }}
                                                             />
                                                         )}
@@ -1047,7 +1086,8 @@ const BankerWorkSpace = () => {
                                                                 onSuccess={() => {
                                                                     const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
                                                                     handlePostLog(finalId);
-                                                                    handleCompleteTask(selectedTask);
+                                                                    setSelectedWorkType("TASK_SELECT");
+
                                                                 }}
                                                             />
                                                         )}
@@ -1063,7 +1103,8 @@ const BankerWorkSpace = () => {
                                                                 onSuccess={() => {
                                                                     const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
                                                                     handlePostLog(finalId);
-                                                                    handleCompleteTask(selectedTask);
+                                                                    setSelectedWorkType("TASK_SELECT"); // 화면을 처음 메뉴 선택화면으로
+
                                                                 }}
                                                             />
                                                         )}
@@ -1078,7 +1119,8 @@ const BankerWorkSpace = () => {
                                                                 onComplete={() => {
                                                                     const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
                                                                     handlePostLog(finalId);
-                                                                    handleCompleteTask(selectedTask);
+                                                                    setSelectedWorkType("TASK_SELECT"); // 화면을 처음 메뉴 선택화면으로
+
                                                                 }}
                                                                 selectedTask={selectedTask}
                                                             />
@@ -1095,7 +1137,8 @@ const BankerWorkSpace = () => {
                                                                 onCreate={() => {
                                                                     const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
                                                                     handlePostLog(finalId);
-                                                                    handleCompleteTask(selectedTask);
+                                                                    setSelectedWorkType("TASK_SELECT"); // 화면을 처음 메뉴 선택화면으로
+
                                                                 }}
                                                             />
                                                         )}
@@ -1111,8 +1154,9 @@ const BankerWorkSpace = () => {
                                                                 onCreate={() => {
                                                                     const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
                                                                     handlePostLog(finalId);
-                                                                    handleCompleteTask(selectedTask);
-                                                                 }}
+                                                                    setSelectedWorkType("TASK_SELECT"); // 화면을 처음 메뉴 선택화면으로
+
+                                                                }}
                                                             />
                                                         )}
 
@@ -1127,7 +1171,8 @@ const BankerWorkSpace = () => {
                                                                 onSubmit={() => {
                                                                     const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
                                                                     handlePostLog(finalId);
-                                                                    handleCompleteTask(selectedTask);
+                                                                    setSelectedWorkType("TASK_SELECT"); // 화면을 처음 메뉴 선택화면으로
+
                                                                 }}
                                                             />
                                                         )}
@@ -1143,7 +1188,7 @@ const BankerWorkSpace = () => {
                                                                 onComplete={() => {
                                                                     const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
                                                                     handlePostLog(finalId);
-                                                                    handleCompleteTask(selectedTask);
+                                                                    setSelectedWorkType("TASK_SELECT");
                                                                 }}
                                                             />
                                                         )}
@@ -1159,7 +1204,7 @@ const BankerWorkSpace = () => {
                                                                 onComplete={() => {
                                                                     const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
                                                                     handlePostLog(finalId);
-                                                                    handleCompleteTask(selectedTask);
+                                                                    setSelectedWorkType("TASK_SELECT");
                                                                 }}
                                                             />
                                                         )}
@@ -1174,7 +1219,7 @@ const BankerWorkSpace = () => {
                                                                 onSuccess={() => {
                                                                     const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
                                                                     handlePostLog(finalId);
-                                                                    handleCompleteTask(selectedTask);
+                                                                    setSelectedWorkType("TASK_SELECT");
                                                                 }}
                                                             />
                                                         )}
@@ -1189,7 +1234,7 @@ const BankerWorkSpace = () => {
                                                                 onComplete={() => {
                                                                     const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
                                                                     handlePostLog(finalId);
-                                                                    handleCompleteTask(selectedTask);
+                                                                    setSelectedWorkType("TASK_SELECT");
                                                                 }}
                                                             />
                                                         )}
@@ -1204,8 +1249,7 @@ const BankerWorkSpace = () => {
                                                                 onComplete={() => {
                                                                     const finalId = selectedTask?.id || selectedTask?.taskId || selectedTask;
                                                                     handlePostLog(finalId);
-                                                                    handleCompleteTask(selectedTask);
-                                                                }}
+                                                                    setSelectedWorkType("TASK_SELECT");                                                                }}
                                                             />
                                                         )}
 
@@ -1269,7 +1313,7 @@ const BankerWorkSpace = () => {
                                                     </button>
                                                 </div>
                                             ) : logList.length === 0 ? (
-                                                <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>
+                                                <div className={styles.none}>
                                                     업무 이력이 없습니다.
                                                 </div>
                                             ) : (
@@ -1312,7 +1356,15 @@ const BankerWorkSpace = () => {
                                                                         id: product.productId,
                                                                         name: product.productName,
                                                                         description: product.description,
-                                                                        detail: product.description
+                                                                        detail: product.description,
+                                                                        baseInterestRate: product.baseInterestRate,
+                                                                        maxInterestRate: product.maxInterestRate,
+                                                                        minAmount: product.minAmount,
+                                                                        targetType: product.targetType,
+                                                                        minDurationMonths : product.minDurationMonths,
+                                                                        maxDurationMonths: product.maxDurationMonths,
+                                                                        maxAmount: product.maxAmount,
+                                                                        productCategory: product.productCategory,
                                                                     })}
                                                                 >
                                                                     <span className={styles.recommendIcon}>{index + 1}</span>
@@ -1395,6 +1447,7 @@ const BankerWorkSpace = () => {
                 isOpen={isModalOpen}
                 product={selectedProduct}
                 onClose={() => setIsModalOpen(false)}
+                selectedTask={selectedTask}
             />
 
             <CustomModal

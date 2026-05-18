@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import styles from './Kiosk.module.css';
 import {useModal} from "../../context/ModalContext.jsx";
 
-const KioskComplete = ({ formData, onGoHome, onAddMore, userName, isAiMode }) => {
+const KioskComplete = ({ formData, onGoHome, /*onAddMore,*/ userName, isAiMode }) => {
     const { openModal } = useModal();
 
     const [ticketInfo, setTicketInfo] = useState({
@@ -51,19 +51,37 @@ const KioskComplete = ({ formData, onGoHome, onAddMore, userName, isAiMode }) =>
                 if (response.ok) {
                     const data = await response.json();
                     
-                    if (data.result === 'SUCCESS') {
-                        // AI 모드일 경우 응답 구조(data.taskResult)에 맞춰 처리
-                        if (isAiMode) {
-                            const task = data.taskResult;
-                            
-                            // 파이썬 응답에는 member_id만 오기 때문에, 멤버 리스트를 조회하여 창구번호를 매핑
+                    switch (data.result) {
+                        case 'SUCCESS': {
+                            let task, memberId;
+                            if (isAiMode) {
+                                task = data.taskResult;
+                                memberId = task.member_id;
+                            } else {
+                                // 직접 접수 성공 시, /api/kiosk/task 로 다시 조회해서 결과 세팅
+                                const checkResponse = await fetch('/api/kiosk/task');
+                                if (checkResponse.ok) {
+                                    const checkData = await checkResponse.json();
+                                    if (checkData.result === 'SUCCESS') {
+                                        task = checkData.task;
+                                        memberId = task.memberId;
+                                    } else {
+                                        console.error("Failed to get task info:", checkData);
+                                        // 실패 시 기본값으로 설정하거나 오류 처리
+                                        task = {};
+                                    }
+                                } else {
+                                    task = {};
+                                }
+                            }
+
                             let counterNumber = null;
-                            if (task.member_id) {
+                            if (memberId) {
                                 try {
                                     const membersRes = await fetch('/api/user/members');
                                     if (membersRes.ok) {
                                         const members = await membersRes.json();
-                                        const foundMember = members.find(m => m.id === task.member_id);
+                                        const foundMember = members.find(m => m.id === memberId);
                                         if (foundMember) {
                                             counterNumber = foundMember.counterNumber;
                                         }
@@ -74,49 +92,42 @@ const KioskComplete = ({ formData, onGoHome, onAddMore, userName, isAiMode }) =>
                             }
 
                             setTicketInfo({
-                                ticketNumber: task.ticket_number || '-',
-                                level: task.assigned_level || '-',
+                                ticketNumber: task.ticketNumber || task.ticket_number || '-',
+                                level: task.assignedLevel || task.assigned_level || '-',
                                 counter: counterNumber ? `${counterNumber}번 창구` : '배정 중',
-                                taskType: task.task_type || '-',
-                                taskDetailType: task.task_detail_type || '-'
+                                taskType: task.taskType || task.task_type || '-',
+                                taskDetailType: task.taskDetailType || task.task_detail_type || '-'
                             });
-                        } else {
-                            // 직접 접수 성공 시, /api/kiosk/task 로 다시 조회해서 결과 세팅
-                            const checkResponse = await fetch('/api/kiosk/task');
-                            if (checkResponse.ok) {
-                                const checkData = await checkResponse.json();
-                                if (checkData.result === 'SUCCESS') {
-                                    const task = checkData.task;
-                                    setTicketInfo({
-                                        ticketNumber: task.ticketNumber || '-',
-                                        level: task.assignedLevel || '-',
-                                        counter: task.counterNumber ? `${task.counterNumber}번 창구` : '배정 중',
-                                        taskType: task.taskType || '-',
-                                        taskDetailType: task.taskDetailType || '-'
-                                    });
-                                } else {
-                                    console.error("Failed to get task info:", checkData);
-                                }
-                            }
+                            break;
                         }
-                    } else if (data.result === 'FAILURE_TASK_IN_PROGRESS') {
-                        openModal({ 
-                            title: '알림', 
-                            message: '이미 처리중인 업무가 있습니다.',
-                            onConfirm: () => onGoHome()
-                        });
-                    } else if (data.result === 'FAILURE_SESSION') {
-                        openModal({ 
-                            title: '알림', 
-                            message: '세션이 만료되었습니다. 다시 로그인해주세요.',
-                            onConfirm: () => onGoHome()
-                        });
-                    } else {
-                        openModal({
-                            title: '알림', 
-                            message: '대기표 발급에 실패했습니다: ' + (data.message || '알 수 없는 오류'),
-                            onConfirm: () => onGoHome()
-                        });
+                        case 'FAILURE_TASK_IN_PROGRESS':
+                            openModal({ 
+                                title: '알림', 
+                                message: '이미 처리중인 업무가 있습니다.',
+                                onConfirm: () => onGoHome()
+                            });
+                            break;
+                        case 'FAILURE_SESSION':
+                            openModal({ 
+                                title: '알림', 
+                                message: '세션이 만료되었습니다. 다시 로그인해주세요.',
+                                onConfirm: () => onGoHome()
+                            });
+                            break;
+                        case 'FAILURE_TASK_PLURAL':
+                            openModal({
+                                title: '알림',
+                                message: '추가 접수는 불가능합니다.',
+                                onConfirm: () => onGoHome()
+                            });
+                            break;
+                        default:
+                            openModal({
+                                title: '알림', 
+                                message: '대기표 발급에 실패했습니다: ' + (data.message || '알 수 없는 오류'),
+                                onConfirm: () => onGoHome()
+                            });
+                            break;
                     }
                 } else {
                     openModal({ 
@@ -145,7 +156,7 @@ const KioskComplete = ({ formData, onGoHome, onAddMore, userName, isAiMode }) =>
         if (!isLoading) {
             const timer = setTimeout(() => {
                 onGoHome();
-            }, 7000);
+            }, 4000);
             return () => clearTimeout(timer);
         }
     }, [isLoading, onGoHome]);
@@ -224,9 +235,9 @@ const KioskComplete = ({ formData, onGoHome, onAddMore, userName, isAiMode }) =>
                         <button className={styles.goHomeBtn} onClick={onGoHome}>
                             처음으로 돌아가기
                         </button>
-                        <button className={styles.addMoreBtn} onClick={onAddMore}>
+                        {/*<button className={styles.addMoreBtn} onClick={onAddMore}>
                             추가 업무 접수
-                        </button>
+                        </button>*/}
                     </div>
                 </>
             )}

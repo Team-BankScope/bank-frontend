@@ -49,7 +49,7 @@ const Home = () => {
     const corporateTasks = [
         { id: 1, title: '기업 대출 신청', icon: Briefcase, isVisitRequired: true },
         { id: 2, title: '법인 계좌 개설', icon: Corporation, isVisitRequired: true },
-        { id: 3, title: '기업 연체 관리', icon: Warning, isVisitRequired: false },
+        { id: 3, title: '기업 연체 관리', icon: Warning, isVisitRequired: true },
     ];
 
     const [boardList, setBoardList] = useState([]);
@@ -160,17 +160,15 @@ const Home = () => {
                 }
 
             case '기업 연체 관리':
-                switch (user.userType) {
-                    case 'corporate':
-                    case 'admin':
-                        navigate('/overdue'); 
-                        break;
-                    default:
-                        setModalMessage('기업회원만 접근 가능합니다.\n기업 계정으로 로그인해주세요.');
-                        setIsAccessModalOpen(true);
-                        break;
+
+                if (user.userType === 'corporate' || user.userType === 'admin') {
+                    message = '전문적인 상담과 법적 절차 확인을 위해\n오프라인 창구 방문이 필요합니다.';
+                    break;
+                } else {
+                    setModalMessage('기업회원만 접근 가능합니다.\n기업 계정으로 로그인해주세요.');
+                    setIsAccessModalOpen(true);
+                    return;
                 }
-                return;
 
             default:
                 console.log(`${title} 페이지로 이동합니다.`);

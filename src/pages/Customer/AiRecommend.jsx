@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, {useCallback, useState} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import Loading from '../../components/common/Loading.jsx';
 import styles from './AiRecommend.module.css';
+import { useModal } from '../../context/ModalContext';
 
 const CATEGORY_LABEL = {
     DEPOSIT: '예금',
@@ -17,6 +18,14 @@ const AiRecommend = () => {
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [aiResult, setAiResult] = useState(null);
     const [error, setError] = useState(null);
+    const { openModal } = useModal();
+    const showAlert = useCallback((message, onConfirm = null) => {
+        openModal({
+            message: message,
+            onConfirm: onConfirm
+        });
+    }, [openModal]);
+
 
     const handleAiRecommend = async () => {
         setIsAiLoading(true);
@@ -30,6 +39,9 @@ const AiRecommend = () => {
             const data = await res.json();
             setAiResult(data.products ?? []);
         } catch (e) {
+            showAlert('금융상품 추천은 로그인 상태에서만 가능합니다.', () => {
+                navigate('/login');
+            })
             setError(e.message);
         } finally {
             setIsAiLoading(false);

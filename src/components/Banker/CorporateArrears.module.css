@@ -94,10 +94,17 @@
     -webkit-appearance: none;
 }
 
+.emptyState {
+    text-align: center;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    width: 100%;
+    color: #718096;
+}
+
 /* 정보 박스 */
 .mintInfoBox {
     width: 100%;
-
     border: 1px solid #6ED3B9;
     padding: 15px;
     border-radius: 12px;
@@ -172,6 +179,53 @@
     cursor: pointer;
     white-space: nowrap;
 }
+
+/* Repayment Type Selection */
+.repayTypeGroup {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+.repayTypeOption {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background-color: #fff;
+}
+
+.repayTypeOption.selectedOption {
+    border-color: #6ED3B9;
+    background-color: #F0FAF8;
+    box-shadow: 0 0 0 2px #6ED3B9;
+}
+
+.hiddenRadio {
+    display: none;
+}
+
+.optionContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.optionTitle {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #2d3748;
+}
+
+.optionDesc {
+    font-size: 0.75rem;
+    color: #718096;
+    margin-top: 4px;
+}
+
 
 /* 하단 버튼 (buttonRow) */
 .buttonRow { display: flex; gap: 15px; margin-top: 10px; }

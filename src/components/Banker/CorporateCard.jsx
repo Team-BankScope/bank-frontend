@@ -50,7 +50,7 @@ const CorporateCard = ({ onCancel, selectedTask, onSuccess }) => {
                         if (userData.user.userType !== 'corporate') {
                             openModal({
                                 message: "개인회원은 법인카드 발급 업무를 진행할 수 없습니다.",
-                                onConfirm: onCancel
+                                onConfirm: onSuccess
                             });
                             setIsCorporate(false);
                             return; // 비법인 고객일 경우 데이터 로드 중단 및 조기 종료

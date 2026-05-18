@@ -10,6 +10,8 @@ const LoanPayment = ({ onCancel, onCreate, selectedTask }) => {
     const [accounts, setAccounts] = useState([]);
     const [selectedLoan, setSelectedLoan] = useState(null);
     const [selectedAccount, setSelectedAccount] = useState(null);
+    // 💡 1. 상환 방식 상태 추가 (기본값: SCHEDULED)
+    const [repayType, setRepayType] = useState('SCHEDULED'); 
 
     const [formData, setFormData] = useState({
         password: '',
@@ -73,6 +75,7 @@ const LoanPayment = ({ onCancel, onCreate, selectedTask }) => {
             passwordConfirm: '',
             amount: '',
         });
+        setRepayType('SCHEDULED'); // 💡 리셋 시 상환 방식도 기본값으로
     };
 
     const handleSubmit = async () => {
@@ -103,7 +106,12 @@ const LoanPayment = ({ onCancel, onCreate, selectedTask }) => {
         };
 
         try {
-            const response = await fetch(`/api/loan/${selectedLoan}/repay`, {
+            // 💡 3. API 동적 호출 처리
+            const apiUrl = repayType === 'SCHEDULED' 
+                ? `/api/loan/${selectedLoan}/repay` 
+                : `/api/loan/${selectedLoan}/repay-early`;
+
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -112,19 +120,22 @@ const LoanPayment = ({ onCancel, onCreate, selectedTask }) => {
             });
 
             const data = await response.json();
-            console.log(data)
 
             switch (data.result) {
                 case 'SUCCESS':
-                    showAlert("상환이 완료되었습니다.", () => {
+                    // 💡 성공 메시지도 상환 방식에 따라 다르게
+                    { const successMessage = repayType === 'SCHEDULED'
+                        ? "스케줄 상환이 완료되었습니다."
+                        : "중도 상환이 완료되었습니다.";
+                    showAlert(successMessage, () => {
                         if (onCreate) onCreate();
                     });
-                    break;
+                    break; }
                 case 'FAILURE':
                     showAlert("상환에 실패했습니다.");
                     break;
                 case 'FAILURE_SESSION':
-                    showAlert("세션이 만료되었습니다.");
+                    showAlert("세션이 만료되었습니다. 다시 로그인해주세요.");
                     break;
                 case 'FAILURE_UNAUTHORIZED':
                     showAlert("권한이 없습니다.");
@@ -198,6 +209,41 @@ const LoanPayment = ({ onCancel, onCreate, selectedTask }) => {
                 {loans.length === 0 && <div style={{textAlign: 'center', padding: '20px'}}>대출 목록이 없습니다.</div>}
             </div>
 
+            {/* 💡 2. 상환 방식 선택 UI */}
+            <div className={styles.repayTypeSection}>
+                <div className={styles.sectionLabel}>상환 방식 선택</div>
+                <div className={styles.repayTypeGroup}>
+                    <label className={`${styles.repayTypeOption} ${repayType === 'SCHEDULED' ? styles.selectedOption : ''}`}>
+                        <input 
+                            type="radio" 
+                            name="repayType" 
+                            value="SCHEDULED" 
+                            checked={repayType === 'SCHEDULED'} 
+                            onChange={() => setRepayType('SCHEDULED')} 
+                            className={styles.hiddenRadio}
+                        />
+                        <div className={styles.optionContent}>
+                            <span className={styles.optionTitle}>정기 스케줄 상환</span>
+                            <span className={styles.optionDesc}>이번 달 미납분(원금+이자) 납부</span>
+                        </div>
+                    </label>
+                    <label className={`${styles.repayTypeOption} ${repayType === 'EARLY' ? styles.selectedOption : ''}`}>
+                        <input 
+                            type="radio" 
+                            name="repayType" 
+                            value="EARLY" 
+                            checked={repayType === 'EARLY'} 
+                            onChange={() => setRepayType('EARLY')} 
+                            className={styles.hiddenRadio}
+                        />
+                        <div className={styles.optionContent}>
+                            <span className={styles.optionTitle}>중도 상환</span>
+                            <span className={styles.optionDesc}>남은 원금 차감 및 전액 완납</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
             {/* 3. 출금 계좌 섹션 */}
             <div className={styles.accountSection}>
                 <div className={styles.sectionLabel}>출금 계좌 (선택)</div>
@@ -236,7 +282,7 @@ const LoanPayment = ({ onCancel, onCreate, selectedTask }) => {
                     />
                 </div>
                 <div className={styles.inputGroup}>
-                    <label>계좌 비밀번호</label>
+                    <label>계좌 비밀번호 확인</label>
                     <input
                         type="password"
                         name="passwordConfirm"
@@ -254,6 +300,8 @@ const LoanPayment = ({ onCancel, onCreate, selectedTask }) => {
                             value={formData.amount}
                             onChange={handleChange}
                             className={styles.amountInput}
+                            /* 💡 4. 선택된 모드에 따라 다르게 보여주기 */
+                            placeholder={repayType === 'SCHEDULED' ? "스케줄 상환할 금액 입력" : "원금을 차감할 금액 입력"}
                         />
                         <span className={styles.unit}>원</span>
                     </div>

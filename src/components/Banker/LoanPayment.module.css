@@ -110,6 +110,60 @@
     margin: 0;
 }
 
+/* 2.5. 상환 방식 선택 섹션 추가 */
+.repayTypeSection {
+    margin-bottom: 30px;
+}
+
+.repayTypeGroup {
+    display: flex;
+    gap: 15px;
+}
+
+.repayTypeOption {
+    flex: 1;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s;
+    background-color: #fafafa;
+}
+
+.repayTypeOption:hover {
+    border-color: #66cccc;
+    background-color: #f4faf9;
+}
+
+.selectedOption {
+    border: 2px solid #66cccc;
+    background-color: #e6f7f5;
+}
+
+.hiddenRadio {
+    display: none;
+}
+
+.optionContent {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-left: 10px;
+}
+
+.optionTitle {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #333;
+}
+
+.optionDesc {
+    font-size: 0.85rem;
+    color: #666;
+}
+
 /* 3. 출금 계좌 섹션 */
 .accountSection {
     margin-bottom: 30px;

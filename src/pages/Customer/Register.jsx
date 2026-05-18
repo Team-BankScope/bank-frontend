@@ -29,7 +29,8 @@ const Register = () => {
         password: '',
         phone: '',
         residentNumber: '',
-        identificationNumber: ''
+        identificationNumber: '',
+        isTermsAgreed: 0 // 백엔드 DTO에 맞게 기본값 추가
     });
     const [passwordConfirm, setPasswordConfirm] = useState('');
     const navigate = useNavigate();
@@ -57,7 +58,17 @@ const Register = () => {
                 clearInterval(interval);
             }
         };
-    }, [timer, isEmailSent, isEmailVerified]);
+    }, [timer, isEmailSent, isEmailVerified, showAlert]);
+
+    // 체크박스 핸들러 추가
+    const handleAgreementChange = (e) => {
+        const checked = e.target.checked;
+        setIsAgreed(checked);
+        setFormData(prev => ({
+            ...prev,
+            isTermsAgreed: checked ? 1 : 0 // 체크 시 1, 해제 시 0
+        }));
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -150,10 +161,13 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!isAgreed) {
+        
+        // 프론트엔드 레벨 검증 (한 번 더 확인)
+        if (formData.isTermsAgreed !== 1) {
             showAlert('개인정보 수집 및 이용에 동의해야 회원가입이 가능합니다.');
             return;
         }
+        
         if (!isStep2Valid()) {
             showAlert('모든 필드를 채워야 합니다.');
             return;
@@ -177,10 +191,21 @@ const Register = () => {
 
             if (response.ok) {
                 const data = await response.json();
-                if (data.result === 'SUCCESS') {
-                    showAlert('회원가입 성공!', () => navigate('/Login'));
-                } else {
-                    showAlert('회원가입 실패: ' + (data.message || ''));
+                
+                // 백엔드 응답 switch-case 처리
+                switch(data.result) {
+                    case 'SUCCESS':
+                        showAlert('회원가입 성공!', () => navigate('/Login'));
+                        break;
+                    case 'FAILURE_NOT_AGREED':
+                        showAlert('약관에 동의하지 않았습니다. 동의 후 다시 시도해주세요.');
+                        setIsAgreed(false);
+                        setFormData(prev => ({ ...prev, isTermsAgreed: 0 }));
+                        break;
+                    case 'FAILURE':
+                    default:
+                        showAlert('회원가입 실패: ' + (data.message || '정보를 다시 확인해주세요.'));
+                        break;
                 }
             } else {
                 showAlert('회원가입 실패');
@@ -270,7 +295,7 @@ const Register = () => {
                 <label htmlFor="passwordConfirm">비밀번호 확인</label>
                 <input type="password" id="passwordConfirm" value={passwordConfirm} onChange={(e) => setPasswordConfirm(e.target.value)} placeholder="비밀번호를 다시 입력해주세요" required />
             </div>
-            <button type="button" onClick={nextStep} className={styles.submitButton}>다음</button>
+            <button type="button" onClick={nextStep} className={styles.nextButton}>다음</button>
         </>
     );
 
@@ -308,7 +333,7 @@ const Register = () => {
                 </div>
             )}
             <div className={styles.stepButtons}>
-                <button type="button" onClick={prevStep} className={styles.prevButton}>이전</button>
+                <button type="button" onClick={prevStep}  className={styles.previousButton}>이전</button>
                 <button type="button" onClick={() => {
                     if (!isStep2Valid()) {
                         showAlert('모든 필드를 정확히 입력해주세요.');
@@ -322,41 +347,55 @@ const Register = () => {
 
     const renderStep3 = () => (
         <>
-            <div className={styles.inputGroup}>
-                <label>개인정보 수집 및 이용 동의 (필수)</label>
+            <div className={styles.inputSign}>
+                <label>[필수] 개인정보 및 고유식별정보 수집·이용 동의서</label>
                 
                 <div style={{ 
-                    height: '180px', overflowY: 'scroll', padding: '15px', 
+                    height: '250px', overflowY: 'scroll', padding: '15px', 
                     border: '1px solid #ddd', borderRadius: '8px', 
-                    fontSize: '14px', lineHeight: '1.6', marginBottom: '15px', backgroundColor: '#f9f9f9',
-                    color: '#222'
+                    fontSize: '13px', lineHeight: '1.6', marginBottom: '15px', backgroundColor: '#f9f9f9',
+                    color: '#333'
                 }}>
                     <strong>1. 수집 및 이용 목적</strong><br />
-                    회원 식별, 서비스 제공 및 유지 관리, 고객 상담 등<br /><br />
+                    금융거래와 관련하여 본인의 개인정보를 수집·이용하는 목적은 다음과 같습니다.<br />
+                    - 금융거래 관계의 설정·유지·이행·관리: 계좌 개설, 금융상품(예·적금, 대출 등) 가입, 금융거래 승인 및 처리<br />
+                    - 법령상 의무 이행: 「금융실명거래 및 비밀보장에 관한 법률」에 따른 실명 확인 및 본인 인증, 「특정 금융거래정보의 보고 및 이용 등에 관한 법률」에 따른 자금세탁방지(AML) 의무 이행<br />
+                    - 신용질서 유지 및 보호: 금융사고 예방 및 조사, 분쟁 해결, 고객 민원 처리 및 상담<br />
+                    - 신용정보의 조회: 신용조회회사 또는 신용정보집중기관에 대한 신용정보 조회 (대출 등 여신거래 시)<br /><br />
                     
                     <strong>2. 수집하는 개인정보 항목</strong><br />
-                    성명, 이메일, 전화번호, 고유식별정보(주민등록번호) 등<br /><br />
+                    은행은 서비스 제공을 위해 아래의 필수적인 개인정보 및 고유식별정보를 수집합니다.<br />
+                    - [필수] 일반 개인정보: 성명, 연락처(휴대폰 번호, 자택/직장 전화번호), 이메일<br />
+                    - [필수] 고유식별정보: 주민등록번호, 사업자등록번호<br />
+                    (※ 고유식별정보는 금융실명법 제3조 등 관련 법령에 명확한 근거가 있는 경우에 한하여 수집 및 처리됩니다.)<br />
+                    - [필수] 금융거래 정보: 상품 종류, 거래 조건(이자율, 만기 등), 거래 일시 및 금액 등 거래 설정 및 내역 정보<br /><br />
                     
                     <strong>3. 보유 및 이용 기간</strong><br />
-                    회원 탈퇴 시까지 (단, 관계 법령에 따라 보존할 필요가 있는 경우 해당 법령에서 정한 기간 동안 보관)<br /><br />
-                    
-                    <span style={{ color: '#E63946' }}>※ 상세 약관 내용은 백엔드 서버 정책을 따릅니다.</span>
-                </div>
+                    수집된 개인정보는 원칙적으로 금융거래 종료일로부터 법령에서 정한 기간 동안 안전하게 보관 및 이용되며, 목적이 달성된 후에는 지체 없이 파기됩니다.<br />
+                    - 원칙: 금융거래 종료일(계좌 해지, 회원 탈퇴 등)로부터 5년까지 보관 (「신용정보의 이용 및 보호에 관한 법률」 등)<br />
+                    - 예외 (관련 법령에 의한 별도 보존):<br />
+                    &nbsp;&nbsp;&nbsp;&nbsp;· 「전자금융거래법」에 따른 전자금융 거래기록: 5년<br />
+                    &nbsp;&nbsp;&nbsp;&nbsp;· 「상법」에 따른 상업장부 및 영업 관련 중요 서류: 10년<br />
+                    &nbsp;&nbsp;&nbsp;&nbsp;· 「특정 금융거래정보의 보고 및 이용 등에 관한 법률」에 따른 고객 확인 정보 및 거래기록: 5년<br />
+                    (※ 단, 금융사고 조사, 분쟁 해결, 민원 처리, 법령상 의무 이행을 위해 필요한 경우 해당 목적이 달성될 때까지 보관될 수 있습니다.)<br /><br />
 
-                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '15px', fontWeight: 'bold' }}>
+                    <strong>4. 동의를 거부할 권리 및 불이익</strong><br />
+                    고객님은 위 개인정보 및 고유식별정보의 수집·이용에 대한 동의를 거부할 권리가 있습니다. 단, 위 정보는 금융거래 설정 및 서비스 제공을 위한 필수적 요건이므로, 동의를 거부하실 경우 계좌 개설, 대출, 스마트뱅킹 등 은행의 금융 서비스 이용이 불가능합니다.
+                </div>
+                <div className={styles.checkboxGroup}>
                     <input
                         type="checkbox"
+                        id="agreeCheckbox"
                         checked={isAgreed}
-                        onChange={(e) => setIsAgreed(e.target.checked)}
-                        style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                        onChange={handleAgreementChange}
                     />
-                    위 개인정보 수집 및 이용에 동의합니다.
-                </label>
+                    <label htmlFor="agreeCheckbox" style={{cursor: 'pointer' , margin: 0, padding: 0}}>위 개인정보 수집 및 이용에 동의합니다.</label>
+                </div>
             </div>
 
             <div className={styles.stepButtons}>
-                <button type="button" onClick={() => setStep(2)} className={styles.prevButton}>이전</button>
-                <button type="submit" className={styles.registerButton}>회원가입 완료</button>
+                <button type="button" onClick={() => setStep(2)} className={styles.previousButton}>이전</button>
+                <button type="submit" className={styles.submitButton} disabled={formData.isTermsAgreed !== 1}>회원가입 완료</button>
             </div>
         </>
     );

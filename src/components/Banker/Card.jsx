@@ -20,7 +20,7 @@ const Card = ({ onCancel, selectedTask, onSuccess }) => {
         paymentDay: 14, // Default payment day
         userId: selectedTask?.userId || null,
         cardColor: 'blue', // 'blue' or 'green'
-        creditLimit: 1000000,
+        creditLimit: null,
         password: ''
     };
 
@@ -56,7 +56,7 @@ const Card = ({ onCancel, selectedTask, onSuccess }) => {
 
     const fetchCardList = useCallback( async () => {
         if (!selectedTask || !selectedTask.userId) return;
-        console.log(selectedTask.userId);
+
 
         try {
             const response = await fetch(`/api/card/workspace/list?userId=${selectedTask.userId}`, {

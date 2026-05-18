@@ -379,7 +379,7 @@
 }
 
 
-.btnProcessing { background: #a0aec0; color: white; }
+.btnProcessing { background: #a0aec0; color: white; cursor: not-allowed !important;}
 .btnComplete { background: #35987c; color: white; }
 
 /* --- 중앙 및 우측 메인 콘텐츠 --- */
@@ -505,10 +505,10 @@
     border: 1px solid #e2e8f0;
     border-radius: 12px;
     padding: 20px;
-    max-height: 300px;
+    min-height: 97px;
     display: flex;
     flex-direction: column;
-    overflow: hidden;        
+    overflow: hidden;
 }
 
 .infoBox h4 {
@@ -1083,4 +1083,10 @@
     display: flex;
     gap: 10px;
     margin-top: 10px;
+}
+
+.none {
+    padding: 20px;
+    text-align: center;
+    color: #888;
 }

@@ -136,7 +136,7 @@ const LoginContent = () => {
                         <div className={styles.inputGroup}>
                             <label htmlFor="residentNumber">주민등록번호</label>
                             <input
-                                type="text"
+                                type="password"
                                 id="residentNumber"
                                 name="residentNumber"
                                 value={formData.residentNumber}

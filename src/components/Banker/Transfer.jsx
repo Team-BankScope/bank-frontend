@@ -96,7 +96,6 @@ const Transfer = ({ onCancel, taskId, selectedTask, onSuccess }) => {
                         if (onSuccess) {
                             await onSuccess();
                         }
-                        onCancel();
                     }
                 });
             } else {

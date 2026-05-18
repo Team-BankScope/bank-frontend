@@ -133,7 +133,7 @@ const Withdraw = ({ onCancel, taskId, selectedTask, onSuccess }) => {
                                 >
                                     {accounts.map((acc, index) => (
                                         <option key={index} value={acc.accountNumber || acc.accountNum}>
-                                            {acc.accountNumber || acc.accountNum} ({acc.accountName || '일반예금'})
+                                            {acc.accountNumber || acc.accountNum} ({acc.accountName || '일반예금'} ){` ( 잔액: ${acc.balance}원)`}
                                         </option>
                                     ))}
                                 </select>

@@ -35,7 +35,7 @@ const CorporateLoan = ({ onCancel ,onComplete, selectedTask }) => {
                         if (userData.user.userType !== 'corporate') {
                             openModal({
                                 message: "개인손님이 이용할 수 없는 기능입니다.",
-                                onConfirm: onCancel
+                                onConfirm: onComplete
                             } );
                             return; // 비법인 고객일 경우 데이터 로드 중단 및 조기 종료
                         }

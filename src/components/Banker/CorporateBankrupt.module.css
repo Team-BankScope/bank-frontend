@@ -26,6 +26,14 @@
     position: absolute;
     right: 20px;
 }
+/* 등급별 색상 */
+.riskE { background-color: #fee2e2; color: #ef4444; } /* 빨강 */
+.riskD { background-color: #ffedd5; color: #f97316; } /* 주황 */
+.riskC { background-color: #fef9c3; color: #ca8a04; } /* 노랑 */
+.riskB { background-color: #d3ffe1; color: #22c55e; } /* 초록 */
+.riskA { background-color: #d3ffe1; color: #22c55e; } /* 초록 */
+
+.riskDefault { background-color: #f3f4f6; color: #6b7280; } /* 회색 */
 
 .formContainer {
     display: flex;

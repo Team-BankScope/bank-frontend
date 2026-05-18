@@ -140,7 +140,6 @@ const Accounts = ({ onCancel, onCreate, selectedTask }) => {
                     if (response.ok) {
                         const rawData = await response.json();
                         const data = Array.isArray(rawData) ? rawData : rawData.accounts || [];
-                        console.log(data);
                         
                         // 💡 JSON 응답에서 accounts 배열을 순회하여 매핑하는 코드
                         const mappedAccounts = data.map(account => ({
@@ -290,7 +289,6 @@ const Accounts = ({ onCancel, onCreate, selectedTask }) => {
             }
 
             const data = await response.json();
-            console.log(data);
             // 5. 응답 결과 처리 분기
             switch (data.result) {
                 case 'SUCCESS':
@@ -305,7 +303,7 @@ const Accounts = ({ onCancel, onCreate, selectedTask }) => {
                     showAlert('법인 고객만 이용 가능한 상품입니다.');
                     break;
                 case 'FAILURE':
-                    showAlert('계좌 개설에 실패했습니다. 잠시 후 다시 d시도해주세요.');
+                    showAlert('계좌 개설에 실패했습니다. 잠시 후 다시 시도해주세요.');
                     break;
                 default:
                     showAlert('계좌 개설에 실패했습니다. 잠시 후 다시 시도해주세요.');
@@ -399,7 +397,7 @@ const Accounts = ({ onCancel, onCreate, selectedTask }) => {
                             <>
                                 <strong>기본금리:</strong> 연 {selectedProduct.baseInterestRate}% | <strong>최고금리:</strong> 연 {selectedProduct.maxInterestRate}%<br/>
                                 <strong>가입기간:</strong> {selectedProduct.minDurationMonths}개월 ~ {selectedProduct.maxDurationMonths}개월<br/>
-                                <strong>가입금액:</strong> {selectedProduct.minAmount.toLocaleString()}원 ~ {selectedProduct.maxAmount.toLocaleString()}원<br/>
+                                <strong>가입금액:</strong> {selectedProduct.minAmount?.toLocaleString() ?? 0}원 ~ {selectedProduct.maxAmount?.toLocaleString() ?? 0}원<br/>
                                 <strong>설명:</strong> {selectedProduct.description}
                             </>
                         ) : (
