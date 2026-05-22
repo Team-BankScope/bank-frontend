@@ -88,7 +88,8 @@ const CorporateCard = ({ onCancel, selectedTask, onSuccess }) => {
         };
 
         validateAndFetch();
-    }, [selectedTask?.userId, openModal, onCancel, showAlert]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedTask?.userId]);
 
     const fetchCardList = useCallback( async () => {
         if (!selectedTask || !selectedTask.userId) return;

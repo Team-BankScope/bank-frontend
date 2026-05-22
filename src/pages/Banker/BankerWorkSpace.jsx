@@ -956,8 +956,8 @@ const BankerWorkSpace = () => {
                                                 {selectedWorkType === "TASK_SELECT" ? (
                                                     <TaskSelect
                                                         initialPage={lastTaskPage}
-                                                        // pageNumber도 받아서 handleTaskMenuSelect로 넘겨주도록 추가!
                                                         onSelectTask={(taskTitle, pageNumber) => handleTaskMenuSelect(taskTitle, pageNumber)}
+                                                        selectedTask={selectedTask}
                                                     />
                                                 ) : (
                                                     <>

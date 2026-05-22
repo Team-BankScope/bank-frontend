@@ -50,7 +50,8 @@ const CorporateBankrupt = ({ onCancel, onComplete, selectedTask }) => {
         };
 
         fetchInitialData();
-    }, [userId, showAlert, onCancel]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userId]);
 
     // 1. 컴포넌트 로드 시 위험 진단 및 기업 정보 조회
     useEffect(() => {
@@ -89,7 +90,8 @@ const CorporateBankrupt = ({ onCancel, onComplete, selectedTask }) => {
         };
 
         fetchRiskStatus();
-    }, [selectedTask, onCancel, showAlert]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedTask]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;

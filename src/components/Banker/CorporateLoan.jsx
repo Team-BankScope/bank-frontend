@@ -67,7 +67,8 @@ const CorporateLoan = ({ onCancel ,onComplete, selectedTask }) => {
         };
 
         validateAndFetch();
-    }, [selectedTask?.userId, targetType, openModal, onCancel]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedTask?.userId, targetType]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;

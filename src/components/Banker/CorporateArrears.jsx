@@ -67,7 +67,8 @@ const CorporateArrears = ({ onCancel, onComplete, selectedTask }) => {
         };
 
         fetchInitialData();
-    }, [userId, showAlert, onCancel]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userId]);
 
     // Fetch loan details and schedules
     useEffect(() => {

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import styles from "./TaskSelect.module.css";
 import accountIcon from '../../images/Banker/account-create.png';
 import withdrawIcon from '../../images/Banker/GetCash.png';
@@ -12,11 +12,13 @@ import Transfer from '../../images/Home/Transfer.png';
 import PiggyBank from '../../images/Home/PiggyBank.png';
 import CorporateIcon from '../../images/Banker/corporate.png';
 
-const TaskSelect = ({ onSelectTask, initialPage = 1 }) => {
+const TaskSelect = ({ onSelectTask, initialPage = 1 , selectedTask}) => {
 
     const [currentPage, setCurrentPage] = useState(initialPage);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedId, setSelectedId] = useState(1);
+    const [userName, setUserName] = useState("고객");
+
 
     const allTasks = [
         { id: 1, title: "입출금 계좌 개설", subTitle: "Open an Account", icon: accountIcon },
@@ -72,11 +74,47 @@ const TaskSelect = ({ onSelectTask, initialPage = 1 }) => {
             onSelectTask(task.title, currentPage);
         }
     };
+    
+    useEffect(() => {
+        const fetchUserName = async () => {
+            const userId = selectedTask?.userId;
+            console.log(userId)
+            if (userId) {
+                try {
+                    const response = await fetch(`/api/user/info?userId=${userId}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.result === 'SUCCESS' && data.user) {
+                            setUserName(data.user.name);
+                        } else {
+                            console.error("고객 정보 조회 실패:", data.message);
+                            setUserName("고객");
+                        }
+                    } else {
+                        console.error("고객 정보 API 호출 실패:", response.status);
+                        setUserName("고객");
+                    }
+                } catch (error) {
+                    console.error("고객 정보 조회 중 에러 발생:", error);
+                    setUserName("고객");
+                }
+            } else {
+                // selectedTask.userId가 없을 경우, onSelectTask.userName을 직접 사용
+                if (onSelectTask && onSelectTask.userName) {
+                    setUserName(onSelectTask.userName);
+                } else {
+                    setUserName("고객");
+                }
+            }
+        };
+    
+        fetchUserName();
+    }, [onSelectTask]);
 
     return (
         <div className={styles.container}>
             <header className={styles.header}>
-                <h2 className={styles.welcomeText}>김갑수 고객님의 업무를 선택해주세요</h2>
+                <h2 className={styles.welcomeText}>{userName} 고객님의 업무를 선택해주세요</h2>
             </header>
 
             <div className={styles.searchSection}>

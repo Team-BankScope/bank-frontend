@@ -155,7 +155,6 @@ const RecommendDeposit = ({ product, onClose, selectedTask }) => {
     };
     
     const handleSubmit =  async () => {
-        showAlert('아니시발 실행은돼?')
         if (!validate()) return;
 
         // 실제 API에 전송될 형태 (DTO 매핑)

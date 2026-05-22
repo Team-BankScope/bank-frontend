@@ -30,7 +30,7 @@ const CorporateAccount = ({ onCancel, onComplete, selectedTask, taskId }) => {
                 if (userData.result === 'SUCCESS') {
                     const { user } = userData;
                     if (user.userType !== 'corporate') {
-                        openModal({ title: '알림', message: '개인회원은 이 탭에 접근할 수 없습니다.', onComplete });
+                        openModal({ title: '알림', message: '개인회원은 이 탭에 접근할 수 없습니다.', onConfirm: onComplete });
                         return;
                     }
 
@@ -44,7 +44,8 @@ const CorporateAccount = ({ onCancel, onComplete, selectedTask, taskId }) => {
         };
 
         fetchInitialData();
-    }, [userId, openModal, onCancel, onComplete]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userId]);
 
     // 1. 법인용 금융상품 목록 조회 (카테고리: CORPORATE)
     useEffect(() => {
