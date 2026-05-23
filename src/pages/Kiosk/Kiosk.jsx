@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styles from './Kiosk.module.css';
-import BackgroundImage from '../../images/Kiosk/KioskBackground.jpg';
+import BackgroundImage from '../../images/Kiosk/kioskBackground.jpg';
 import KioskLogin from './KioskLogin';
 import KioskTaskSelect from './KioskTaskSelect';
 import KioskComplete from './KioskComplete';
