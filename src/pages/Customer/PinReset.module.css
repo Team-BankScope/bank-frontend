@@ -121,6 +121,7 @@
     border-radius: 8px;
     font-size: 14px;
     outline: none;
+    box-sizing: border-box;
 }
 
 .input:focus, .select:focus {
@@ -131,16 +132,24 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    width: 100%;
+}
+
+.rrnWrapper .input {
+    flex: 1 1 0;
+    min-width: 0;
+    width: 100%;
 }
 
 .phoneWrapper, .verifyWrapper {
     display: flex;
     gap: 10px;
-
+    width: 100%;
 }
 
 .phoneWrapper .select {
     width: 100px;
+    box-sizing: border-box;
 }
 
 .phoneWrapper .input {
@@ -158,6 +167,7 @@
     font-weight: 500;
     white-space: nowrap;
     transition: all 0.2s;
+    box-sizing: border-box;
 }
 
 .actionBtn:hover {
@@ -186,6 +196,7 @@
     font-weight: 600;
     cursor: pointer;
     margin-top: 30px;
+    box-sizing: border-box;
 }
 
 .nextBtn:hover {
@@ -214,6 +225,7 @@
     cursor: not-allowed;
     margin-top: 30px;
     transition: background-color 0.3s, color 0.3s;
+    box-sizing: border-box;
 }
 
 .nextBtnActive {
@@ -228,6 +240,7 @@
     cursor: pointer;
     margin-top: 30px;
     transition: background-color 0.3s;
+    box-sizing: border-box;
 }
 
 .nextBtnActive:hover {

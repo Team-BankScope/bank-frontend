@@ -110,8 +110,8 @@ const Kiosk = () => {
                                 <div className={styles.step}></div>
                                 <div className={styles.step}></div>
                             </div>
-                            <h1 className={styles.title}>비교는 빠르게<br/>선택은 안전하게</h1>
-                            <p className={styles.subtitle}>AI 기반 창구 자동배치로 최적의 담당자를<br/>연결해 드립니다.</p>
+                            <h1 className={styles.title}>디지털 소외 없는<br/>금융 서비스</h1>
+                            <p className={styles.subtitle}>누구나 쉬운 스마트 키오스크.<br/> AI 창구 매칭 시스템이 나에게 꼭 맞는 담당자를 찾아드립니다.</p>
                         </div>
                         <div className={styles.infoCards}>
                             <div className={styles.card}><span className={styles.cardTitle}>현재 대기 고객</span><span className={styles.cardValue}>{dashboardData.waitingCount}</span></div>
