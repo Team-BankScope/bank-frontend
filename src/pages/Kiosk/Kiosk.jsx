@@ -6,8 +6,12 @@ import KioskTaskSelect from './KioskTaskSelect';
 import KioskComplete from './KioskComplete';
 import KioskNonMember from './KioskNonMember';
 import CustomModal from '../../components/common/CustomModal';
+import { useAuth } from '../../context/AuthContext';
+
 
 const Kiosk = () => {
+    const { logout } = useAuth();
+
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         userId: '',
@@ -58,7 +62,8 @@ const Kiosk = () => {
         }
     }, [step]);
 
-    const handleGoHome = () => {
+    const handleGoHome = async () => {
+        await logout({ silent: true }); //자동 로그아웃
         setFormData({ userId: '', ssn: '', task: '', userName: '', taskType: '' });
         setIsAiMode(false);
         setStep(1);
@@ -67,7 +72,7 @@ const Kiosk = () => {
     const handleAddMoreTask = () => {
         setFormData(prev => ({ ...prev, task: '', taskType: '' }));
         setIsAiMode(false); // 추가 업무 접수는 직접 접수로 간주
-        setStep(4); 
+        setStep(4);
     };
 
     const handleAiAutoSelect = () => {
@@ -91,11 +96,11 @@ const Kiosk = () => {
         switch (step) {
             case 0:
                 return (
-                    <KioskNonMember 
-                        formData={formData} 
-                        setFormData={setFormData} 
-                        onNext={() => setStep(3)} 
-                        onPrev={() => setStep(1)} 
+                    <KioskNonMember
+                        formData={formData}
+                        setFormData={setFormData}
+                        onNext={() => setStep(3)}
+                        onPrev={() => setStep(1)}
                     />
                 );
             case 1:
@@ -148,7 +153,7 @@ const Kiosk = () => {
                             <h2 className={styles.loginTitle}>접수 방식을 선택해주세요</h2>
                             <p className={styles.loginSubtitle}>원하시는 접수 방식을 선택해주세요.</p>
                         </div>
-                        
+
                         <div className={styles.modeSelectContainer}>
                             <div className={styles.modeCard}>
                                 <h3 className={styles.modeTitle}>자동 접수</h3>
@@ -177,7 +182,7 @@ const Kiosk = () => {
                                 </button>
                             </div>
                         </div>
-                        
+
                         <button className={styles.prevButton} onClick={() => setStep(1)}>
                             ← 처음으로
                         </button>
@@ -186,11 +191,11 @@ const Kiosk = () => {
             case 4:
                 return <KioskTaskSelect formData={formData} setFormData={setFormData} onNext={() => setStep(5)} onPrev={() => setStep(3)} userName={formData.userName} />;
             case 5:
-                return <KioskComplete 
-                            formData={formData} 
-                            onGoHome={handleGoHome} 
-                            onAddMore={handleAddMoreTask} 
-                            userName={formData.userName} 
+                return <KioskComplete
+                            formData={formData}
+                            onGoHome={handleGoHome}
+                            onAddMore={handleAddMoreTask}
+                            userName={formData.userName}
                             isAiMode={isAiMode}
                         />;
             default:

@@ -67,7 +67,7 @@ export const AuthProvider = ({ children }) => {
         await checkSession();
     };
 
-    const logout = async () => {
+    const logout = async (options = { silent: false }) => {
         try {
             await fetch('/api/user/logout', { method: 'POST' });
             
@@ -75,13 +75,19 @@ export const AuthProvider = ({ children }) => {
             if (user && user.email) {
                 localStorage.removeItem(`bankerStatus_${user.email}`);
             }
-
-            showAlert('로그아웃 되었습니다.', () => {
+            // silent false일때만 로그아웃 모달함수가뜬다.
+            if (options.silent) {
                 setUser(null);
-            });
+            } else {
+                showAlert('로그아웃 되었습니다.', () => {
+                    setUser(null);
+                });
+            }
         } catch (error) {
             console.error("Logout failed", error);
-            showAlert('로그아웃에 실패했습니다.');
+            if (!options.silent) {
+                showAlert('로그아웃에 실패했습니다.');
+            }
         }
     };
 

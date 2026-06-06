@@ -336,7 +336,7 @@ const MyPage = () => {
                 
                 <div className={styles.accountList}>
                     {accounts.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
+                        <div  className={styles.noAccounts}>
                             보유하신 계좌가 없습니다.
                         </div>
                     ) : (
